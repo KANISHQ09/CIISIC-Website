@@ -33,6 +33,32 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
     return () => document.removeEventListener('click', handleOutsideClick);
   }, [dropdownOpen]);
 
+  const navItems = [
+    { id: 'hero', label: 'Home' },
+    { id: 'about-ciisic', label: 'About CIISIC' },
+    { id: 'services', label: 'Services' },
+    { id: 'partner-institutions', label: 'Institutions' },
+    { id: 'problem-statements', label: 'Problem Statements' },
+    { id: 'our-ecosystem', label: 'Our Ecosystem' },
+    { id: 'how-it-works', label: 'How It Works' },
+    { id: 'get-involved', label: 'Get Involved' },
+  ];
+
+  const isNavActive = (id: string) => {
+    if (id === 'services' && location.pathname === '/services') return true;
+    if (id === 'partner-institutions' && location.pathname === '/institutions') return true;
+    if (
+      id === 'problem-statements' &&
+      (location.pathname === '/problem-statements' || location.pathname.startsWith('/details'))
+    ) {
+      return true;
+    }
+    if (location.pathname === '/') {
+      return activeSection === id;
+    }
+    return false;
+  };
+
   // Active section scroll highlighter
   useEffect(() => {
     if (location.pathname === '/services') {
@@ -40,7 +66,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
       return;
     }
     if (location.pathname === '/institutions') {
-      setActiveSection('institutions');
+      setActiveSection('partner-institutions');
       return;
     }
     if (location.pathname === '/problem-statements' || location.pathname.startsWith('/details')) {
@@ -49,23 +75,47 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
     }
 
     const handleScroll = () => {
-      const sections = ['hero', 'about-ciisic', 'partner-institutions', 'our-ecosystem', 'how-it-works', 'get-involved'];
-      const scrollPosition = window.scrollY + 160; // Offset for sticky navbar
+      const sections = [
+        'hero',
+        'about-ciisic',
+        'services',
+        'partner-institutions',
+        'problem-statements',
+        'our-ecosystem',
+        'how-it-works',
+        'get-involved',
+      ];
+
+      // If scrolled to very bottom of document (within 60px), activate last section
+      const isBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 60;
+      if (isBottom) {
+        setActiveSection('get-involved');
+        return;
+      }
+
+      // If near top of page, activate hero
+      if (window.scrollY < 80) {
+        setActiveSection('hero');
+        return;
+      }
+
+      const navOffset = 110;
+      let currentSection = 'hero';
 
       for (const section of sections) {
         const el = document.getElementById(section);
         if (el) {
-          const top = el.offsetTop;
-          const height = el.offsetHeight;
-          if (scrollPosition >= top && scrollPosition < top + height) {
-            setActiveSection(section);
-            break;
+          const top = el.getBoundingClientRect().top;
+          if (top <= navOffset) {
+            currentSection = section;
           }
         }
       }
+
+      setActiveSection(currentSection);
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // Run immediately to sync on mount
     return () => window.removeEventListener('scroll', handleScroll);
   }, [location.pathname]);
@@ -84,17 +134,38 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
+    if (sectionId === 'services' && location.pathname === '/services') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (sectionId === 'problem-statements' && (location.pathname === '/problem-statements' || location.pathname.startsWith('/details'))) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    const scrollToSection = (id: string) => {
+      const el = document.getElementById(id);
+      if (el) {
+        const navElement = document.getElementById('platform-navbar');
+        const navHeight = navElement ? navElement.offsetHeight : 72;
+        const elementPosition = el.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - navHeight - 16;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth',
+        });
+      }
+    };
 
     if (location.pathname !== '/') {
       navigate('/');
       // Wait a moment for the page to transition, then scroll
       setTimeout(() => {
-        const el = document.getElementById(sectionId);
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 300);
+        scrollToSection(sectionId);
+      }, 150);
     } else {
-      const el = document.getElementById(sectionId);
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      scrollToSection(sectionId);
     }
   };
 
@@ -217,86 +288,22 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
             <div className="hidden lg:flex items-center justify-center flex-1 mx-1 lg:mx-2 xl:mx-3 space-x-0.5 xl:space-x-1">
               {!currentUser && (
                 <>
-                  <button
-                    onClick={() => handleNavClick('hero')}
-                    className={`relative py-1.5 px-2 xl:px-2.5 text-xs xl:text-[13px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                      activeSection === 'hero' 
-                        ? 'text-[#063028] font-bold after:absolute after:bottom-0 after:left-2 after:right-2 xl:after:left-2.5 xl:after:right-2.5 after:h-[2px] after:bg-[#c48825] after:rounded-full' 
-                        : 'text-stone-700 hover:text-[#063028]'
-                    }`}
-                  >
-                    Home
-                  </button>
-                  <button
-                    onClick={() => handleNavClick('about-ciisic')}
-                    className={`relative py-1.5 px-2 xl:px-2.5 text-xs xl:text-[13px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                      activeSection === 'about-ciisic' 
-                        ? 'text-[#063028] font-bold after:absolute after:bottom-0 after:left-2 after:right-2 xl:after:left-2.5 xl:after:right-2.5 after:h-[2px] after:bg-[#c48825] after:rounded-full' 
-                        : 'text-stone-700 hover:text-[#063028]'
-                    }`}
-                  >
-                    About CIISIC
-                  </button>
-                  <Link
-                    to="/services"
-                    className={`relative py-1.5 px-2 xl:px-2.5 text-xs xl:text-[13px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                      activeSection === 'services' || location.pathname === '/services'
-                        ? 'text-[#063028] font-bold after:absolute after:bottom-0 after:left-2 after:right-2 xl:after:left-2.5 xl:after:right-2.5 after:h-[2px] after:bg-[#c48825] after:rounded-full' 
-                        : 'text-stone-700 hover:text-[#063028]'
-                    }`}
-                  >
-                    Services
-                  </Link>
-                  <button
-                    onClick={() => handleNavClick('partner-institutions')}
-                    className={`relative py-1.5 px-2 xl:px-2.5 text-xs xl:text-[13px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                      activeSection === 'partner-institutions' 
-                        ? 'text-[#063028] font-bold after:absolute after:bottom-0 after:left-2 after:right-2 xl:after:left-2.5 xl:after:right-2.5 after:h-[2px] after:bg-[#c48825] after:rounded-full' 
-                        : 'text-stone-700 hover:text-[#063028]'
-                    }`}
-                  >
-                    Institutions
-                  </button>
-                  <Link
-                    to="/problem-statements"
-                    className={`relative py-1.5 px-2 xl:px-2.5 text-xs xl:text-[13px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                      activeSection === 'problem-statements' || location.pathname === '/problem-statements' || location.pathname.startsWith('/details')
-                        ? 'text-[#063028] font-bold after:absolute after:bottom-0 after:left-2 after:right-2 xl:after:left-2.5 xl:after:right-2.5 after:h-[2px] after:bg-[#c48825] after:rounded-full' 
-                        : 'text-stone-700 hover:text-[#063028]'
-                    }`}
-                  >
-                    Problem Statements
-                  </Link>
-                  <button
-                    onClick={() => handleNavClick('our-ecosystem')}
-                    className={`relative py-1.5 px-2 xl:px-2.5 text-xs xl:text-[13px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                      activeSection === 'our-ecosystem' 
-                        ? 'text-[#063028] font-bold after:absolute after:bottom-0 after:left-2 after:right-2 xl:after:left-2.5 xl:after:right-2.5 after:h-[2px] after:bg-[#c48825] after:rounded-full' 
-                        : 'text-stone-700 hover:text-[#063028]'
-                    }`}
-                  >
-                    Our Ecosystem
-                  </button>
-                  <button
-                    onClick={() => handleNavClick('how-it-works')}
-                    className={`relative py-1.5 px-2 xl:px-2.5 text-xs xl:text-[13px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                      activeSection === 'how-it-works' 
-                        ? 'text-[#063028] font-bold after:absolute after:bottom-0 after:left-2 after:right-2 xl:after:left-2.5 xl:after:right-2.5 after:h-[2px] after:bg-[#c48825] after:rounded-full' 
-                        : 'text-stone-700 hover:text-[#063028]'
-                    }`}
-                  >
-                    How It Works
-                  </button>
-                  <button
-                    onClick={() => handleNavClick('get-involved')}
-                    className={`relative py-1.5 px-2 xl:px-2.5 text-xs xl:text-[13px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                      activeSection === 'get-involved' 
-                        ? 'text-[#063028] font-bold after:absolute after:bottom-0 after:left-2 after:right-2 xl:after:left-2.5 xl:after:right-2.5 after:h-[2px] after:bg-[#c48825] after:rounded-full' 
-                        : 'text-stone-700 hover:text-[#063028]'
-                    }`}
-                  >
-                    Get Involved
-                  </button>
+                  {navItems.map((item) => {
+                    const active = isNavActive(item.id);
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => handleNavClick(item.id)}
+                        className={`relative py-1.5 px-2 xl:px-2.5 text-xs xl:text-[13px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                          active
+                            ? 'text-[#063028] font-bold after:absolute after:bottom-0 after:left-2 after:right-2 xl:after:left-2.5 xl:after:right-2.5 after:h-[2px] after:bg-[#c48825] after:rounded-full'
+                            : 'text-stone-700 hover:text-[#063028]'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
                 </>
               )}
             </div>
@@ -359,74 +366,22 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
             <div className="px-4 pt-3 pb-4 space-y-1 sm:px-6">
               {!currentUser ? (
                 <>
-                  <button
-                    onClick={() => handleNavClick('hero')}
-                    className={`w-full text-left block px-3 py-2 rounded-md text-base font-medium cursor-pointer ${
-                      activeSection === 'hero' ? 'text-[#063028] bg-[#edf4f0] font-bold' : 'text-stone-700 hover:bg-stone-50 hover:text-[#063028]'
-                    }`}
-                  >
-                    Home
-                  </button>
-                  <button
-                    onClick={() => handleNavClick('about-ciisic')}
-                    className={`w-full text-left block px-3 py-2 rounded-md text-base font-medium cursor-pointer ${
-                      activeSection === 'about-ciisic' ? 'text-[#063028] bg-[#edf4f0] font-bold' : 'text-stone-700 hover:bg-stone-50 hover:text-[#063028]'
-                    }`}
-                  >
-                    About CIISIC
-                  </button>
-                  <Link
-                    to="/services"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`w-full text-left block px-3 py-2 rounded-md text-base font-medium cursor-pointer ${
-                      location.pathname === '/services' ? 'text-[#063028] bg-[#edf4f0] font-bold' : 'text-stone-700 hover:bg-stone-50 hover:text-[#063028]'
-                    }`}
-                  >
-                    Services
-                  </Link>
-                  <button
-                    onClick={() => handleNavClick('partner-institutions')}
-                    className={`w-full text-left block px-3 py-2 rounded-md text-base font-medium cursor-pointer ${
-                      activeSection === 'partner-institutions' ? 'text-[#063028] bg-[#edf4f0] font-bold' : 'text-stone-700 hover:bg-stone-50 hover:text-[#063028]'
-                    }`}
-                  >
-                    Institutions
-                  </button>
-                  <Link
-                    to="/problem-statements"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`w-full text-left block px-3 py-2 rounded-md text-base font-medium cursor-pointer ${
-                      location.pathname === '/problem-statements' || location.pathname.startsWith('/details')
-                        ? 'text-[#063028] bg-[#edf4f0] font-bold'
-                        : 'text-stone-700 hover:bg-stone-50 hover:text-[#063028]'
-                    }`}
-                  >
-                    Problem Statements
-                  </Link>
-                  <button
-                    onClick={() => handleNavClick('our-ecosystem')}
-                    className={`w-full text-left block px-3 py-2 rounded-md text-base font-medium cursor-pointer ${
-                      activeSection === 'our-ecosystem' ? 'text-[#063028] bg-[#edf4f0] font-bold' : 'text-stone-700 hover:bg-stone-50 hover:text-[#063028]'
-                    }`}
-                  >
-                    Our Ecosystem
-                  </button>
-                  <button
-                    onClick={() => handleNavClick('how-it-works')}
-                    className={`w-full text-left block px-3 py-2 rounded-md text-base font-medium cursor-pointer ${
-                      activeSection === 'how-it-works' ? 'text-[#063028] bg-[#edf4f0] font-bold' : 'text-stone-700 hover:bg-stone-50 hover:text-[#063028]'
-                    }`}
-                  >
-                    How It Works
-                  </button>
-                  <button
-                    onClick={() => handleNavClick('get-involved')}
-                    className={`w-full text-left block px-3 py-2 rounded-md text-base font-medium cursor-pointer ${
-                      activeSection === 'get-involved' ? 'text-[#063028] bg-[#edf4f0] font-bold' : 'text-stone-700 hover:bg-stone-50 hover:text-[#063028]'
-                    }`}
-                  >
-                    Get Involved
-                  </button>
+                  {navItems.map((item) => {
+                    const active = isNavActive(item.id);
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => handleNavClick(item.id)}
+                        className={`w-full text-left block px-3 py-2 rounded-md text-base font-medium cursor-pointer transition-colors ${
+                          active
+                            ? 'text-[#063028] bg-[#edf4f0] font-bold'
+                            : 'text-stone-700 hover:bg-stone-50 hover:text-[#063028]'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
 
                   <div className="border-t border-stone-200 my-2 pt-2 space-y-2 px-1">
                     <Link

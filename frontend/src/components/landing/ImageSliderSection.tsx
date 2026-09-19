@@ -12,48 +12,72 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 
 /* ─────────────────────────────────────────────
-   Gallery images — swap in your own when ready
+   Gallery images — Real CII events & summits
 ───────────────────────────────────────────── */
 const images = [
   {
     id: 1,
-    src: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&q=80',
-    alt: 'Industry summit conference',
+    src: encodeURI('/images/Photos/Industry Academia Excellence Cell Leadership Meet July 2026.JPG'),
+    alt: 'Industry Academia Excellence Cell Leadership Meet July 2026',
+    title: 'Industry Academia Excellence Cell Leadership Meet',
+    date: 'July 2026',
+    objectPosition: 'center 32%',
   },
   {
     id: 2,
-    src: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1200&q=80',
-    alt: 'Student innovation workshop',
+    src: encodeURI('/images/Photos/Industry Academia Survey Repot Launch Feb 2026.jpeg'),
+    alt: 'Industry Academia Survey Report Launch Feb 2026',
+    title: 'Industry Academia Survey Report Launch',
+    date: 'February 2026',
+    objectPosition: 'center 25%',
   },
   {
     id: 3,
-    src: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80',
-    alt: 'Collaboration session',
+    src: encodeURI('/images/Photos/Interaction with PS Higher Education, Govt of MP July 2026.JPG'),
+    alt: 'Interaction with PS Higher Education, Govt of MP July 2026',
+    title: 'Interaction with PS Higher Education, Govt of MP',
+    date: 'July 2026',
+    objectPosition: 'center 35%',
   },
   {
     id: 4,
-    src: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200&q=80',
-    alt: 'Research and innovation lab',
+    src: encodeURI('/images/Photos/July 2026 (2).JPG'),
+    alt: 'Industry-Academia Strategic Dialogue July 2026',
+    title: 'Industry-Academia Strategic Dialogue',
+    date: 'July 2026',
+    objectPosition: 'center 30%',
   },
   {
     id: 5,
-    src: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1200&q=80',
-    alt: 'AgriTech demonstration',
+    src: encodeURI('/images/Photos/July 2026.JPG'),
+    alt: 'Felicitation and Memento Presentation July 2026',
+    title: 'Leadership Felicitation & Memento Presentation',
+    date: 'July 2026',
+    objectPosition: 'center 30%',
   },
   {
     id: 6,
-    src: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&q=80',
-    alt: 'Student pitch event',
+    src: encodeURI('/images/Photos/Launch of 7 Excellence Cells - July 2026.JPG'),
+    alt: 'Launch of 7 Excellence Cells July 2026',
+    title: 'Official Launch of 7 Industry Excellence Cells',
+    date: 'July 2026',
+    objectPosition: 'center 20%',
   },
   {
     id: 7,
-    src: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1200&q=80',
-    alt: 'Technical skills workshop',
+    src: encodeURI('/images/Photos/Round Table on Industry Academia Collaboration - May 2025 (2).jpeg'),
+    alt: 'Round Table on Industry Academia Collaboration May 2025',
+    title: 'Round Table on Industry-Academia Collaboration',
+    date: 'May 2025',
+    objectPosition: 'center center',
   },
   {
     id: 8,
-    src: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=1200&q=80',
-    alt: 'Excellence summit launch',
+    src: encodeURI('/images/Photos/Round Table on Industry Academia Collaboration Ma 2026.jpeg'),
+    alt: 'Round Table on Industry Academia Collaboration March 2026',
+    title: 'Round Table on Collaborative Innovation',
+    date: 'March 2026',
+    objectPosition: 'center center',
   },
 ];
 
@@ -103,14 +127,23 @@ export const ImageSliderSection: React.FC = () => {
         >
           {images.map((img) => (
             <SwiperSlide key={img.id} className="gallery-slide">
-              <div className="overflow-hidden rounded-2xl sm:rounded-[24px] aspect-[4/3] sm:aspect-[16/10] w-full shadow-lg">
+              <div className="relative overflow-hidden rounded-2xl sm:rounded-[24px] aspect-[4/3] sm:aspect-[16/10] w-full shadow-lg group">
                 <img
                   src={img.src}
                   alt={img.alt}
                   loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-500"
+                  style={{ objectPosition: img.objectPosition }}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   draggable={false}
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent pointer-events-none flex flex-col justify-end p-4 sm:p-6 text-white">
+                  <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#c48825] mb-1">
+                    {img.date}
+                  </span>
+                  <h3 className="text-sm sm:text-base md:text-lg font-bold font-serif leading-snug drop-shadow-sm text-stone-100">
+                    {img.title}
+                  </h3>
+                </div>
               </div>
             </SwiperSlide>
           ))}

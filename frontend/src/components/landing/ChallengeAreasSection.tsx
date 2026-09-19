@@ -19,7 +19,8 @@ export const ChallengeAreasSection: React.FC = () => {
   ];
 
   return (
-    <section id="challenge-areas" className="py-24 bg-[#faf8f4] border-t border-[#e8e4dc] scroll-mt-20">
+    <section id="problem-statements" className="py-24 bg-[#faf8f4] border-t border-[#e8e4dc] scroll-mt-20 relative">
+      <div id="challenge-areas" className="absolute -top-20" aria-hidden="true" />
       <div className="max-w-[1320px] mx-auto px-6 sm:px-8 lg:px-12 space-y-20">
         
         {/* Main Section: Domains Grid + Flyer Poster split layout */}
