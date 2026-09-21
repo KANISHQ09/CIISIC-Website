@@ -101,7 +101,7 @@ export const HeroBannerCarousel: React.FC = () => {
         loop={true}
         speed={800}
         autoplay={{
-          delay: 6000,
+          delay: 2500,
           disableOnInteraction: false,
           pauseOnMouseEnter: true,
         }}
