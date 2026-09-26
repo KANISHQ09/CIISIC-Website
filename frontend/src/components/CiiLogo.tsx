@@ -1,10 +1,11 @@
 import React from 'react';
 
-export const CiiLogo: React.FC<{ className?: string; size?: 'sm' | 'md' | 'lg' }> = ({ className = '', size = 'md' }) => {
+export const CiiLogo: React.FC<{ className?: string; size?: 'xs' | 'sm' | 'md' | 'lg' }> = ({ className = '', size = 'md' }) => {
   const dimensions = {
-    sm: 'h-10 w-10',
-    md: 'h-12 w-12',
-    lg: 'h-16 w-16'
+    xs: 'h-7 w-7',
+    sm: 'h-8 w-8',
+    md: 'h-9.5 w-9.5',
+    lg: 'h-14 w-14'
   };
 
   return (

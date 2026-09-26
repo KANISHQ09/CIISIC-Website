@@ -49,7 +49,7 @@ export interface ProblemStatement {
   editedByAdmin?: boolean;
 }
 
-export type UserRole = 'industry' | 'admin' | 'institution';
+export type UserRole = 'industry' | 'admin' | 'institution' | 'student';
 
 export interface User {
   id: string;
@@ -63,6 +63,9 @@ export interface User {
   institutionCity?: string;
   department?: string;
   phone?: string;
+  enrollmentNo?: string;
+  yearOfStudy?: number | string;
+  skills?: string[];
 }
 
 export type AssignmentStatus = 'ASSIGNED' | 'IN_PROGRESS' | 'SUBMITTED';

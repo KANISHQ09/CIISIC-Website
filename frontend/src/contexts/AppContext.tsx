@@ -42,23 +42,31 @@ const mapUserRole = (user: any): User => {
     SUPER_ADMIN: 'admin',
     CII_ADMIN: 'admin',
     INSTITUTION_SPOC: 'institution',
-    STUDENT: 'institution',
+    STUDENT: 'student',
+    student: 'student',
     industry: 'industry',
     admin: 'admin',
     institution: 'institution',
   };
+  const role = roleMap[user.role] || (user.role as UserRole) || 'industry';
   return {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: roleMap[user.role] || (user.role as UserRole) || 'industry',
+    role,
     companyName: user.industryProfile?.companyName ?? user.companyName,
-    designation: user.industryProfile?.designation ?? user.institutionProfile?.designation ?? user.designation,
+    designation:
+      role === 'student'
+        ? (user.studentProfile?.enrollmentNo ? `Student Innovator (${user.studentProfile.enrollmentNo})` : 'Student Innovator')
+        : (user.industryProfile?.designation ?? user.institutionProfile?.designation ?? user.designation),
     industry: user.industryProfile?.industry ?? user.industry,
-    institutionName: user.institutionProfile?.institution?.name ?? user.institutionName,
-    institutionCity: user.institutionProfile?.institution?.city ?? user.institutionCity,
-    department: user.institutionProfile?.department ?? user.department,
+    institutionName: user.studentProfile?.institution?.name ?? user.institutionProfile?.institution?.name ?? user.institutionName,
+    institutionCity: user.studentProfile?.institution?.city ?? user.institutionProfile?.institution?.city ?? user.institutionCity,
+    department: user.studentProfile?.department ?? user.institutionProfile?.department ?? user.department,
     phone: user.phone,
+    enrollmentNo: user.studentProfile?.enrollmentNo ?? user.enrollmentNo,
+    yearOfStudy: user.studentProfile?.yearOfStudy ?? user.yearOfStudy,
+    skills: user.studentProfile?.skills ?? user.skills,
   };
 };
 

@@ -304,17 +304,21 @@ export function mapBackendUserToFrontend(backendUser: any): User {
   let role: UserRole = 'industry';
   if (backendUser.role === 'CII_ADMIN' || backendUser.role === 'SUPER_ADMIN' || backendUser.role === 'admin') {
     role = 'admin';
-  } else if (backendUser.role === 'INSTITUTION_SPOC' || backendUser.role === 'institution' || backendUser.role === 'STUDENT') {
+  } else if (backendUser.role === 'INSTITUTION_SPOC' || backendUser.role === 'institution') {
     role = 'institution';
+  } else if (backendUser.role === 'STUDENT' || backendUser.role === 'student') {
+    role = 'student';
   } else if (backendUser.role === 'INDUSTRY_SPOC' || backendUser.role === 'industry') {
     role = 'industry';
   }
 
   const instName =
+    backendUser.studentProfile?.institution?.name ||
     backendUser.institutionProfile?.institution?.name ||
     backendUser.institutionName ||
     '';
   const instCity =
+    backendUser.studentProfile?.institution?.city ||
     backendUser.institutionProfile?.institution?.city ||
     backendUser.institutionCity ||
     '';
@@ -323,11 +327,14 @@ export function mapBackendUserToFrontend(backendUser: any): User {
     backendUser.companyName ||
     '';
   const desig =
-    backendUser.industryProfile?.designation ||
-    backendUser.institutionProfile?.designation ||
-    backendUser.designation ||
-    '';
+    role === 'student'
+      ? (backendUser.studentProfile?.enrollmentNo ? `Student Innovator (${backendUser.studentProfile.enrollmentNo})` : 'Student Innovator')
+      : (backendUser.industryProfile?.designation ||
+         backendUser.institutionProfile?.designation ||
+         backendUser.designation ||
+         '');
   const dept =
+    backendUser.studentProfile?.department ||
     backendUser.institutionProfile?.department ||
     backendUser.department ||
     '';
@@ -348,6 +355,9 @@ export function mapBackendUserToFrontend(backendUser: any): User {
     institutionCity: instCity,
     department: dept,
     phone,
+    enrollmentNo: backendUser.studentProfile?.enrollmentNo,
+    yearOfStudy: backendUser.studentProfile?.yearOfStudy,
+    skills: backendUser.studentProfile?.skills,
   };
 }
 
@@ -450,6 +460,11 @@ export async function login(email: string, password: string, _roleHint?: UserRol
     role = 'admin';
     name = 'CII Administrator';
     compName = '';
+  } else if (_roleHint === 'student' || normalizedEmail.includes('student') || normalizedEmail.includes('stud')) {
+    role = 'student';
+    name = 'Arjun Verma';
+    instName = 'Jagran Lakecity University';
+    compName = '';
   } else if (normalizedEmail.includes('inst') || normalizedEmail.includes('univ') || normalizedEmail.includes('college') || normalizedEmail.includes('edu') || _roleHint === 'institution') {
     role = 'institution';
     name = 'Dr. Academic SPOC';
@@ -463,11 +478,14 @@ export async function login(email: string, password: string, _roleHint?: UserRol
     email: email.trim(),
     role: role,
     companyName: compName,
-    designation: role === 'admin' ? 'Head of CII Operations' : role === 'institution' ? 'Dean of Academic R&D' : 'Lead R&D Director',
+    designation: role === 'admin' ? 'Head of CII Operations' : role === 'institution' ? 'Dean of Academic R&D' : role === 'student' ? 'Student Innovator (JLU2024CS001)' : 'Lead R&D Director',
     institutionName: instName,
-    institutionCity: 'New Delhi',
-    department: 'Research & Innovation Cell',
+    institutionCity: role === 'student' ? 'Bhopal' : 'New Delhi',
+    department: role === 'student' ? 'Computer Science & Engineering' : 'Research & Innovation Cell',
     phone: '+91 9876543210',
+    enrollmentNo: role === 'student' ? 'JLU2024CS001' : undefined,
+    yearOfStudy: role === 'student' ? 3 : undefined,
+    skills: role === 'student' ? ['Python', 'Machine Learning', 'React', 'Data Analysis'] : undefined,
   };
 
   setAuthToken('token_local_' + Date.now());
