@@ -187,6 +187,11 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                   <GraduationCap className="h-4 w-4 text-amber-300 shrink-0" />
                   {currentUser.institutionName || 'Academic Institution'}
                 </span>
+              ) : currentUser.role === 'student' ? (
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-200 uppercase tracking-wider">
+                  <GraduationCap className="h-4 w-4 text-amber-300 shrink-0" />
+                  Student Innovator ({currentUser.enrollmentNo || currentUser.institutionName || 'Portal'})
+                </span>
               ) : (
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-stone-200 uppercase tracking-wider">
                   <Building className="h-4 w-4 text-stone-300 shrink-0" />
@@ -212,7 +217,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                   <div className="px-4 py-3 bg-stone-50/70">
                     <p className="font-extrabold text-stone-900 truncate text-sm">{currentUser.name}</p>
                     <p className="text-xs text-[#063028] font-bold uppercase tracking-wider mt-0.5">
-                      {currentUser.role === 'admin' ? 'CII Admin' : currentUser.role === 'institution' ? 'Institution SPOC' : 'Industry Partner'}
+                      {currentUser.role === 'admin' ? 'CII Admin' : currentUser.role === 'institution' ? 'Institution SPOC' : currentUser.role === 'student' ? 'Student Innovator' : 'Industry Partner'}
                     </p>
                     <p className="text-xs text-stone-600 font-medium truncate mt-1">{currentUser.email}</p>
                   </div>
@@ -225,6 +230,8 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                           ? '/admin/dashboard' 
                           : currentUser.role === 'institution' 
                           ? '/institution/dashboard' 
+                          : currentUser.role === 'student'
+                          ? '/student/dashboard'
                           : '/industry/dashboard'
                       }
                       onClick={() => setDropdownOpen(false)}
@@ -267,61 +274,64 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
       {/* Sticky Premium Navbar - Full Width & Adaptive */}
       <nav id="platform-navbar" className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#e8e4dc] shadow-xs w-full">
-        <div className="w-full px-4 sm:px-6 lg:px-6 xl:px-8 2xl:px-10">
-          <div className="flex justify-between items-center h-18 w-full">
+        <div className="w-full px-3 sm:px-5 lg:px-4 xl:px-6 2xl:px-8">
+          <div className="flex justify-between items-center h-15 sm:h-16 w-full">
             {/* Logo and Brand */}
-            <div className="flex items-center shrink-0 pr-2 lg:pr-3 xl:pr-4">
-              <Link to="/" className="shrink-0 flex items-center gap-2.5 sm:gap-3">
-                <CiiLogo size="md" />
+            <div className="flex items-center shrink-0 pr-1.5 lg:pr-2 xl:pr-3">
+              <Link to="/" className="shrink-0 flex items-center gap-2 sm:gap-2.5">
+                <CiiLogo size="sm" />
                 <div className="flex flex-col justify-center leading-tight">
-                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#063028] font-serif">
+                  <span className="text-base sm:text-lg font-extrabold tracking-tight text-[#063028] font-serif">
                     CIISIC
                   </span>
-                  <span className="text-[10px] sm:text-xs text-stone-600 font-semibold tracking-wide mt-0.5 whitespace-nowrap">
+                  <span className="text-[9px] sm:text-[9.5px] text-stone-600 font-semibold tracking-wide mt-0.5 whitespace-nowrap">
                     CII Student Innovation Challenge
                   </span>
                 </div>
               </Link>
             </div>
 
-            {/* Desktop Navigation Links */}
-            <div className="hidden lg:flex items-center justify-center flex-1 mx-1 lg:mx-2 xl:mx-3 space-x-0.5 xl:space-x-1">
-              {!currentUser && (
-                <>
-                  {navItems.map((item) => {
-                    const active = isNavActive(item.id);
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => handleNavClick(item.id)}
-                        className={`relative py-1.5 px-2 xl:px-2.5 text-xs xl:text-[13px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                          active
-                            ? 'text-[#063028] font-bold after:absolute after:bottom-0 after:left-2 after:right-2 xl:after:left-2.5 xl:after:right-2.5 after:h-[2px] after:bg-[#c48825] after:rounded-full'
-                            : 'text-stone-700 hover:text-[#063028]'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    );
-                  })}
-                </>
-              )}
+            {/* Desktop Navigation Links - Compact & Equally Aligned in Same Line */}
+            <div className="hidden lg:flex items-center justify-center flex-1 mx-1 xl:mx-2 space-x-0.5 xl:space-x-1">
+              {navItems.map((item) => {
+                const active = isNavActive(item.id);
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleNavClick(item.id)}
+                    className={`relative py-1.5 px-1.5 xl:px-2 2xl:px-2.5 text-[11px] xl:text-[11.5px] 2xl:text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                      active
+                        ? 'text-[#063028] font-bold after:absolute after:bottom-0 after:left-1.5 after:right-1.5 xl:after:left-2 xl:after:right-2 after:h-[2px] after:bg-[#c48825] after:rounded-full'
+                        : 'text-stone-700 hover:text-[#063028]'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Desktop CTA buttons on the right */}
-            <div className="hidden lg:flex items-center space-x-1.5 xl:space-x-2 shrink-0 pl-1 xl:pl-3">
+            <div className="hidden lg:flex items-center space-x-1 xl:space-x-1.5 shrink-0 pl-1 xl:pl-2">
               {!currentUser ? (
                 <>
                   <Link
-                    to="/institution/login"
-                    className="px-2.5 xl:px-3 py-1.5 xl:py-2 border border-[#063028]/25 text-[#063028] bg-transparent hover:bg-[#edf4f0] text-xs xl:text-[13px] font-bold rounded-xl transition-all whitespace-nowrap cursor-pointer shadow-2xs flex items-center gap-1.5"
+                    to="/student/login"
+                    className="px-2 xl:px-2.5 py-1.5 border border-stone-300 text-stone-800 bg-transparent hover:bg-stone-50 text-[11px] xl:text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer shadow-2xs flex items-center gap-1"
                   >
-                    <GraduationCap className="w-3.5 h-3.5 text-[#c48825]" />
+                    <GraduationCap className="w-3.5 h-3.5 text-[#063028]" />
+                    Student Login
+                  </Link>
+                  <Link
+                    to="/institution/login"
+                    className="px-2 xl:px-2.5 py-1.5 border border-[#063028]/25 text-[#063028] bg-transparent hover:bg-[#edf4f0] text-[11px] xl:text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer shadow-2xs flex items-center gap-1"
+                  >
+                    <Building className="w-3.5 h-3.5 text-[#c48825]" />
                     Institution Portal
                   </Link>
                   <Link
                     to="/industry/login"
-                    className="px-2.5 xl:px-3 py-1.5 xl:py-2 border border-stone-800 text-stone-900 bg-transparent hover:bg-stone-50 text-xs xl:text-[13px] font-bold rounded-xl transition-all whitespace-nowrap cursor-pointer shadow-2xs"
+                    className="px-2 xl:px-2.5 py-1.5 border border-stone-800 text-stone-900 bg-transparent hover:bg-stone-50 text-[11px] xl:text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer shadow-2xs"
                   >
                     Industry Login
                   </Link>
@@ -333,9 +343,11 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                       ? '/admin/dashboard' 
                       : currentUser.role === 'institution' 
                       ? '/institution/dashboard' 
+                      : currentUser.role === 'student'
+                      ? '/student/dashboard'
                       : '/industry/dashboard'
                   }
-                  className={`px-4 py-2 rounded-xl text-xs xl:text-sm font-bold whitespace-nowrap transition-all border ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all border ${
                     location.pathname.includes('/dashboard') 
                       ? 'text-white bg-[#063028] border-[#063028] shadow-xs' 
                       : 'text-[#063028] bg-stone-50 hover:bg-stone-100 border-stone-200'
@@ -385,11 +397,19 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
                   <div className="border-t border-stone-200 my-2 pt-2 space-y-2 px-1">
                     <Link
+                      to="/student/login"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-base font-semibold border border-stone-300 text-stone-800 text-center hover:bg-stone-50 transition-all cursor-pointer"
+                    >
+                      <GraduationCap className="w-4 h-4 text-[#063028]" />
+                      Student Login
+                    </Link>
+                    <Link
                       to="/institution/login"
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-base font-semibold border border-[#063028]/30 text-[#063028] text-center hover:bg-[#edf4f0] transition-all cursor-pointer"
                     >
-                      <GraduationCap className="w-4 h-4 text-[#c48825]" />
+                      <Building className="w-4 h-4 text-[#c48825]" />
                       Institution Portal
                     </Link>
                     <Link
@@ -409,6 +429,8 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                         ? '/admin/dashboard' 
                         : currentUser.role === 'institution' 
                         ? '/institution/dashboard' 
+                        : currentUser.role === 'student'
+                        ? '/student/dashboard'
                         : '/industry/dashboard'
                     }
                     onClick={() => setMobileMenuOpen(false)}

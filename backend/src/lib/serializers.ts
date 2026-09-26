@@ -106,7 +106,7 @@ export function serializeChallenge(
     domain: challenge.domain,
     status: challenge.status,
     deadline: challenge.deadline,
-    budgetRange: challenge.budgetRange ?? null,
+    budgetRange: requestingRole === "STUDENT" ? undefined : (challenge.budgetRange ?? null),
     tags: challenge.tags ?? [],
     viewCount: challenge.viewCount,
     createdAt: challenge.createdAt,

@@ -17,6 +17,8 @@ import { InstitutionLogin } from './pages/InstitutionLogin';
 import { InstitutionRegister } from './pages/InstitutionRegister';
 import { InstitutionDashboard } from './pages/InstitutionDashboard';
 import { SubmitSolution } from './pages/SubmitSolution';
+import { StudentLogin } from './pages/StudentLogin';
+import { StudentDashboard } from './pages/StudentDashboard';
 
 // Role-based Protected Route for Industry Partners
 const IndustryRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -56,7 +58,22 @@ const InstitutionRoute: React.FC<{ children: React.ReactNode }> = ({ children })
     return <Navigate to="/institution/login" replace />;
   }
 
-  if (currentUser.role !== 'institution' && currentUser.role !== 'admin') {
+  if (currentUser.role !== 'institution' && currentUser.role !== 'admin' && currentUser.role !== 'student') {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// Role-based Protected Route for Students
+const StudentRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { currentUser } = useApp();
+
+  if (!currentUser) {
+    return <Navigate to="/student/login" replace />;
+  }
+
+  if (currentUser.role !== 'student' && currentUser.role !== 'admin') {
     return <Navigate to="/" replace />;
   }
 
@@ -75,7 +92,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 };
 
 // Route controller that redirects already authenticated users
-const GuestRoute: React.FC<{ children: React.ReactNode; role: 'industry' | 'admin' | 'institution' }> = ({ children, role }) => {
+const GuestRoute: React.FC<{ children: React.ReactNode; role: 'industry' | 'admin' | 'institution' | 'student' }> = ({ children, role }) => {
   const { currentUser } = useApp();
 
   if (currentUser && currentUser.role === role) {
@@ -87,6 +104,9 @@ const GuestRoute: React.FC<{ children: React.ReactNode; role: 'industry' | 'admi
     }
     if (currentUser.role === 'institution') {
       return <Navigate to="/institution/dashboard" replace />;
+    }
+    if (currentUser.role === 'student') {
+      return <Navigate to="/student/dashboard" replace />;
     }
   }
 
@@ -195,6 +215,24 @@ export default function App() {
                 <InstitutionRoute>
                   <SubmitSolution />
                 </InstitutionRoute>
+              } 
+            />
+
+            {/* Student Innovator Portal Routes */}
+            <Route 
+              path="/student/login" 
+              element={
+                <GuestRoute role="student">
+                  <StudentLogin />
+                </GuestRoute>
+              } 
+            />
+            <Route 
+              path="/student/dashboard" 
+              element={
+                <StudentRoute>
+                  <StudentDashboard />
+                </StudentRoute>
               } 
             />
 
