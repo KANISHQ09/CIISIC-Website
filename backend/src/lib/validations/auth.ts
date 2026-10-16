@@ -19,6 +19,9 @@ export const RegisterSchema = z.object({
   enrollmentNo: z.string().optional(),
   institutionId: z.string().optional(),
   department: z.string().optional(),
+  course: z.string().optional(),
+  idCardUrl: z.string().optional(),
+  phone: z.string().optional(),
   yearOfStudy: z.number().min(1).max(6).optional(),
   skills: z.array(z.string()).optional(),
   // Industry-specific

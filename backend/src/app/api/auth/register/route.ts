@@ -33,29 +33,43 @@ export async function POST(req: NextRequest) {
       where: { email: data.email },
     });
     if (existing) {
-      return conflict("An account with this email already exists");
+      return conflict("An account with this email is already registered. Please sign in.");
     }
 
     const passwordHash = await hashPassword(data.password);
 
     // Role-specific validation
+    let resolvedInstitutionId = data.institutionId;
     if (data.role === "STUDENT") {
       if (!data.enrollmentNo || !data.institutionId || !data.department) {
         return badRequest(
           "Students must provide enrollmentNo, institutionId, and department"
         );
       }
-      const institution = await prisma.institution.findUnique({
-        where: { id: data.institutionId },
+      let institution = await prisma.institution.findFirst({
+        where: {
+          OR: [
+            { id: data.institutionId },
+            { name: { equals: data.institutionId, mode: "insensitive" } },
+            { name: { contains: data.institutionId, mode: "insensitive" } },
+          ],
+        },
       });
       if (!institution) {
-        return badRequest("Institution not found");
+        institution = await prisma.institution.create({
+          data: {
+            name: data.institutionId,
+            city: "Madhya Pradesh",
+          },
+        });
       }
+      resolvedInstitutionId = institution.id;
+
       const existingEnrollment = await prisma.studentProfile.findUnique({
         where: { enrollmentNo: data.enrollmentNo },
       });
       if (existingEnrollment) {
-        return conflict("Enrollment number already registered");
+        return conflict("This enrollment number is already registered. Please sign in.");
       }
     }
 
@@ -87,8 +101,10 @@ export async function POST(req: NextRequest) {
           data: {
             userId: newUser.id,
             enrollmentNo: data.enrollmentNo!,
-            institutionId: data.institutionId!,
+            institutionId: resolvedInstitutionId!,
             department: data.department!,
+            course: data.course || "B.Tech",
+            idCardUrl: data.idCardUrl || null,
             yearOfStudy: data.yearOfStudy ?? 1,
             skills: data.skills ?? [],
           },

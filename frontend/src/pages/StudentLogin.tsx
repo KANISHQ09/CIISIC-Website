@@ -3,11 +3,17 @@ import { useNavigate, Link } from 'react-router-dom';
 import { GraduationCap, Lock, Mail, ArrowLeft, ArrowRight, Building2, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 
+import { useSearchParams } from 'react-router-dom';
+
 export const StudentLogin: React.FC = () => {
   const { login, showToast } = useApp();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  const [email, setEmail] = useState('');
+  const registeredFromQuery = searchParams.get('registered') === 'true';
+  const emailFromQuery = searchParams.get('email') || '';
+
+  const [email, setEmail] = useState(emailFromQuery);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +47,7 @@ export const StudentLogin: React.FC = () => {
       <div className="absolute inset-0 bg-[radial-gradient(#e5e0d8_1px,transparent_1px)] [background-size:24px_24px] opacity-60"></div>
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#edf4f0]/60 rounded-full blur-3xl pointer-events-none"></div>
       
-      <div className="max-w-md w-full space-y-6 relative z-10 animate-fade-in">
+      <div className="max-w-md w-full space-y-5 relative z-10 animate-fade-in">
         {/* Navigation back to Homepage */}
         <div className="flex justify-between items-center px-1">
           <Link 
@@ -52,10 +58,37 @@ export const StudentLogin: React.FC = () => {
             <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" /> 
             Back to Homepage
           </Link>
-          <span className="text-xs font-bold text-[#063028] tracking-wider uppercase bg-[#edf4f0] border border-[#063028]/15 px-3 py-1 rounded-full">
-            Student Portal
-          </span>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/student/register"
+              className="text-xs font-bold text-[#c48825] hover:underline inline-flex items-center gap-1"
+            >
+              New Registration →
+            </Link>
+          </div>
         </div>
+
+        {/* REGISTER FIRST BANNER */}
+        <div className="bg-gradient-to-r from-[#063028] to-[#0a483d] text-white p-4 rounded-2xl shadow-sm flex items-center justify-between gap-3 text-left">
+          <div className="space-y-0.5">
+            <p className="text-xs font-bold uppercase tracking-wider text-emerald-300">New Innovator?</p>
+            <p className="text-sm font-semibold text-white">Student registration is required first</p>
+          </div>
+          <Link
+            to="/student/register"
+            className="px-3.5 py-1.5 bg-[#c48825] hover:bg-[#b0781e] text-white text-xs font-bold rounded-xl transition-all whitespace-nowrap shadow-sm shrink-0"
+            id="top-register-first-btn"
+          >
+            Register Here
+          </Link>
+        </div>
+
+        {/* Registered Success Banner if redirected from registration */}
+        {registeredFromQuery && (
+          <div className="p-4 bg-emerald-50 border-l-4 border-emerald-600 rounded-r-xl text-xs sm:text-sm font-medium text-emerald-800 leading-relaxed animate-fade-in text-left">
+            <strong>Registration complete!</strong> Please enter your password to sign in to your student dashboard.
+          </div>
+        )}
 
         {/* Login Card */}
         <div className="bg-white rounded-3xl border border-stone-200/90 shadow-xl overflow-hidden">
@@ -175,8 +208,14 @@ export const StudentLogin: React.FC = () => {
                 {!isLoading && <ArrowRight className="h-5 w-5" />}
               </button>
 
-              <div className="pt-2 text-center">
+              <div className="pt-2 text-center space-y-2">
                 <p className="text-xs text-stone-600">
+                  Not registered yet?{' '}
+                  <Link to="/student/register" className="font-bold text-[#063028] hover:underline inline-flex items-center gap-1" id="register-link-login-footer">
+                    Register as Student Innovator <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </p>
+                <p className="text-xs text-stone-500">
                   Faculty coordinator or college SPOC?{' '}
                   <Link to="/institution/login" className="font-bold text-[#c48825] hover:underline inline-flex items-center gap-1">
                     Institution Coordinator Login <ArrowRight className="h-3 w-3" />

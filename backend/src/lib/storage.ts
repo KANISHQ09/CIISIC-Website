@@ -15,7 +15,7 @@ export interface StorageProvider {
     buffer: Buffer,
     originalName: string,
     mimeType: string,
-    uploadType: "LOGO" | "DOCUMENT"
+    uploadType: "LOGO" | "DOCUMENT" | "ID_CARD"
   ): Promise<UploadResult>;
 }
 
@@ -24,7 +24,7 @@ export class LocalStorageProvider implements StorageProvider {
     buffer: Buffer,
     originalName: string,
     mimeType: string,
-    uploadType: "LOGO" | "DOCUMENT"
+    uploadType: "LOGO" | "DOCUMENT" | "ID_CARD"
   ): Promise<UploadResult> {
     const fileExt = mimeType === "application/pdf"
       ? "pdf"
@@ -34,7 +34,9 @@ export class LocalStorageProvider implements StorageProvider {
       ? "png"
       : mimeType === "image/webp"
       ? "webp"
-      : "docx"; // default fallback for ALLOWED_DOC_TYPES
+      : mimeType === "image/jpeg" || mimeType === "image/jpg"
+      ? "jpg"
+      : "bin";
 
     const secureName = `${crypto.randomUUID()}.${fileExt}`;
     const uploadDir = join(process.cwd(), "public", "uploads");
@@ -57,7 +59,7 @@ export class SupabaseStorageProvider implements StorageProvider {
     buffer: Buffer,
     originalName: string,
     mimeType: string,
-    uploadType: "LOGO" | "DOCUMENT"
+    uploadType: "LOGO" | "DOCUMENT" | "ID_CARD"
   ): Promise<UploadResult> {
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_ANON_KEY;
@@ -68,8 +70,8 @@ export class SupabaseStorageProvider implements StorageProvider {
       throw new Error("Supabase URL or API key is missing. Check your environment variables.");
     }
 
-    // Preserve max file size validation: max 2MB for LOGO, max 10MB for DOCUMENT
-    const maxSize = uploadType === "LOGO" ? 2 * 1024 * 1024 : 10 * 1024 * 1024;
+    // Preserve max file size validation: max 2MB for LOGO, max 5MB for ID_CARD, max 10MB for DOCUMENT
+    const maxSize = uploadType === "LOGO" ? 2 * 1024 * 1024 : uploadType === "ID_CARD" ? 5 * 1024 * 1024 : 10 * 1024 * 1024;
     if (buffer.length > maxSize) {
       throw new Error(`File size exceeds the limit of ${maxSize / (1024 * 1024)}MB`);
     }
@@ -81,8 +83,8 @@ export class SupabaseStorageProvider implements StorageProvider {
     const fileId = crypto.randomUUID();
     const cleanName = originalName.replace(/[^a-zA-Z0-9.-]/g, "_");
     
-    // Path structure: challenges/{folderId}/{uuid}-{originalName} for DOCUMENT, or logos/{folderId}/{uuid}-{originalName} for LOGO
-    const subFolder = uploadType === "DOCUMENT" ? "challenges" : "logos";
+    // Path structure: idcards/{folderId}/{uuid}-{originalName} for ID_CARD, challenges/... for DOCUMENT, logos/... for LOGO
+    const subFolder = uploadType === "ID_CARD" ? "idcards" : uploadType === "DOCUMENT" ? "challenges" : "logos";
     const filePath = `${subFolder}/${folderId}/${fileId}-${cleanName}`;
 
     // Upload using Supabase JS Storage SDK

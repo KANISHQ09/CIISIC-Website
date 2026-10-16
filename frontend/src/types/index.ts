@@ -62,10 +62,32 @@ export interface User {
   institutionName?: string;
   institutionCity?: string;
   department?: string;
+  course?: string;
+  idCardUrl?: string;
   phone?: string;
   enrollmentNo?: string;
   yearOfStudy?: number | string;
   skills?: string[];
+}
+
+export interface RegisteredStudent {
+  id: string;
+  userId?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  institutionId?: string;
+  institutionName: string;
+  institutionCity?: string;
+  enrollmentNo: string;
+  department: string;
+  course: string;
+  yearOfStudy: number | string;
+  idCardUrl?: string;
+  idCardFileName?: string;
+  skills: string[];
+  createdAt: string;
+  status: 'VERIFIED' | 'PENDING' | 'REJECTED';
 }
 
 export type AssignmentStatus = 'ASSIGNED' | 'IN_PROGRESS' | 'SUBMITTED';

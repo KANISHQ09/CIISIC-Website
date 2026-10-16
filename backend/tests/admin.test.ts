@@ -32,8 +32,7 @@ describe("Admin Challenge Review Workflow", () => {
 
   it("should block a student from reviewing a challenge", async () => {
     vi.mocked(auth).mockResolvedValue({
-      user: { id: "student-1", role: "STUDENT", email: "student@jlu.edu.in", name: "Student" },
-      expires: "",
+      user: { id: "student-1", role: "STUDENT", email: "student@jlu.edu.in", name: "Student", avatarUrl: null },
     });
 
     const req = new NextRequest("http://ciisic.test/api/admin/challenges/challenge-1/review", {
@@ -50,8 +49,7 @@ describe("Admin Challenge Review Workflow", () => {
 
   it("should allow admin to approve a challenge and change status to OPEN", async () => {
     vi.mocked(auth).mockResolvedValue({
-      user: { id: "admin-1", role: "CII_ADMIN", email: "admin@cii.org", name: "Admin" },
-      expires: "",
+      user: { id: "admin-1", role: "CII_ADMIN", email: "admin@cii.org", name: "Admin", avatarUrl: null },
     });
 
     vi.mocked(prisma.challenge.findUnique).mockResolvedValue({
@@ -105,8 +103,7 @@ describe("Admin Challenge Review Workflow", () => {
 
   it("should allow admin to reject a challenge and change status to REJECTED", async () => {
     vi.mocked(auth).mockResolvedValue({
-      user: { id: "admin-1", role: "CII_ADMIN", email: "admin@cii.org", name: "Admin" },
-      expires: "",
+      user: { id: "admin-1", role: "CII_ADMIN", email: "admin@cii.org", name: "Admin", avatarUrl: null },
     });
 
     vi.mocked(prisma.challenge.findUnique).mockResolvedValue({
@@ -156,8 +153,7 @@ describe("Admin Challenge Review Workflow", () => {
 
   it("should return review details to admin or owner", async () => {
     vi.mocked(auth).mockResolvedValue({
-      user: { id: "admin-1", role: "CII_ADMIN", email: "admin@cii.org", name: "Admin" },
-      expires: "",
+      user: { id: "admin-1", role: "CII_ADMIN", email: "admin@cii.org", name: "Admin", avatarUrl: null },
     });
 
     vi.mocked(prisma.challenge.findUnique).mockResolvedValue({

@@ -33,6 +33,22 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
     return () => document.removeEventListener('click', handleOutsideClick);
   }, [dropdownOpen]);
 
+  // Lock body scroll when mobile menu is open & close on route changes
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   const navItems = [
     { id: 'hero', label: 'Home' },
     { id: 'about-ciisic', label: 'About CIISIC' },
@@ -372,10 +388,37 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
           </div>
         </div>
 
-        {/* Mobile menu, show/hide based on menu state. */}
+        {/* Mobile full-screen menu overlay */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-b border-stone-200 bg-white animate-fade-in shadow-lg">
-            <div className="px-4 pt-3 pb-4 space-y-1 sm:px-6">
+          <div className="lg:hidden fixed inset-0 z-50 bg-white flex flex-col h-[100dvh] w-screen animate-fade-in">
+            {/* Mobile Header with Logo & Close Button */}
+            <div className="flex justify-between items-center h-15 sm:h-16 px-3 sm:px-5 border-b border-stone-200 bg-white shrink-0">
+              <Link
+                to="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className="shrink-0 flex items-center gap-2 sm:gap-2.5"
+              >
+                <CiiLogo size="sm" />
+                <div className="flex flex-col justify-center leading-tight">
+                  <span className="text-base sm:text-lg font-extrabold tracking-tight text-[#063028] font-serif">
+                    CIISIC
+                  </span>
+                  <span className="text-[9px] sm:text-[9.5px] text-stone-600 font-semibold tracking-wide mt-0.5 whitespace-nowrap">
+                    CII Student Innovation Challenge
+                  </span>
+                </div>
+              </Link>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="inline-flex items-center justify-center p-2 rounded-lg text-stone-600 hover:text-[#063028] hover:bg-stone-100 transition-colors cursor-pointer"
+                aria-label="Close menu"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Scrollable Nav Content - Full screen height coverage */}
+            <div className="flex-1 overflow-y-auto overscroll-contain px-4 pt-3 pb-12 space-y-1 sm:px-6 bg-white">
               {!currentUser ? (
                 <>
                   {navItems.map((item) => {
@@ -384,7 +427,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                       <button
                         key={item.id}
                         onClick={() => handleNavClick(item.id)}
-                        className={`w-full text-left block px-3 py-2 rounded-md text-base font-medium cursor-pointer transition-colors ${
+                        className={`w-full text-left block px-3.5 py-2.5 rounded-lg text-base font-semibold cursor-pointer transition-colors ${
                           active
                             ? 'text-[#063028] bg-[#edf4f0] font-bold'
                             : 'text-stone-700 hover:bg-stone-50 hover:text-[#063028]'
@@ -395,7 +438,15 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                     );
                   })}
 
-                  <div className="border-t border-stone-200 my-2 pt-2 space-y-2 px-1">
+                  <div className="border-t border-stone-200 my-3 pt-3 space-y-2.5 px-0.5">
+                    <Link
+                      to="/student/register"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-base font-semibold bg-[#063028] text-white text-center hover:bg-[#04201a] transition-all cursor-pointer shadow-xs"
+                    >
+                      <GraduationCap className="w-4 h-4 text-emerald-300" />
+                      Student Registration
+                    </Link>
                     <Link
                       to="/student/login"
                       onClick={() => setMobileMenuOpen(false)}
@@ -434,14 +485,14 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                         : '/industry/dashboard'
                     }
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-md text-base font-bold text-[#063028] hover:bg-stone-50"
+                    className="block px-3.5 py-2.5 rounded-lg text-base font-bold text-[#063028] hover:bg-stone-50"
                   >
                     Dashboard
                   </Link>
                   <Link
                     to="/problem-statements"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-md text-base font-bold text-stone-700 hover:bg-stone-50"
+                    className="block px-3.5 py-2.5 rounded-lg text-base font-bold text-stone-700 hover:bg-stone-50"
                   >
                     Problem Statements
                   </Link>
@@ -449,7 +500,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                     <Link
                       to="/industry/submit"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block px-3 py-2 rounded-md text-base font-bold text-stone-700 hover:bg-stone-50"
+                      className="block px-3.5 py-2.5 rounded-lg text-base font-bold text-stone-700 hover:bg-stone-50"
                     >
                       Submit Problem
                     </Link>
@@ -459,7 +510,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                       setMobileMenuOpen(false);
                       handleLogout();
                     }}
-                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-base font-bold bg-red-600 text-white hover:bg-red-700 transition-all cursor-pointer mt-2"
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-base font-bold bg-red-600 text-white hover:bg-red-700 transition-all cursor-pointer mt-3"
                   >
                     <LogOut className="h-4 w-4" />
                     Sign Out
