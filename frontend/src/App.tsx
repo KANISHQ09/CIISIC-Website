@@ -18,6 +18,7 @@ import { InstitutionRegister } from './pages/InstitutionRegister';
 import { InstitutionDashboard } from './pages/InstitutionDashboard';
 import { SubmitSolution } from './pages/SubmitSolution';
 import { StudentLogin } from './pages/StudentLogin';
+import { StudentRegister } from './pages/StudentRegister';
 import { StudentDashboard } from './pages/StudentDashboard';
 
 // Role-based Protected Route for Industry Partners
@@ -224,6 +225,14 @@ export default function App() {
               element={
                 <GuestRoute role="student">
                   <StudentLogin />
+                </GuestRoute>
+              } 
+            />
+            <Route 
+              path="/student/register" 
+              element={
+                <GuestRoute role="student">
+                  <StudentRegister />
                 </GuestRoute>
               } 
             />

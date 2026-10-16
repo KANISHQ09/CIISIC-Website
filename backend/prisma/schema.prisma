@@ -75,6 +75,8 @@ model StudentProfile {
   enrollmentNo  String      @unique
   institutionId String
   department    String
+  course        String?
+  idCardUrl     String?
   yearOfStudy   Int
   skills        String[]
   createdAt     DateTime    @default(now())

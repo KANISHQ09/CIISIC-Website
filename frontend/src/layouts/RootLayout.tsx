@@ -397,6 +397,14 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
                   <div className="border-t border-stone-200 my-2 pt-2 space-y-2 px-1">
                     <Link
+                      to="/student/register"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-base font-semibold bg-[#063028] text-white text-center hover:bg-[#04201a] transition-all cursor-pointer shadow-xs"
+                    >
+                      <GraduationCap className="w-4 h-4 text-emerald-300" />
+                      Student Registration
+                    </Link>
+                    <Link
                       to="/student/login"
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-base font-semibold border border-stone-300 text-stone-800 text-center hover:bg-stone-50 transition-all cursor-pointer"

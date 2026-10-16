@@ -1,12 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   GraduationCap, Building2, Users, FileText, CheckCircle2, 
   Clock, ArrowRight, Search, Plus, ExternalLink, AlertCircle, 
-  Layers, Sparkles, Filter, ChevronRight, Check, X, Eye, Send, Award, Lock
+  Layers, Sparkles, Filter, ChevronRight, Check, X, Eye, Send, Award, Lock,
+  Mail, Phone, ShieldCheck, Download, Calendar
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
-import { ProblemStatement, ProblemAssignment, SolutionSubmission } from '../types';
+import { ProblemStatement, ProblemAssignment, SolutionSubmission, RegisteredStudent } from '../types';
+import { fetchInstitutionStudents } from '../lib/api';
 import { ChangePasswordModal } from '../components/common/ChangePasswordModal';
 
 export const InstitutionDashboard: React.FC = () => {
@@ -16,12 +18,57 @@ export const InstitutionDashboard: React.FC = () => {
   // Change password modal state
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
-  // Active Tab: 'available' | 'assignments' | 'solutions'
-  const [activeTab, setActiveTab] = useState<'available' | 'assignments' | 'solutions'>('available');
+  // Active Tab: 'available' | 'assignments' | 'solutions' | 'students'
+  const [activeTab, setActiveTab] = useState<'available' | 'assignments' | 'solutions' | 'students'>('available');
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSector, setSelectedSector] = useState('All');
+
+  // Registered Students State
+  const [registeredStudents, setRegisteredStudents] = useState<RegisteredStudent[]>([]);
+  const [studentSearchQuery, setStudentSearchQuery] = useState('');
+  const [studentDeptFilter, setStudentDeptFilter] = useState('All');
+  const [studentYearFilter, setStudentYearFilter] = useState('All');
+  const [selectedStudentForIdView, setSelectedStudentForIdView] = useState<RegisteredStudent | null>(null);
+
+  // Load students for this institution
+  useEffect(() => {
+    (async () => {
+      const list = await fetchInstitutionStudents(currentUser?.institutionName || currentUser?.id);
+      setRegisteredStudents(list);
+    })();
+  }, [currentUser]);
+
+  // Unique departments for filter
+  const studentDepartments = useMemo(() => {
+    const depts = registeredStudents.map(s => s.department).filter(Boolean);
+    return ['All', ...Array.from(new Set(depts))];
+  }, [registeredStudents]);
+
+  // Filtered students
+  const filteredStudents = useMemo(() => {
+    return registeredStudents.filter(s => {
+      if (studentDeptFilter !== 'All' && s.department !== studentDeptFilter) {
+        return false;
+      }
+      if (studentYearFilter !== 'All' && String(s.yearOfStudy) !== studentYearFilter) {
+        return false;
+      }
+      if (studentSearchQuery.trim()) {
+        const q = studentSearchQuery.toLowerCase();
+        return (
+          s.name.toLowerCase().includes(q) ||
+          s.enrollmentNo.toLowerCase().includes(q) ||
+          s.department.toLowerCase().includes(q) ||
+          s.course.toLowerCase().includes(q) ||
+          s.email.toLowerCase().includes(q) ||
+          (s.skills && s.skills.some(sk => sk.toLowerCase().includes(q)))
+        );
+      }
+      return true;
+    });
+  }, [registeredStudents, studentDeptFilter, studentYearFilter, studentSearchQuery]);
 
   // Assign Team Modal State
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -42,6 +89,24 @@ export const InstitutionDashboard: React.FC = () => {
 
   // Solution View Details Modal
   const [viewSolutionModal, setViewSolutionModal] = useState<SolutionSubmission | null>(null);
+
+  // Quick helper to prefill and assign challenge to a registered student
+  const handleAssignStudentToChallenge = (student: RegisteredStudent) => {
+    if (approvedChallenges.length === 0) {
+      showToast('No open problem statements currently available to assign.', 'info');
+      return;
+    }
+    // Pick first open challenge by default
+    setSelectedChallengeForAssign(approvedChallenges[0]);
+    setTeamName(`${student.name.split(' ')[0]}'s Innovation Team`);
+    setLeadName(student.name);
+    setLeadEmail(student.email);
+    setLeadDepartment(student.department);
+    setLeadYear(`${student.yearOfStudy}${student.yearOfStudy === 1 ? 'st' : student.yearOfStudy === 2 ? 'nd' : student.yearOfStudy === 3 ? 'rd' : 'th'} Year (${student.course})`);
+    setMembersInput('');
+    setAssignError('');
+    setIsAssignModalOpen(true);
+  };
 
   // Available approved challenges
   const approvedChallenges = useMemo(() => {
@@ -198,31 +263,37 @@ export const InstitutionDashboard: React.FC = () => {
         </div>
 
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          <div className="bg-white p-5 sm:p-6 rounded-2xl border border-stone-200/90 shadow-2xs text-left space-y-1">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="bg-white p-5 rounded-2xl border border-stone-200/90 shadow-2xs text-left space-y-1">
             <span className="text-xs font-bold uppercase tracking-wider text-stone-500">Available Problems</span>
             <p className="text-2xl sm:text-3xl font-extrabold text-[#063028] font-serif">{approvedChallenges.length}</p>
-            <p className="text-[11px] text-stone-500">Open for institutional adoption</p>
+            <p className="text-[11px] text-stone-500">Open for adoption</p>
           </div>
 
-          <div className="bg-white p-5 sm:p-6 rounded-2xl border border-stone-200/90 shadow-2xs text-left space-y-1">
+          <div className="bg-white p-5 rounded-2xl border border-stone-200/90 shadow-2xs text-left space-y-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#063028]">Registered Students</span>
+            <p className="text-2xl sm:text-3xl font-extrabold text-[#063028] font-serif">{registeredStudents.length}</p>
+            <p className="text-[11px] text-stone-500">Innovators enrolled</p>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-stone-200/90 shadow-2xs text-left space-y-1">
             <span className="text-xs font-bold uppercase tracking-wider text-[#c48825]">Assigned Teams</span>
             <p className="text-2xl sm:text-3xl font-extrabold text-[#c48825] font-serif">{institutionAssignments.length}</p>
-            <p className="text-[11px] text-stone-500">Student teams actively working</p>
+            <p className="text-[11px] text-stone-500">Teams working</p>
           </div>
 
-          <div className="bg-white p-5 sm:p-6 rounded-2xl border border-stone-200/90 shadow-2xs text-left space-y-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-stone-500">Solutions Submitted</span>
+          <div className="bg-white p-5 rounded-2xl border border-stone-200/90 shadow-2xs text-left space-y-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-stone-500">Solutions</span>
             <p className="text-2xl sm:text-3xl font-extrabold text-[#063028] font-serif">{institutionSolutions.length}</p>
-            <p className="text-[11px] text-stone-500">Sent to industry partners</p>
+            <p className="text-[11px] text-stone-500">Sent to sponsors</p>
           </div>
 
-          <div className="bg-white p-5 sm:p-6 rounded-2xl border border-stone-200/90 shadow-2xs text-left space-y-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-green-700">Approved Solutions</span>
+          <div className="bg-white p-5 rounded-2xl border border-stone-200/90 shadow-2xs text-left space-y-1 col-span-2 md:col-span-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-green-700">Approved</span>
             <p className="text-2xl sm:text-3xl font-extrabold text-green-700 font-serif">
               {institutionSolutions.filter(s => s.status === 'APPROVED').length}
             </p>
-            <p className="text-[11px] text-stone-500">Shortlisted by corporate sponsors</p>
+            <p className="text-[11px] text-stone-500">Shortlisted</p>
           </div>
         </div>
 
@@ -237,6 +308,17 @@ export const InstitutionDashboard: React.FC = () => {
             }`}
           >
             <Layers className="h-4 w-4" /> Available Problem Statements ({approvedChallenges.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('students')}
+            className={`px-4 py-3 text-xs sm:text-sm font-bold rounded-t-xl transition-all border-b-2 whitespace-nowrap cursor-pointer flex items-center gap-2 ${
+              activeTab === 'students'
+                ? 'border-[#063028] text-[#063028] bg-white'
+                : 'border-transparent text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            <GraduationCap className="h-4 w-4 text-[#c48825]" /> Registered Students ({registeredStudents.length})
           </button>
 
           <button
@@ -636,6 +718,213 @@ export const InstitutionDashboard: React.FC = () => {
           </div>
         )}
 
+        {/* TAB 4: REGISTERED STUDENTS DIRECTORY */}
+        {activeTab === 'students' && (
+          <div className="space-y-6">
+            {/* Header & Subtitle */}
+            <div className="px-1 text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-[#063028] font-serif">
+                  Registered Students Directory
+                </h2>
+                <p className="text-xs sm:text-sm text-stone-600">
+                  Review student innovators registered under {currentUser?.institutionName || 'your academic institution'}, inspect ID cards, and assign them to corporate problem statements.
+                </p>
+              </div>
+              <div className="shrink-0 flex items-center gap-2">
+                <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-[#edf4f0] text-[#063028] border border-[#063028]/15">
+                  {filteredStudents.length} {filteredStudents.length === 1 ? 'Student' : 'Students'} Listed
+                </span>
+              </div>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/90 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="relative w-full md:w-96 text-left">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+                <input
+                  type="text"
+                  placeholder="Search by student name, roll no, department..."
+                  value={studentSearchQuery}
+                  onChange={(e) => setStudentSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-stone-300 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#063028]"
+                  id="student-search-input"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-stone-500 whitespace-nowrap">Dept:</span>
+                  <select
+                    value={studentDeptFilter}
+                    onChange={(e) => setStudentDeptFilter(e.target.value)}
+                    className="px-3 py-2 border border-stone-300 rounded-xl text-xs font-semibold bg-white text-stone-800 focus:outline-none focus:border-[#063028] cursor-pointer"
+                  >
+                    {studentDepartments.map(dept => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-stone-500 whitespace-nowrap">Year:</span>
+                  <select
+                    value={studentYearFilter}
+                    onChange={(e) => setStudentYearFilter(e.target.value)}
+                    className="px-3 py-2 border border-stone-300 rounded-xl text-xs font-semibold bg-white text-stone-800 focus:outline-none focus:border-[#063028] cursor-pointer"
+                  >
+                    <option value="All">All Years</option>
+                    <option value="1">1st Year</option>
+                    <option value="2">2nd Year</option>
+                    <option value="3">3rd Year</option>
+                    <option value="4">4th Year</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Students Grid */}
+            {filteredStudents.length === 0 ? (
+              <div className="bg-white rounded-3xl border border-stone-200/90 p-12 text-center space-y-4">
+                <GraduationCap className="h-12 w-12 text-stone-400 mx-auto" />
+                <h3 className="text-xl font-bold text-stone-800 font-serif">No Students Found</h3>
+                <p className="text-sm text-stone-600 max-w-md mx-auto">
+                  {studentSearchQuery || studentDeptFilter !== 'All' || studentYearFilter !== 'All'
+                    ? 'No registered students match your active filters. Try resetting the search or filter criteria.'
+                    : 'No student innovators have registered under your institution yet. Share the registration link with your students to get started.'}
+                </p>
+                <div className="pt-2">
+                  <Link
+                    to="/student/register"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#063028] text-white text-xs sm:text-sm font-bold rounded-xl hover:bg-[#04201a] transition-all"
+                  >
+                    Student Registration Link <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {filteredStudents.map((student) => {
+                  const initials = student.name
+                    .split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2);
+
+                  return (
+                    <div
+                      key={student.id}
+                      className="bg-white rounded-2xl sm:rounded-3xl border border-stone-200/90 p-6 sm:p-7 shadow-xs hover:border-[#063028] transition-all flex flex-col justify-between text-left space-y-5"
+                    >
+                      <div className="space-y-4">
+                        {/* Header with avatar, name & badges */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3.5">
+                            <div className="w-12 h-12 rounded-2xl bg-[#edf4f0] text-[#063028] border border-[#063028]/15 flex items-center justify-center font-bold text-base shadow-2xs shrink-0">
+                              {initials}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="text-lg font-bold text-stone-900 font-serif leading-snug">
+                                  {student.name}
+                                </h3>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
+                                  <ShieldCheck className="w-3 h-3" /> Verified
+                                </span>
+                              </div>
+                              <p className="text-xs text-stone-500 mt-0.5">
+                                {student.institutionName} • {student.institutionCity || 'Madhya Pradesh'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <span className="text-xs font-mono font-bold bg-stone-100 text-[#063028] px-2.5 py-1 rounded-lg border border-stone-200 shrink-0">
+                            {student.enrollmentNo}
+                          </span>
+                        </div>
+
+                        {/* Course, Department & Year */}
+                        <div className="bg-[#faf8f4] p-3.5 rounded-xl border border-stone-200/80 grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <span className="text-stone-400 font-bold uppercase text-[10px] block">Course &amp; Branch</span>
+                            <span className="font-semibold text-stone-800 line-clamp-1">{student.course} ({student.department})</span>
+                          </div>
+                          <div>
+                            <span className="text-stone-400 font-bold uppercase text-[10px] block">Academic Year</span>
+                            <span className="font-semibold text-stone-800">
+                              {student.yearOfStudy}{student.yearOfStudy === 1 ? 'st' : student.yearOfStudy === 2 ? 'nd' : student.yearOfStudy === 3 ? 'rd' : 'th'} Year
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Contact details */}
+                        <div className="space-y-1.5 text-xs text-stone-600">
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+                            <a href={`mailto:${student.email}`} className="hover:text-[#063028] hover:underline truncate">
+                              {student.email}
+                            </a>
+                          </div>
+                          {student.phone && (
+                            <div className="flex items-center gap-2">
+                              <Phone className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+                              <a href={`tel:${student.phone}`} className="hover:text-[#063028] hover:underline">
+                                {student.phone}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Skills Chips */}
+                        {student.skills && student.skills.length > 0 && (
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">Innovator Skills:</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {student.skills.map((skill, sIdx) => (
+                                <span key={sIdx} className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 text-[11px] font-medium">
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Card Footer with View ID Card and Assign Challenge actions */}
+                      <div className="pt-4 border-t border-stone-100 flex items-center justify-between gap-3 flex-wrap">
+                        <span className="text-[11px] text-stone-400 inline-flex items-center gap-1">
+                          <Calendar className="w-3 h-3" /> Registered: {new Date(student.createdAt).toLocaleDateString()}
+                        </span>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedStudentForIdView(student)}
+                            className="px-3 py-1.5 bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 rounded-xl text-xs font-bold transition-all shadow-2xs inline-flex items-center gap-1.5 cursor-pointer"
+                            id={`view-id-btn-${student.enrollmentNo}`}
+                          >
+                            <FileText className="w-3.5 h-3.5 text-[#063028]" /> View ID Card
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleAssignStudentToChallenge(student)}
+                            className="px-3.5 py-1.5 bg-[#063028] text-white hover:bg-[#04201a] rounded-xl text-xs font-bold transition-all shadow-2xs inline-flex items-center gap-1 cursor-pointer"
+                            id={`assign-btn-${student.enrollmentNo}`}
+                          >
+                            Assign <ArrowRight className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
 
       {/* ASSIGN TEAM MODAL DIALOG */}
@@ -782,6 +1071,118 @@ export const InstitutionDashboard: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* STUDENT ID CARD PREVIEW MODAL */}
+      {selectedStudentForIdView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in overflow-y-auto">
+          <div className="bg-white rounded-3xl border border-stone-200 max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-6 text-left my-8">
+            <div className="flex justify-between items-start">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#063028] bg-[#edf4f0] px-2.5 py-0.5 rounded-full border border-[#063028]/15">
+                  Student Verification Card
+                </span>
+                <h3 className="text-xl sm:text-2xl font-bold text-[#063028] font-serif leading-snug mt-1.5">
+                  {selectedStudentForIdView.name}
+                </h3>
+                <p className="text-xs text-stone-500 font-mono">
+                  Enrollment: <strong className="text-stone-800">{selectedStudentForIdView.enrollmentNo}</strong>
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedStudentForIdView(null)}
+                className="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* ID Card Display */}
+            <div className="space-y-4">
+              <div className="border border-stone-200 rounded-2xl overflow-hidden bg-stone-50 shadow-inner p-4 text-center">
+                {selectedStudentForIdView.idCardUrl ? (
+                  <div className="space-y-3">
+                    <img
+                      src={selectedStudentForIdView.idCardUrl}
+                      alt={`${selectedStudentForIdView.name} ID Card`}
+                      className="w-full max-h-72 object-contain rounded-xl border border-stone-300 bg-white mx-auto shadow-sm"
+                    />
+                    <div className="flex items-center justify-between text-xs text-stone-500 px-1">
+                      <span>Uploaded ID Document</span>
+                      <a
+                        href={selectedStudentForIdView.idCardUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[#063028] font-bold hover:underline inline-flex items-center gap-1"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" /> Open Full Image
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-8 space-y-3">
+                    <div className="w-16 h-16 rounded-2xl bg-amber-100 text-[#a6711c] mx-auto flex items-center justify-center">
+                      <GraduationCap className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-stone-800">Official Student Profile</p>
+                      <p className="text-xs text-stone-500">Verified through university enrollment register</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Student Metadata Table */}
+              <div className="p-4 rounded-xl bg-[#faf8f4] border border-stone-200 text-xs text-stone-700 space-y-2">
+                <div className="flex justify-between items-center border-b border-stone-200 pb-1.5">
+                  <span className="text-stone-500 font-medium">Institution:</span>
+                  <span className="font-bold text-stone-900">{selectedStudentForIdView.institutionName}</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-stone-200 pb-1.5">
+                  <span className="text-stone-500 font-medium">Course &amp; Branch:</span>
+                  <span className="font-bold text-stone-900">{selectedStudentForIdView.course} • {selectedStudentForIdView.department}</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-stone-200 pb-1.5">
+                  <span className="text-stone-500 font-medium">Academic Year:</span>
+                  <span className="font-bold text-stone-900">
+                    {selectedStudentForIdView.yearOfStudy}{selectedStudentForIdView.yearOfStudy === 1 ? 'st' : selectedStudentForIdView.yearOfStudy === 2 ? 'nd' : selectedStudentForIdView.yearOfStudy === 3 ? 'rd' : 'th'} Year
+                  </span>
+                </div>
+                <div className="flex justify-between items-center border-b border-stone-200 pb-1.5">
+                  <span className="text-stone-500 font-medium">Student Email:</span>
+                  <span className="font-semibold text-stone-900">{selectedStudentForIdView.email}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-stone-500 font-medium">Status:</span>
+                  <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    ✓ Verified Bona Fide Student
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedStudentForIdView(null)}
+                className="px-4 py-2.5 text-stone-600 hover:text-stone-900 text-xs sm:text-sm font-bold rounded-xl cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const student = selectedStudentForIdView;
+                  setSelectedStudentForIdView(null);
+                  handleAssignStudentToChallenge(student);
+                }}
+                className="px-5 py-2.5 bg-[#063028] text-white text-xs sm:text-sm font-bold rounded-xl hover:bg-[#04201a] transition-all shadow-sm cursor-pointer inline-flex items-center gap-1.5"
+              >
+                Assign to Challenge <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}
