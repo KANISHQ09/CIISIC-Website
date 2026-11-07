@@ -167,7 +167,7 @@ export const InstitutionRegister: React.FC = () => {
                 Register Partner Institution
               </h1>
               <p className="text-xs sm:text-sm text-stone-300 max-w-md mx-auto font-normal">
-                Join the CII Industry–Academia Excellence network to adopt industrial challenges and assign student teams.
+                Join the CII Industry–Academia Excellence network to adopt industrial challenges and submit solutions from your faculty-mentored teams.
               </p>
             </div>
           </div>
