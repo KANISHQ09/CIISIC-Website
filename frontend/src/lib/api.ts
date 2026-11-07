@@ -1,6 +1,6 @@
 import {
   ProblemStatement, User, SubmissionStatus, UserRole,
-  SolutionSubmission, SolutionStatus
+  SolutionSubmission, SolutionStatus, PublicIndustry
 } from '../types';
 
 /**
@@ -775,6 +775,10 @@ function flattenChallengePayload(payload: any): any {
     attachmentUrls: payload.additional?.fileAttachmentName ? [payload.additional.fileAttachmentName] : [],
     organizationName: payload.company?.companyName || 'Unknown Organization',
     duration: payload.technical?.expectedDuration || '6 Months',
+    contactName: payload.company?.representativeName || undefined,
+    contactDesignation: payload.company?.designation || undefined,
+    contactEmail: payload.company?.email || undefined,
+    contactPhone: payload.company?.phone || undefined,
   };
 
   if (payload.status) {
@@ -941,18 +945,23 @@ function formatThemeToSector(theme?: string): string {
 
 function mapBackendToProblemStatement(backend: any): ProblemStatement {
   const sectorName = formatThemeToSector(backend.domain);
-  const company = backend.organizationName || backend.industry?.companyName || 'Corporate Partner';
+  const company = backend.organisation?.name || backend.organizationName || backend.industry?.companyName || 'Corporate Partner';
+  // Contact details only come back for CII admins and the owning company
+  const contact = backend.contact ?? {};
   return {
     id: backend.id,
     company: {
       industryName: sectorName,
       companyName: company,
-      representativeName: backend.industry?.representativeName ?? '',
-      designation: backend.industry?.designation ?? 'Corporate R&D',
-      email: backend.industry?.email ?? '',
-      phone: backend.industry?.phone ?? '',
-      website: backend.industry?.website ?? '',
-      industrySector: sectorName,
+      representativeName: contact.name ?? backend.industry?.representativeName ?? '',
+      designation: contact.designation ?? backend.industry?.designation ?? '',
+      email: contact.email ?? backend.industry?.email ?? '',
+      phone: contact.phone ?? backend.industry?.phone ?? '',
+      website: backend.organisation?.website ?? backend.industry?.website ?? '',
+      industrySector: backend.organisation?.sector || sectorName,
+      city: backend.organisation?.city ?? undefined,
+      state: backend.organisation?.state ?? undefined,
+      address: backend.organisation?.address ?? undefined,
     },
     details: {
       title: backend.title ?? '',
@@ -979,6 +988,11 @@ function mapBackendToProblemStatement(backend: any): ProblemStatement {
     status: mapBackendStatus(backend.status),
     submittedDate: backend.createdAt || new Date().toISOString(),
     reviewRemarks: backend.reviewRemarks,
+    referenceCode: backend.referenceCode ?? undefined,
+    submissionSource: backend.submissionSource,
+    isNewOrganisation: backend.isNewOrganisation ?? false,
+    ownedByRequester: backend.ownedByRequester ?? false,
+    review: backend.review ?? undefined,
   } as ProblemStatement;
 }
 
@@ -995,3 +1009,103 @@ function mapBackendStatus(status: string): SubmissionStatus {
   return map[status] || 'Pending';
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Public (no-login) problem submission
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Calls a public endpoint and surfaces the server's own error message. */
+async function publicRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  if (!API_BASE) {
+    throw new Error('The submission service is not configured. Please try again later.');
+  }
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, init);
+  } catch {
+    throw new Error('Could not reach the server. Check your connection and try again.');
+  }
+  const body = await response.json().catch(() => null);
+  if (!response.ok || !body?.success) {
+    const fieldErrors = body?.errors?.fieldErrors as Record<string, string[]> | undefined;
+    const firstFieldError = fieldErrors ? Object.values(fieldErrors).flat()[0] : undefined;
+    const formError = (body?.errors?.formErrors as string[] | undefined)?.[0];
+    throw new Error(firstFieldError || formError || body?.message || `Request failed (${response.status})`);
+  }
+  return body.data as T;
+}
+
+/** Registered, approved organisations for the submission dropdown. */
+export async function fetchPublicIndustries(): Promise<PublicIndustry[]> {
+  return publicRequest<PublicIndustry[]>('/api/public/industries');
+}
+
+/** Upload a PDF attachment without logging in. */
+export async function uploadPublicDocument(file: File): Promise<{ url: string }> {
+  const form = new FormData();
+  form.append('file', file);
+  return publicRequest<{ url: string }>('/api/public/upload', { method: 'POST', body: form });
+}
+
+export interface PublicProblemPayload {
+  // Organisation: either a registered one…
+  industryProfileId?: string;
+  // …or "Other"
+  organisationName?: string;
+  orgSector?: string;
+  orgWebsite?: string;
+  orgCity?: string;
+  orgState?: string;
+  orgAddress?: string;
+  // Contact person
+  contactName: string;
+  contactDesignation: string;
+  contactEmail: string;
+  contactPhone: string;
+  // Problem (already in backend shape)
+  title: string;
+  description: string;
+  problemStatement: string;
+  domain: string;
+  deadline: string;
+  budgetRange?: string;
+  tags?: string[];
+  attachmentUrls?: string[];
+  duration?: string;
+  // Spam trap — always empty for real users
+  companyFax?: string;
+}
+
+/** Submit a problem statement without logging in. Never falls back to local storage. */
+export async function submitPublicProblem(
+  payload: PublicProblemPayload
+): Promise<{ id: string; referenceCode: string; status: string; message: string }> {
+  return publicRequest('/api/public/challenges', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+/** Build the backend problem fields from the submission form's ProblemStatement shape. */
+export function toBackendProblemFields(payload: Omit<ProblemStatement, 'id' | 'status' | 'submittedDate'>) {
+  const flat = flattenChallengePayload(payload);
+  return {
+    title: flat.title,
+    description: flat.description,
+    problemStatement: flat.problemStatement,
+    domain: flat.domain,
+    deadline: flat.deadline,
+    budgetRange: flat.budgetRange || undefined,
+    tags: flat.tags,
+    attachmentUrls: flat.attachmentUrls,
+    duration: flat.duration,
+  };
+}
+
+/** CII admin: invite an unregistered ("Other") organisation to register. */
+export async function inviteOrganisation(challengeId: string): Promise<{ inviteSentAt: string }> {
+  if (!API_BASE) throw new Error('Backend is not configured');
+  return fetchJSON<{ inviteSentAt: string }>(`${API_BASE}/api/admin/challenges/${challengeId}/invite`, {
+    method: 'POST',
+  });
+}

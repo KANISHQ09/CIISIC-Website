@@ -319,18 +319,50 @@ export const SubmissionDetails: React.FC = () => {
                   <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Industry category</span>
                   <span className="font-semibold text-stone-800 text-base block mt-1">{submission.company.industryName}</span>
                 </div>
-                <div>
-                  <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">SPOC Name</span>
-                  <span className="font-semibold text-stone-800 text-base block mt-1">{submission.company.representativeName} ({submission.company.designation})</span>
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Contact Information</span>
-                  <span className="text-stone-700 text-base block mt-1">{submission.company.email} • {submission.company.phone}</span>
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Corporate website</span>
-                  <a href={`https://${submission.company.website.replace(/https?:\/\//, '')}`} target="_blank" rel="noopener noreferrer" className="text-[#c48825] hover:text-[#a6711c] hover:underline block mt-1 font-medium text-base">{submission.company.website}</a>
-                </div>
+                {(submission.company.city || submission.company.state) && (
+                  <div>
+                    <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Location</span>
+                    <span className="font-semibold text-stone-800 text-base block mt-1">
+                      {[submission.company.city, submission.company.state].filter(Boolean).join(', ')}
+                    </span>
+                  </div>
+                )}
+                {submission.company.email ? (
+                  <>
+                    <div>
+                      <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">SPOC Name</span>
+                      <span className="font-semibold text-stone-800 text-base block mt-1">
+                        {submission.company.representativeName}
+                        {submission.company.designation ? ` (${submission.company.designation})` : ''}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Contact Information</span>
+                      <span className="text-stone-700 text-base block mt-1 break-all">
+                        {[submission.company.email, submission.company.phone].filter(Boolean).join(' • ')}
+                      </span>
+                    </div>
+                    {submission.company.address && (
+                      <div className="sm:col-span-2">
+                        <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Address</span>
+                        <span className="text-stone-700 text-base block mt-1">{submission.company.address}</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="sm:col-span-2">
+                    <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Contact</span>
+                    <span className="text-stone-600 text-sm block mt-1">
+                      Contact details are shared by CII with partner institutions on request.
+                    </span>
+                  </div>
+                )}
+                {submission.company.website && (
+                  <div>
+                    <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Corporate website</span>
+                    <a href={`https://${submission.company.website.replace(/https?:\/\//, '')}`} target="_blank" rel="noopener noreferrer" className="text-[#c48825] hover:text-[#a6711c] hover:underline block mt-1 font-medium text-base break-all">{submission.company.website}</a>
+                  </div>
+                )}
               </div>
             )}
           </div>

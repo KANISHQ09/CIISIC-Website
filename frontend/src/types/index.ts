@@ -10,6 +10,10 @@ export interface CompanyInfo {
   phone: string;
   website: string;
   industrySector: string;
+  // Organisation location (from public submissions)
+  city?: string;
+  state?: string;
+  address?: string;
 }
 
 export interface ProblemDetails {
@@ -47,6 +51,28 @@ export interface ProblemStatement {
   submittedDate: string;
   reviewRemarks?: string;
   editedByAdmin?: boolean;
+  // Human-friendly ID shared with the submitter (admins and owner only)
+  referenceCode?: string;
+  submissionSource?: 'PORTAL' | 'PUBLIC';
+  // Submitted as "Other" — the organisation has no account on the portal
+  isNewOrganisation?: boolean;
+  // True when the logged-in industry user owns this problem
+  ownedByRequester?: boolean;
+  // Reviewer hints (CII admins only)
+  review?: {
+    registeredCompany: boolean;
+    emailMatchesCompany: boolean | null;
+    inviteSentAt: string | null;
+  };
+}
+
+/** Registered organisation shown in the "Submit a problem" dropdown. */
+export interface PublicIndustry {
+  id: string;
+  companyName: string;
+  industry: string;
+  logoUrl: string | null;
+  websiteUrl: string | null;
 }
 
 export type UserRole = 'industry' | 'admin' | 'institution';

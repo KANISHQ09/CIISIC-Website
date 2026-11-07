@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { INDUSTRY_PROFILE_SELECT } from "@/lib/problem-submission";
 import { createAuditLog, getRequestMeta } from "@/lib/audit";
 import { serializeChallenge } from "@/lib/serializers";
 import {
@@ -12,6 +13,7 @@ import {
   serverError,
 } from "@/lib/api-response";
 import { z } from "zod";
+import { sendProblemDecisionEmail } from "@/lib/email";
 
 const ReviewSchema = z.object({
   action: z.enum(["APPROVE", "REJECT"]),
@@ -51,7 +53,7 @@ export async function GET(
 
     const isOwner =
       session.user.role === "INDUSTRY_SPOC" &&
-      challenge.industryProfile.userId === session.user.id;
+      challenge.industryProfile?.userId === session.user.id;
 
     if (!isAdmin && !isOwner) {
       return forbidden("You do not have permission to view review details");
@@ -102,7 +104,7 @@ export async function POST(
       where: { id },
       include: {
         industryProfile: {
-          select: { userId: true, companyName: true },
+          select: { userId: true, companyName: true, user: { select: { name: true, email: true } } },
         },
       },
     });
@@ -123,37 +125,42 @@ export async function POST(
         ...(action === "APPROVE" && { publishedAt: new Date() }),
       },
       include: {
-        industryProfile: {
-          select: {
-            id: true,
-            userId: true,
-            companyName: true,
-            industry: true,
-            logoUrl: true,
-            isCIIMember: true,
-            user: {
-              select: {
-                email: true,
-                name: true,
-              },
-            },
-          },
-        },
+        industryProfile: { select: INDUSTRY_PROFILE_SELECT },
         _count: { select: { proposals: true } },
       },
     });
 
-    // Notify the Industry SPOC (owner)
-    await prisma.notification.create({
-      data: {
-        userId: challenge.industryProfile.userId,
-        title: `Challenge ${action === "APPROVE" ? "Approved" : "Rejected"}`,
-        body: remarks
-          ? `Review Remarks: ${remarks}`
-          : `Your challenge "${challenge.title}" has been ${action === "APPROVE" ? "approved" : "rejected"}.`,
-        link: `/api/challenges/${id}`,
-      },
-    });
+    // Notify the Industry SPOC (owner), when the problem belongs to a registered account
+    if (challenge.industryProfile) {
+      await prisma.notification.create({
+        data: {
+          userId: challenge.industryProfile.userId,
+          title: `Challenge ${action === "APPROVE" ? "Approved" : "Rejected"}`,
+          body: remarks
+            ? `Review Remarks: ${remarks}`
+            : `Your challenge "${challenge.title}" has been ${action === "APPROVE" ? "approved" : "rejected"}.`,
+          link: `/api/challenges/${id}`,
+        },
+      });
+    }
+
+    // Email the person who submitted it (falls back to the account holder)
+    const recipientEmail = challenge.contactEmail ?? challenge.industryProfile?.user?.email;
+    const recipientName = challenge.contactName ?? challenge.industryProfile?.user?.name ?? "there";
+    if (recipientEmail) {
+      try {
+        await sendProblemDecisionEmail(
+          recipientEmail,
+          recipientName,
+          challenge.title,
+          challenge.referenceCode,
+          action === "APPROVE",
+          remarks
+        );
+      } catch (err) {
+        console.error("[ChallengeReview] Failed to send decision email:", err);
+      }
+    }
 
     // Create Audit Log entry
     const { ipAddress, userAgent } = getRequestMeta(req);

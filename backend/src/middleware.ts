@@ -26,6 +26,8 @@ const PUBLIC_API_PREFIXES = [
   "/api/auth/register",
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
+  // No-login problem submission (rate-limited inside each route)
+  "/api/public",
 ];
 
 export default async function middleware(req: NextRequest) {

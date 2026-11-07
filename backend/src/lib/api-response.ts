@@ -39,6 +39,10 @@ export function serverError(message = "Internal server error") {
   return NextResponse.json({ success: false, message }, { status: 500 });
 }
 
+export function tooManyRequests(message = "Too many requests. Please try again later.") {
+  return NextResponse.json({ success: false, message }, { status: 429 });
+}
+
 export function validationError(errors: unknown) {
   return NextResponse.json(
     { success: false, message: "Validation failed", errors },

@@ -4,12 +4,76 @@ import {
   FileText, CheckCircle, AlertTriangle, Search, 
   ChevronLeft, ChevronRight, Eye, Check, X, 
   SlidersHorizontal, LayoutDashboard, GraduationCap, Building2,
-  ExternalLink, Clock, Sparkles, MessageSquare, User, Lock, ShieldCheck, Filter, AlertCircle
+  ExternalLink, Clock, Sparkles, MessageSquare, User, Lock, ShieldCheck, Filter, AlertCircle, Send
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { stripHTML } from '../lib/html';
-import { SolutionStatus, SolutionSubmission } from '../types';
-import { fetchAdminRegistrations, reviewRegistration, RegistrationItem } from '../lib/api';
+import { ProblemStatement, SolutionStatus, SolutionSubmission } from '../types';
+import { fetchAdminRegistrations, reviewRegistration, RegistrationItem, inviteOrganisation } from '../lib/api';
+
+/** Small badges that help CII decide whether a submission is genuine. */
+const VerificationBadges: React.FC<{
+  sub: ProblemStatement;
+  invitedAt?: string | null;
+  inviting: boolean;
+  onInvite: (sub: ProblemStatement) => void;
+}> = ({ sub, invitedAt, inviting, onInvite }) => {
+  const review = sub.review;
+  const inviteSentAt = invitedAt ?? review?.inviteSentAt ?? null;
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+      {sub.referenceCode && (
+        <span className="font-mono text-[11px] font-bold text-stone-600 bg-stone-100 border border-stone-200 px-1.5 py-0.5 rounded">
+          {sub.referenceCode}
+        </span>
+      )}
+      {sub.submissionSource === 'PUBLIC' && (
+        <span className="text-[11px] font-bold text-sky-800 bg-sky-50 border border-sky-200 px-1.5 py-0.5 rounded">
+          Submitted without login
+        </span>
+      )}
+      {sub.isNewOrganisation ? (
+        <span className="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+          New organisation (Other)
+        </span>
+      ) : review?.registeredCompany ? (
+        <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+          Registered partner
+        </span>
+      ) : null}
+      {review?.registeredCompany && sub.submissionSource === 'PUBLIC' && review.emailMatchesCompany === true && (
+        <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+          Email domain matches
+        </span>
+      )}
+      {review?.registeredCompany && sub.submissionSource === 'PUBLIC' && review.emailMatchesCompany === false && (
+        <span
+          className="text-[11px] font-bold text-red-800 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded"
+          title="The submitter's email domain differs from the selected company's account email and website. Verify before approving."
+        >
+          Email domain differs — verify
+        </span>
+      )}
+      {sub.isNewOrganisation && (
+        inviteSentAt ? (
+          <span className="text-[11px] font-semibold text-stone-600">
+            Invited {new Date(inviteSentAt).toLocaleDateString()}
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onInvite(sub)}
+            disabled={inviting}
+            className="inline-flex items-center gap-1 text-[11px] font-bold text-[#063028] bg-white border border-[#063028]/30 hover:bg-[#edf4f0] px-1.5 py-0.5 rounded cursor-pointer disabled:opacity-50"
+            title="Email the submitter an invitation to register this organisation on the industry portal"
+          >
+            <Send className="h-3 w-3" /> {inviting ? 'Sending...' : 'Invite to register'}
+          </button>
+        )
+      )}
+    </div>
+  );
+};
 import { ChangePasswordModal } from '../components/common/ChangePasswordModal';
 
 export const AdminDashboard: React.FC = () => {
@@ -229,6 +293,27 @@ export const AdminDashboard: React.FC = () => {
   const handleQuickReject = (id: string) => {
     updateSubmissionStatus(id, 'Rejected', 'Rejected via Admin Review.');
     showToast(`Submission ${id} marked as Rejected.`, 'info');
+  };
+
+  // Invitations sent during this session (the server also records them)
+  const [invitedAt, setInvitedAt] = useState<Record<string, string>>({});
+  const [invitingId, setInvitingId] = useState<string | null>(null);
+
+  const handleInvite = async (sub: ProblemStatement) => {
+    const who = sub.company.email || 'the submitter';
+    if (!window.confirm(`Email ${who} an invitation to register ${sub.company.companyName} on the industry portal?`)) {
+      return;
+    }
+    setInvitingId(sub.id);
+    try {
+      const result = await inviteOrganisation(sub.id);
+      setInvitedAt((prev) => ({ ...prev, [sub.id]: result.inviteSentAt }));
+      showToast(`Invitation sent to ${who}`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Could not send the invitation', 'error');
+    } finally {
+      setInvitingId(null);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -475,8 +560,21 @@ export const AdminDashboard: React.FC = () => {
                       <td className="px-6 py-4">
                         <div className="flex flex-col max-w-xs">
                           <span className="font-bold text-stone-900 text-base leading-tight">{sub.company.companyName}</span>
-                          <span className="text-xs text-stone-500 mt-0.5 truncate">{sub.company.representativeName} • {sub.company.email}</span>
-                          <span className="text-xs text-[#c48825] font-bold mt-1 uppercase tracking-wide">{sub.company.industrySector}</span>
+                          <span className="text-xs text-stone-500 mt-0.5 truncate">
+                            {[sub.company.representativeName, sub.company.email, sub.company.phone].filter(Boolean).join(' • ')}
+                          </span>
+                          <span className="text-xs text-[#c48825] font-bold mt-1 uppercase tracking-wide">
+                            {sub.company.industrySector}
+                            {(sub.company.city || sub.company.state) && (
+                              <span className="text-stone-500 normal-case font-semibold"> · {[sub.company.city, sub.company.state].filter(Boolean).join(', ')}</span>
+                            )}
+                          </span>
+                          <VerificationBadges
+                            sub={sub}
+                            invitedAt={invitedAt[sub.id]}
+                            inviting={invitingId === sub.id}
+                            onInvite={handleInvite}
+                          />
                         </div>
                       </td>
 
@@ -550,6 +648,15 @@ export const AdminDashboard: React.FC = () => {
                     <p><strong className="text-stone-800">Company:</strong> {sub.company.companyName}</p>
                     <p><strong className="text-stone-800">Sector:</strong> {sub.company.industrySector}</p>
                     <p><strong className="text-stone-800">Representative:</strong> {sub.company.representativeName}</p>
+                    {sub.company.email && (
+                      <p className="break-all"><strong className="text-stone-800">Contact:</strong> {[sub.company.email, sub.company.phone].filter(Boolean).join(' • ')}</p>
+                    )}
+                    <VerificationBadges
+                      sub={sub}
+                      invitedAt={invitedAt[sub.id]}
+                      inviting={invitingId === sub.id}
+                      onInvite={handleInvite}
+                    />
                     <p><strong className="text-stone-800">Filing Date:</strong> {new Date(sub.submittedDate).toLocaleDateString()}</p>
                   </div>
 

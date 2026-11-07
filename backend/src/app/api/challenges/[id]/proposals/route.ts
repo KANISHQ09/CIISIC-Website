@@ -57,7 +57,7 @@ export async function GET(
     if (!challenge) return notFound("Challenge not found");
 
     // Industry SPOC can only see their own challenge's proposals
-    if (isIndustry && challenge.industryProfile.userId !== session.user.id) {
+    if (isIndustry && challenge.industryProfile?.userId !== session.user.id) {
       return forbidden("Access denied to this challenge's proposals");
     }
 
@@ -222,7 +222,11 @@ export async function POST(
     }
 
     // Only notify industry if proposal is submitted/resubmitted
-    if (proposal.status === "SUBMITTED" || proposal.status === "RESUBMITTED") {
+    // (Problems from unregistered organisations have no account to notify — CII follows up.)
+    if (
+      challenge.industryProfileId &&
+      (proposal.status === "SUBMITTED" || proposal.status === "RESUBMITTED")
+    ) {
       const industryProfile = await prisma.industryProfile.findUnique({
         where: { id: challenge.industryProfileId },
         select: { userId: true },

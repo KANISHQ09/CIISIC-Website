@@ -200,7 +200,7 @@ export const ProblemStatements: React.FC = () => {
               <BookOpen className="h-4 w-4 text-[#c48825]" /> Partner Institutes
             </Link>
             <Link
-              to="/industry/login"
+              to="/submit-problem"
               className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#063028] hover:bg-[#04201a] text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-xs w-full md:w-auto text-center"
             >
               Post a Problem <ChevronRight className="h-4 w-4" />
@@ -312,12 +312,12 @@ export const ProblemStatements: React.FC = () => {
             <div className="space-y-2">
               <h3 className="text-2xl font-bold text-stone-900 font-serif">No Problem Statements Published Yet</h3>
               <p className="text-sm text-stone-600 max-w-md mx-auto leading-relaxed font-normal">
-                Approved corporate partners can sign in to submit industry problem statements and initiate collaborative innovation challenges with students and institutions.
+                Any organisation can submit an industry problem statement — no login needed. CII verifies each one before it is published to partner institutions.
               </p>
             </div>
             <div className="pt-2 flex flex-wrap justify-center gap-3">
               <Link
-                to="/industry/login"
+                to="/submit-problem"
                 className="inline-flex items-center gap-2 px-6 py-3.5 bg-[#063028] text-white text-sm font-bold rounded-xl hover:bg-[#04201a] transition-all shadow-sm"
               >
                 Post an Industry Challenge <ArrowRight className="h-4 w-4" />
@@ -476,14 +476,14 @@ export const ProblemStatements: React.FC = () => {
               Have an Engineering or R&amp;D Challenge in Your Enterprise?
             </h3>
             <p className="text-sm sm:text-base text-stone-300 leading-relaxed">
-              Approved industry partners can log in and submit industrial problem statements. Our technical review committee pairs your challenge with top student and faculty innovation clusters across Indore and Bhopal.
+              Any organisation can submit an industrial problem statement — no login needed, and CII verifies it before publishing. Our technical review committee pairs your challenge with top student and faculty innovation clusters across Indore and Bhopal.
             </p>
             <div className="pt-2 flex flex-wrap gap-4">
               <Link
-                to="/industry/login"
+                to="/submit-problem"
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold text-[#063028] bg-[#c48825] hover:bg-[#b0781e] transition-all shadow-sm"
               >
-                Log In &amp; Post Problem Statement <ArrowRight className="h-4 w-4" />
+                Submit a Problem Statement <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 to="/institutions"

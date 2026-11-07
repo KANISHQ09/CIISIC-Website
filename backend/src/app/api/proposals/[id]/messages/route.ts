@@ -58,7 +58,7 @@ export async function GET(
       role === "INSTITUTION_SPOC" && institutionSpocId(proposal) === userId;
     const isIndustry =
       role === "INDUSTRY_SPOC" &&
-      proposal.challenge.industryProfile.userId === userId;
+      proposal.challenge.industryProfile?.userId === userId;
 
     if (!isAdmin && !isInstitution && !isIndustry) {
       return forbidden("Access denied to this message thread");
@@ -137,7 +137,7 @@ export async function POST(
       role === "INSTITUTION_SPOC" && institutionUserId === userId;
     const isIndustry =
       role === "INDUSTRY_SPOC" &&
-      proposal.challenge.industryProfile.userId === userId;
+      proposal.challenge.industryProfile?.userId === userId;
 
     if (!isInstitution && !isIndustry) {
       return forbidden("You are not a participant in this proposal thread");
@@ -165,7 +165,7 @@ export async function POST(
 
     // Notify the other party
     const recipientId = isInstitution
-      ? proposal.challenge.industryProfile.userId
+      ? proposal.challenge.industryProfile?.userId ?? null
       : institutionUserId;
 
     if (recipientId) {
