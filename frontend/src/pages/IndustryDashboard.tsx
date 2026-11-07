@@ -155,7 +155,7 @@ export const IndustryDashboard: React.FC = () => {
 
   const handleOpenReview = (sol: SolutionSubmission) => {
     setSelectedSolutionForReview(sol);
-    setReviewDecision(sol.status === 'SUBMITTED' ? 'APPROVED' : sol.status);
+    setReviewDecision(sol.status === 'SUBMITTED' || sol.status === 'RESUBMITTED' ? 'APPROVED' : sol.status);
     setReviewNotes(sol.industryFeedback || '');
   };
 

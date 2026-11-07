@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { GraduationCap, Lock, Mail, ArrowLeft, ArrowRight, Building2, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { GraduationCap, Lock, Mail, ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 
 export const InstitutionLogin: React.FC = () => {
@@ -187,26 +187,6 @@ export const InstitutionLogin: React.FC = () => {
           </div>
         </div>
 
-        {/* Portal Switchers */}
-        <div className="text-center pt-4">
-          <p className="text-sm text-stone-600 inline-flex items-center justify-center gap-3 flex-wrap">
-            <Link 
-              to="/industry/login" 
-              className="font-semibold text-stone-600 hover:text-[#063028] hover:underline inline-flex items-center gap-1.5"
-              id="industry-portal-link"
-            >
-              <Building2 className="h-4 w-4 text-[#063028]" /> Industry Partner Login
-            </Link>
-            <span className="text-stone-300">•</span>
-            <Link 
-              to="/admin/login" 
-              className="font-semibold text-[#c48825] hover:text-[#a6711c] hover:underline inline-flex items-center gap-1.5"
-              id="admin-portal-link"
-            >
-              <ShieldCheck className="h-4 w-4 text-[#c48825]" /> CII Admin Portal
-            </Link>
-          </p>
-        </div>
       </div>
     </div>
   );

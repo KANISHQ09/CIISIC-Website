@@ -1,5 +1,6 @@
 import React from 'react';
-import { Mail, Phone, MapPin, ArrowUpRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Mail, Phone, MapPin, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 export const FooterSection: React.FC = () => {
   const handleScrollTo = (id: string) => {
@@ -163,7 +164,17 @@ export const FooterSection: React.FC = () => {
 
         </div>
 
-
+        {/* Bottom bar: copyright + staff login for CII officials */}
+        <div className="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-stone-400">
+          <p>&copy; {new Date().getFullYear()} Confederation of Indian Industry. All rights reserved.</p>
+          <Link
+            to="/admin/login"
+            className="inline-flex items-center gap-1.5 font-semibold text-stone-300 hover:text-[#c48825] transition-colors"
+          >
+            <ShieldCheck className="h-4 w-4 text-[#c48825]" />
+            CII Admin Login
+          </Link>
+        </div>
       </div>
     </footer>
   );

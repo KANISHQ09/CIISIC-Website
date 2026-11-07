@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Building2, Lock, Mail, ArrowLeft, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Building2, Lock, Mail, ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 
 export const IndustryLogin: React.FC = () => {
@@ -9,6 +9,7 @@ export const IndustryLogin: React.FC = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -131,14 +132,22 @@ export const IndustryLogin: React.FC = () => {
                   <input
                     id="password"
                     name="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     autoComplete="current-password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
-                    className="block w-full pl-11 pr-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 transition-all bg-white font-medium"
+                    className="block w-full pl-11 pr-11 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 transition-all bg-white font-medium"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-stone-400 hover:text-stone-600 cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
                 </div>
               </div>
 
@@ -179,26 +188,6 @@ export const IndustryLogin: React.FC = () => {
           </div>
         </div>
 
-        {/* Portal Switchers */}
-        <div className="text-center pt-4">
-          <p className="text-sm text-stone-600 inline-flex items-center justify-center gap-3 flex-wrap">
-            <Link 
-              to="/institution/login" 
-              className="font-semibold text-stone-600 hover:text-[#063028] hover:underline inline-flex items-center gap-1.5"
-              id="institution-portal-link"
-            >
-              <Building2 className="h-4 w-4 text-[#063028]" /> Institution Login
-            </Link>
-            <span className="text-stone-300">•</span>
-            <Link 
-              to="/admin/login" 
-              className="font-semibold text-[#c48825] hover:text-[#a6711c] hover:underline inline-flex items-center gap-1.5"
-              id="admin-portal-link"
-            >
-              <ShieldCheck className="h-4 w-4 text-[#c48825]" /> CII Admin
-            </Link>
-          </p>
-        </div>
       </div>
     </div>
   );

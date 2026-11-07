@@ -92,8 +92,12 @@ export const AdminDashboard: React.FC = () => {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   const loadRegistrations = async () => {
-    const list = await fetchAdminRegistrations();
-    setRegistrations(list);
+    try {
+      const list = await fetchAdminRegistrations();
+      setRegistrations(list);
+    } catch (err: any) {
+      showToast(`Could not load registrations: ${err.message || 'please refresh the page.'}`, 'error');
+    }
   };
 
   useEffect(() => {
@@ -210,7 +214,7 @@ export const AdminDashboard: React.FC = () => {
 
   const handleOpenAdminReview = (sol: SolutionSubmission) => {
     setSelectedSolutionForReview(sol);
-    setAdminDecision(sol.status === 'SUBMITTED' ? 'APPROVED' : sol.status);
+    setAdminDecision(sol.status === 'SUBMITTED' || sol.status === 'RESUBMITTED' ? 'APPROVED' : sol.status);
     setAdminFeedback(sol.industryFeedback || '');
   };
 
@@ -285,14 +289,31 @@ export const AdminDashboard: React.FC = () => {
   };
 
   // Quick Action handlers
-  const handleQuickApprove = (id: string) => {
-    updateSubmissionStatus(id, 'Approved', 'Approved via Admin Review.');
-    showToast(`Submission ${id} Approved successfully!`, 'success');
+  // Quick actions only report success once the server has saved the decision
+  const [quickActionId, setQuickActionId] = useState<string | null>(null);
+
+  const handleQuickApprove = async (id: string) => {
+    setQuickActionId(id);
+    try {
+      await updateSubmissionStatus(id, 'Approved', 'Approved via Admin Review.');
+      showToast(`Submission ${id} approved and published.`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Could not approve this submission.', 'error');
+    } finally {
+      setQuickActionId(null);
+    }
   };
 
-  const handleQuickReject = (id: string) => {
-    updateSubmissionStatus(id, 'Rejected', 'Rejected via Admin Review.');
-    showToast(`Submission ${id} marked as Rejected.`, 'info');
+  const handleQuickReject = async (id: string) => {
+    setQuickActionId(id);
+    try {
+      await updateSubmissionStatus(id, 'Rejected', 'Rejected via Admin Review.');
+      showToast(`Submission ${id} marked as Rejected.`, 'info');
+    } catch (err: any) {
+      showToast(err.message || 'Could not reject this submission.', 'error');
+    } finally {
+      setQuickActionId(null);
+    }
   };
 
   // Invitations sent during this session (the server also records them)
@@ -608,6 +629,7 @@ export const AdminDashboard: React.FC = () => {
                             <>
                               <button
                                 onClick={() => handleQuickApprove(sub.id)}
+                                disabled={quickActionId === sub.id}
                                 className="p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 hover:bg-emerald-600 hover:text-white transition-all shadow-xs cursor-pointer"
                                 title="Approve Problem"
                               >
@@ -615,6 +637,7 @@ export const AdminDashboard: React.FC = () => {
                               </button>
                               <button
                                 onClick={() => handleQuickReject(sub.id)}
+                                disabled={quickActionId === sub.id}
                                 className="p-2 bg-red-50 border border-red-200 rounded-xl text-red-700 hover:bg-red-600 hover:text-white transition-all shadow-xs cursor-pointer"
                                 title="Reject Problem"
                               >
@@ -672,6 +695,7 @@ export const AdminDashboard: React.FC = () => {
                       {sub.status === 'Pending' && (
                         <button
                           onClick={() => handleQuickApprove(sub.id)}
+                                disabled={quickActionId === sub.id}
                           className="px-3.5 py-2 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-sm font-bold cursor-pointer"
                         >
                           Approve
