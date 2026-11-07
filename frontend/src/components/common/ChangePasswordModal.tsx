@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { PasswordInput } from './PasswordInput';
 import { Lock, Eye, EyeOff, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { changePassword } from '../../lib/api';
 
@@ -171,13 +172,13 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
             <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
               Confirm New Password
             </label>
-            <input
-              type="password"
+            <PasswordInput
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Re-enter new password"
+              autoComplete="new-password"
               required
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-stone-300 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10"
+              inputClassName="w-full py-2.5 text-sm rounded-xl border border-stone-300 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10"
             />
           </div>
 

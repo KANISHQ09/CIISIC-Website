@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { 
-  Building2, Lock, Mail, ArrowLeft, ArrowRight, 
+  Building2, Mail, ArrowLeft, ArrowRight, 
   Globe, User, Phone, CheckCircle2, ShieldCheck, 
   Briefcase, AlertCircle 
 } from 'lucide-react';
 import { registerIndustry } from '../lib/api';
+import { PasswordInput } from '../components/common/PasswordInput';
 
 const INDUSTRY_SECTORS = [
   'Information Technology & Software',
@@ -347,38 +348,28 @@ export const IndustryRegister: React.FC = () => {
                   <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1.5">
                     Password *
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">
-                      <Lock className="h-4 w-4" />
-                    </div>
-                    <input
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Min. 8 chars, 1 uppercase, 1 digit"
-                      className="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-xl border border-stone-300 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10"
-                    />
-                  </div>
+                  <PasswordInput
+                    required
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Min. 8 chars, 1 uppercase, 1 digit"
+                    inputClassName="w-full py-2.5 text-sm rounded-xl border border-stone-300 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10"
+                  />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1.5">
                     Confirm Password *
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">
-                      <Lock className="h-4 w-4" />
-                    </div>
-                    <input
-                      type="password"
-                      required
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Re-enter password"
-                      className="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-xl border border-stone-300 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10"
-                    />
-                  </div>
+                  <PasswordInput
+                    required
+                    autoComplete="new-password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter password"
+                    inputClassName="w-full py-2.5 text-sm rounded-xl border border-stone-300 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10"
+                  />
                 </div>
               </div>
             </div>

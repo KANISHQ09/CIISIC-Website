@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { GraduationCap, Lock, Mail, ArrowLeft, ArrowRight, Building, User, Phone, CheckCircle } from 'lucide-react';
+import { GraduationCap, Mail, ArrowLeft, ArrowRight, Building, User, Phone, CheckCircle } from 'lucide-react';
 import { ALL_INSTITUTIONS } from '../data/institutions';
 import { registerInstitution } from '../lib/api';
+import { PasswordInput } from '../components/common/PasswordInput';
 import { useApp } from '../contexts/AppContext';
 
 export const InstitutionRegister: React.FC = () => {
@@ -344,18 +345,15 @@ export const InstitutionRegister: React.FC = () => {
                   <label className="block text-xs font-bold uppercase tracking-wider text-stone-700" htmlFor="password">
                     Password *
                   </label>
-                  <div className="relative rounded-xl shadow-2xs">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">
-                      <Lock className="h-4 w-4" />
-                    </div>
-                    <input
+                  <div className="rounded-xl shadow-2xs">
+                    <PasswordInput
                       id="password"
-                      type="password"
                       required
+                      autoComplete="new-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className="block w-full pl-10 pr-4 py-3 border border-stone-300 rounded-xl text-sm font-medium text-stone-900 bg-white focus:outline-none focus:border-[#063028]"
+                      inputClassName="block w-full py-3 border border-stone-300 rounded-xl text-sm font-medium text-stone-900 bg-white focus:outline-none focus:border-[#063028]"
                     />
                   </div>
                   <p className="text-[11px] text-stone-400 pl-1">Min 8 chars, must include an uppercase letter and a number.</p>
@@ -365,18 +363,15 @@ export const InstitutionRegister: React.FC = () => {
                   <label className="block text-xs font-bold uppercase tracking-wider text-stone-700" htmlFor="confirm-password">
                     Confirm Password *
                   </label>
-                  <div className="relative rounded-xl shadow-2xs">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">
-                      <Lock className="h-4 w-4" />
-                    </div>
-                    <input
+                  <div className="rounded-xl shadow-2xs">
+                    <PasswordInput
                       id="confirm-password"
-                      type="password"
                       required
+                      autoComplete="new-password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className="block w-full pl-10 pr-4 py-3 border border-stone-300 rounded-xl text-sm font-medium text-stone-900 bg-white focus:outline-none focus:border-[#063028]"
+                      inputClassName="block w-full py-3 border border-stone-300 rounded-xl text-sm font-medium text-stone-900 bg-white focus:outline-none focus:border-[#063028]"
                     />
                   </div>
                 </div>

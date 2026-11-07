@@ -115,13 +115,12 @@ export const AdminLogin: React.FC = () => {
                   <label htmlFor="password" className="block text-sm font-bold text-stone-700">
                     Administrative Key
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => alert('Please contact the Confederation of Indian Industry (CII) Support at contact@ciisic.org to recover your password.')}
+                  <Link
+                    to="/forgot-password"
                     className="text-sm font-semibold text-[#c48825] hover:text-[#a6711c] hover:underline cursor-pointer"
                   >
                     Forgot Password?
-                  </button>
+                  </Link>
                 </div>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">

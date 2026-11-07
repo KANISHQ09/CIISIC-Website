@@ -17,6 +17,8 @@ import { InstitutionLogin } from './pages/InstitutionLogin';
 import { InstitutionRegister } from './pages/InstitutionRegister';
 import { InstitutionDashboard } from './pages/InstitutionDashboard';
 import { SubmitSolution } from './pages/SubmitSolution';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { ResetPassword } from './pages/ResetPassword';
 
 // Role-based Protected Route for Industry Partners
 const IndustryRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -74,20 +76,20 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-// Route controller that redirects already authenticated users
-const GuestRoute: React.FC<{ children: React.ReactNode; role: 'industry' | 'admin' | 'institution' }> = ({ children, role }) => {
+// Login / registration pages: anyone already signed in (whatever their role, whichever
+// portal's page they opened) is sent to their own dashboard instead.
+// `role` only documents which portal the page belongs to.
+const GuestRoute: React.FC<{ children: React.ReactNode; role: 'industry' | 'admin' | 'institution' }> = ({ children }) => {
   const { currentUser } = useApp();
 
-  if (currentUser && currentUser.role === role) {
-    if (currentUser.role === 'industry') {
-      return <Navigate to="/industry/dashboard" replace />;
-    }
-    if (currentUser.role === 'admin') {
-      return <Navigate to="/admin/dashboard" replace />;
-    }
-    if (currentUser.role === 'institution') {
-      return <Navigate to="/institution/dashboard" replace />;
-    }
+  if (currentUser) {
+    const dashboard =
+      currentUser.role === 'admin'
+        ? '/admin/dashboard'
+        : currentUser.role === 'institution'
+        ? '/institution/dashboard'
+        : '/industry/dashboard';
+    return <Navigate to={dashboard} replace />;
   }
 
   return <>{children}</>;
@@ -192,6 +194,10 @@ export default function App() {
                 </InstitutionRoute>
               } 
             />
+
+            {/* Password reset (any account type) */}
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Student portal has been retired — send old links home */}
             <Route path="/student/*" element={<Navigate to="/" replace />} />
