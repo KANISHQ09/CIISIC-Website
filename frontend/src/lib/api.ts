@@ -1191,3 +1191,27 @@ export async function inviteOrganisation(challengeId: string): Promise<{ inviteS
     method: 'POST',
   });
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Password reset (all account types)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Email a password reset link. The answer is the same whether or not the email is registered. */
+export async function requestPasswordReset(email: string): Promise<{ message: string }> {
+  const url = API_BASE ? `${API_BASE}/api/auth/forgot-password` : '/api/auth/forgot-password';
+  return fetchJSON<{ message: string }>(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+}
+
+/** Set a new password using the token from the emailed link. */
+export async function resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+  const url = API_BASE ? `${API_BASE}/api/auth/reset-password` : '/api/auth/reset-password';
+  return fetchJSON<{ message: string }>(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, newPassword }),
+  });
+}
