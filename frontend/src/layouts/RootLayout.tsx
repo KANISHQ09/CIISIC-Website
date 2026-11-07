@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, LogOut, Building, ShieldCheck, LayoutDashboard, PlusCircle, GraduationCap } from 'lucide-react';
+import { Menu, X, LogOut, Building, LayoutDashboard, Home, ChevronDown } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { CiiLogo } from '../components/CiiLogo';
 import { Toast } from '../components/Toast';
@@ -143,6 +143,34 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
     setMobileMenuOpen(false);
   };
 
+  // Signed-in users get a minimal header: logo + profile menu only
+  const dashboardPath = !currentUser
+    ? '/'
+    : currentUser.role === 'admin'
+    ? '/admin/dashboard'
+    : currentUser.role === 'institution'
+    ? '/institution/dashboard'
+    : '/industry/dashboard';
+  const isOnDashboard = !!currentUser && location.pathname.startsWith(dashboardPath);
+  // Portal pages (dashboards, logins, solution forms) get the minimal header;
+  // public pages (home, services, problem statements, ...) keep the site navigation.
+  const isPortalPage = /^\/(admin|industry|institution)(\/|$)/.test(location.pathname);
+  const showPublicNav = !currentUser || !isPortalPage;
+  const roleLabel = !currentUser
+    ? ''
+    : currentUser.role === 'admin'
+    ? 'CII Admin'
+    : currentUser.role === 'institution'
+    ? 'Institution SPOC'
+    : 'Industry Partner';
+  const organisationLabel = !currentUser
+    ? ''
+    : currentUser.role === 'admin'
+    ? 'Confederation of Indian Industry'
+    : currentUser.role === 'institution'
+    ? currentUser.institutionName || ''
+    : currentUser.companyName || '';
+
   const handleNavClick = (sectionId: string) => {
     setMobileMenuOpen(false);
     
@@ -187,107 +215,13 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
   return (
     <div className="min-h-screen bg-[#faf7f0] flex flex-col font-sans selection:bg-[#c48825]/20 selection:text-[#063028]">
-      {/* Dynamic Session Bar */}
-      {currentUser && (
-        <div className="bg-[#063028] text-white py-1.5 px-4 sm:px-6 lg:px-8 xl:px-12 text-xs font-medium border-b border-white/10 z-50">
-          <div className="w-full flex justify-between items-center flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-              {currentUser.role === 'admin' ? (
-                <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-300">
-                  <ShieldCheck className="h-4 w-4 text-emerald-300 shrink-0" />
-                  CII Admin Portal
-                </span>
-              ) : currentUser.role === 'institution' ? (
-                <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-200 uppercase tracking-wider">
-                  <GraduationCap className="h-4 w-4 text-amber-300 shrink-0" />
-                  {currentUser.institutionName || 'Academic Institution'}
-                </span>
-              ) : (
-                <span className="flex items-center gap-1.5 text-xs font-semibold text-stone-200 uppercase tracking-wider">
-                  <Building className="h-4 w-4 text-stone-300 shrink-0" />
-                  {currentUser.companyName}
-                </span>
-              )}
-            </div>
-            <div className="relative profile-dropdown-container">
-              <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2 hover:bg-white/10 px-3 py-1 rounded-lg border border-white/10 hover:border-white/20 transition-all cursor-pointer font-bold select-none text-xs"
-              >
-                <div className="w-5 h-5 rounded-full bg-[#c48825] text-white flex items-center justify-center font-extrabold text-[10px] uppercase shadow-sm">
-                  {getInitials(currentUser.name)}
-                </div>
-                <span>{currentUser.name}</span>
-                <span className="text-[9px] opacity-75">▼</span>
-              </button>
-
-              {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-60 bg-white text-stone-800 rounded-xl shadow-xl border border-stone-200/80 py-1.5 z-[100] origin-top-right text-xs divide-y divide-stone-100 animate-fade-in">
-                  {/* User Profile Header */}
-                  <div className="px-4 py-3 bg-stone-50/70">
-                    <p className="font-extrabold text-stone-900 truncate text-sm">{currentUser.name}</p>
-                    <p className="text-xs text-[#063028] font-bold uppercase tracking-wider mt-0.5">
-                      {currentUser.role === 'admin' ? 'CII Admin' : currentUser.role === 'institution' ? 'Institution SPOC' : 'Industry Partner'}
-                    </p>
-                    <p className="text-xs text-stone-600 font-medium truncate mt-1">{currentUser.email}</p>
-                  </div>
-                  
-                  {/* Actions */}
-                  <div className="p-1.5 space-y-0.5">
-                    <Link
-                      to={
-                        currentUser.role === 'admin' 
-                          ? '/admin/dashboard' 
-                          : currentUser.role === 'institution' 
-                          ? '/institution/dashboard' 
-                          : '/industry/dashboard'
-                      }
-                      onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2.5 font-bold text-stone-700 hover:bg-stone-50 hover:text-[#063028] rounded-lg transition-all text-xs sm:text-sm"
-                    >
-                      <LayoutDashboard className="h-4.5 w-4.5 text-stone-400 shrink-0" />
-                      <span>Dashboard</span>
-                    </Link>
-                    {currentUser.role === 'industry' && (
-                      <Link
-                        to="/submit-problem"
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-2 px-3 py-2.5 font-bold text-stone-700 hover:bg-stone-50 hover:text-[#063028] rounded-lg transition-all text-xs sm:text-sm"
-                      >
-                        <PlusCircle className="h-4.5 w-4.5 text-stone-400 shrink-0" />
-                        <span>Submit Problem</span>
-                      </Link>
-                    )}
-                  </div>
-                  
-                  {/* Sign Out */}
-                  <div className="p-1.5">
-                    <button
-                      onClick={() => {
-                        setDropdownOpen(false);
-                        handleLogout();
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2.5 font-bold text-red-650 hover:bg-red-50 hover:text-red-700 rounded-lg transition-all text-left cursor-pointer text-xs sm:text-sm"
-                    >
-                      <LogOut className="h-4.5 w-4.5 text-red-500 shrink-0" />
-                      <span>Sign Out</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Sticky Premium Navbar - Full Width & Adaptive */}
       <nav id="platform-navbar" className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#e8e4dc] shadow-xs w-full">
         <div className="w-full px-3 sm:px-5 lg:px-4 xl:px-6 2xl:px-8">
           <div className="flex justify-between items-center h-15 sm:h-16 w-full">
             {/* Logo and Brand */}
             <div className="flex items-center shrink-0 pr-1.5 lg:pr-2 xl:pr-3">
-              <Link to="/" className="shrink-0 flex items-center gap-2 sm:gap-2.5">
+              <Link to={currentUser ? dashboardPath : '/'} className="shrink-0 flex items-center gap-2 sm:gap-2.5">
                 <CiiLogo size="sm" />
                 <div className="flex flex-col justify-center leading-tight">
                   <span className="text-base sm:text-lg font-extrabold tracking-tight text-[#063028] font-serif">
@@ -300,7 +234,8 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
               </Link>
             </div>
 
-            {/* Desktop Navigation Links - Compact & Equally Aligned in Same Line */}
+            {/* Desktop Navigation Links - hidden on signed-in portal pages */}
+            {showPublicNav && (
             <div className="hidden lg:flex items-center justify-center flex-1 mx-1 xl:mx-2 space-x-0.5 xl:space-x-1">
               {navItems.map((item) => {
                 const active = isNavActive(item.id);
@@ -319,11 +254,13 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                 );
               })}
             </div>
+            )}
 
-            {/* Desktop CTA buttons on the right */}
-            <div className="hidden lg:flex items-center space-x-1 xl:space-x-1.5 shrink-0 pl-1 xl:pl-2">
-              {!currentUser ? (
-                <>
+            {/* Right side */}
+            {!currentUser ? (
+              <>
+                {/* Desktop CTA buttons */}
+                <div className="hidden lg:flex items-center space-x-1 xl:space-x-1.5 shrink-0 pl-1 xl:pl-2">
                   <Link
                     to="/institution/login"
                     className="px-2 xl:px-2.5 py-1.5 border border-[#063028]/25 text-[#063028] bg-transparent hover:bg-[#edf4f0] text-[11px] xl:text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer shadow-2xs flex items-center gap-1"
@@ -343,43 +280,116 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                   >
                     Submit a Problem
                   </Link>
-                </>
-              ) : (
-                <Link
-                  to={
-                    currentUser.role === 'admin' 
-                      ? '/admin/dashboard' 
-                      : currentUser.role === 'institution' 
-                      ? '/institution/dashboard' 
-                      : '/industry/dashboard'
-                  }
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all border ${
-                    location.pathname.includes('/dashboard') 
-                      ? 'text-white bg-[#063028] border-[#063028] shadow-xs' 
-                      : 'text-[#063028] bg-stone-50 hover:bg-stone-100 border-stone-200'
-                  }`}
-                >
-                  Dashboard
-                </Link>
-              )}
-            </div>
+                </div>
 
-            {/* Mobile menu button */}
-            <div className="flex items-center lg:hidden">
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-lg text-stone-600 hover:text-[#063028] hover:bg-stone-100 transition-colors cursor-pointer"
-                aria-expanded={mobileMenuOpen}
-              >
-                <span className="sr-only">Open main menu</span>
-                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </button>
-            </div>
+                {/* Mobile menu button */}
+                <div className="flex items-center lg:hidden">
+                  <button
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    className="inline-flex items-center justify-center p-2 rounded-lg text-stone-600 hover:text-[#063028] hover:bg-stone-100 transition-colors cursor-pointer"
+                    aria-expanded={mobileMenuOpen}
+                  >
+                    <span className="sr-only">Open main menu</span>
+                    {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                  </button>
+                </div>
+              </>
+            ) : (
+              /* Signed in: profile menu (no login buttons); site menu on public pages for mobile */
+              <div className="flex items-center gap-1.5 shrink-0">
+              {showPublicNav && (
+                <div className="flex items-center lg:hidden">
+                  <button
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    className="inline-flex items-center justify-center p-2 rounded-lg text-stone-600 hover:text-[#063028] hover:bg-stone-100 transition-colors cursor-pointer"
+                    aria-expanded={mobileMenuOpen}
+                  >
+                    <span className="sr-only">Open main menu</span>
+                    {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                  </button>
+                </div>
+              )}
+              <div className="relative profile-dropdown-container shrink-0">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  aria-haspopup="menu"
+                  aria-expanded={dropdownOpen}
+                  className="flex items-center gap-2 pl-1 pr-2 sm:pr-3 py-1 rounded-full border border-stone-200 hover:border-[#063028]/40 hover:bg-stone-50 transition-all cursor-pointer select-none"
+                >
+                  <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#063028] text-white flex items-center justify-center font-extrabold text-xs sm:text-sm uppercase shadow-sm">
+                    {getInitials(currentUser.name)}
+                  </span>
+                  <span className="hidden sm:flex flex-col items-start leading-tight max-w-[180px]">
+                    <span className="text-sm font-bold text-stone-900 truncate max-w-full">{currentUser.name}</span>
+                    <span className="text-[11px] font-semibold text-[#c48825] uppercase tracking-wide">{roleLabel}</span>
+                  </span>
+                  <ChevronDown className={`h-4 w-4 text-stone-500 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {dropdownOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-1.5rem)] bg-white text-stone-800 rounded-xl shadow-xl border border-stone-200/80 py-1.5 z-[100] origin-top-right divide-y divide-stone-100 animate-fade-in"
+                  >
+                    {/* Who is signed in */}
+                    <div className="px-4 py-3 bg-stone-50/70">
+                      <p className="font-extrabold text-stone-900 truncate text-sm">{currentUser.name}</p>
+                      <p className="text-xs text-[#063028] font-bold uppercase tracking-wider mt-0.5">{roleLabel}</p>
+                      {organisationLabel && (
+                        <p className="text-xs text-stone-600 font-medium truncate mt-0.5">{organisationLabel}</p>
+                      )}
+                      <p className="text-xs text-stone-500 truncate mt-1">{currentUser.email}</p>
+                    </div>
+
+                    {/* Switch between the dashboard and the public site */}
+                    <div className="p-1.5">
+                      {isOnDashboard ? (
+                        <Link
+                          to="/"
+                          role="menuitem"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2.5 font-bold text-sm text-stone-700 hover:bg-stone-50 hover:text-[#063028] rounded-lg transition-all"
+                        >
+                          <Home className="h-4 w-4 text-stone-400 shrink-0" />
+                          <span>Return to Home</span>
+                        </Link>
+                      ) : (
+                        <Link
+                          to={dashboardPath}
+                          role="menuitem"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2.5 font-bold text-sm text-stone-700 hover:bg-stone-50 hover:text-[#063028] rounded-lg transition-all"
+                        >
+                          <LayoutDashboard className="h-4 w-4 text-stone-400 shrink-0" />
+                          <span>Back to Dashboard</span>
+                        </Link>
+                      )}
+                    </div>
+
+                    {/* Sign out */}
+                    <div className="p-1.5">
+                      <button
+                        role="menuitem"
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          handleLogout();
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 font-bold text-sm text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg transition-all text-left cursor-pointer"
+                      >
+                        <LogOut className="h-4 w-4 text-red-500 shrink-0" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Mobile full-screen menu overlay */}
-        {mobileMenuOpen && (
+        {mobileMenuOpen && showPublicNav && (
           <div className="lg:hidden fixed inset-0 z-50 bg-white flex flex-col h-[100dvh] w-screen animate-fade-in">
             {/* Mobile Header with Logo & Close Button */}
             <div className="flex justify-between items-center h-15 sm:h-16 px-3 sm:px-5 border-b border-stone-200 bg-white shrink-0">
@@ -409,7 +419,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
             {/* Scrollable Nav Content - Full screen height coverage */}
             <div className="flex-1 overflow-y-auto overscroll-contain px-4 pt-3 pb-12 space-y-1 sm:px-6 bg-white">
-              {!currentUser ? (
+              {(
                 <>
                   {navItems.map((item) => {
                     const active = isNavActive(item.id);
@@ -428,6 +438,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                     );
                   })}
 
+                  {!currentUser && (
                   <div className="border-t border-stone-200 my-3 pt-3 space-y-2.5 px-0.5">
                     <Link
                       to="/institution/login"
@@ -452,48 +463,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                       Submit a Problem
                     </Link>
                   </div>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to={
-                      currentUser.role === 'admin' 
-                        ? '/admin/dashboard' 
-                        : currentUser.role === 'institution' 
-                        ? '/institution/dashboard' 
-                        : '/industry/dashboard'
-                    }
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3.5 py-2.5 rounded-lg text-base font-bold text-[#063028] hover:bg-stone-50"
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    to="/problem-statements"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3.5 py-2.5 rounded-lg text-base font-bold text-stone-700 hover:bg-stone-50"
-                  >
-                    Problem Statements
-                  </Link>
-                  {currentUser.role === 'industry' && (
-                    <Link
-                      to="/submit-problem"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="block px-3.5 py-2.5 rounded-lg text-base font-bold text-stone-700 hover:bg-stone-50"
-                    >
-                      Submit Problem
-                    </Link>
                   )}
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      handleLogout();
-                    }}
-                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-base font-bold bg-red-600 text-white hover:bg-red-700 transition-all cursor-pointer mt-3"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Sign Out
-                  </button>
                 </>
               )}
             </div>

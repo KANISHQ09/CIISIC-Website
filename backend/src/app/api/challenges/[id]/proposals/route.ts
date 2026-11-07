@@ -258,7 +258,22 @@ export async function POST(
       userAgent,
     });
 
-    return created(proposal);
+    // Return the same shape as the proposal list so the frontend can use it directly
+    const full = await prisma.proposal.findUnique({
+      where: { id: proposal.id },
+      include: {
+        institution: { select: { name: true, city: true } },
+        challenge: {
+          select: {
+            title: true,
+            domain: true,
+            organizationName: true,
+            industryProfile: { select: { companyName: true } },
+          },
+        },
+      },
+    });
+    return created(serializeProposal(full ?? proposal, session.user.role, session.user.id, institutionId));
   } catch (err) {
     console.error("[POST /api/challenges/[id]/proposals]", err);
     return serverError();

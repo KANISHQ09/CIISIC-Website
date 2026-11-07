@@ -129,28 +129,34 @@ export const SubmissionDetails: React.FC = () => {
     );
   }
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      updateSubmissionStatus(submission.id, 'Approved', remarks.trim() || 'Approved by CII Administration.');
-      setIsSubmitting(false);
+    try {
+      await updateSubmissionStatus(submission.id, 'Approved', remarks.trim() || 'Approved by CII Administration.');
       showToast(`Submission ${submission.id} has been APPROVED.`, 'success');
       navigate('/admin/dashboard');
-    }, 600);
+    } catch (err: any) {
+      showToast(err.message || 'Could not approve this submission.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!remarks.trim()) {
       showToast('A review remark/rejection reason is required to reject a submission.', 'error');
       return;
     }
     setIsSubmitting(true);
-    setTimeout(() => {
-      updateSubmissionStatus(submission.id, 'Rejected', remarks.trim());
-      setIsSubmitting(false);
+    try {
+      await updateSubmissionStatus(submission.id, 'Rejected', remarks.trim());
       showToast(`Submission ${submission.id} has been REJECTED/RETURNED with reasons.`, 'info');
       navigate('/admin/dashboard');
-    }, 600);
+    } catch (err: any) {
+      showToast(err.message || 'Could not reject this submission.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSave = () => {

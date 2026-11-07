@@ -116,7 +116,8 @@ export type SolutionStatus =
   | 'SUBMITTED' 
   | 'UNDER_REVIEW' 
   | 'APPROVED' 
-  | 'REVISION_REQUESTED' 
+  | 'REVISION_REQUESTED'
+  | 'RESUBMITTED'
   | 'REJECTED';
 
 export interface SolutionSubmission {

@@ -446,14 +446,15 @@ export const SubmitProblem: React.FC = () => {
         </div>
 
         {/* Progress Stepper Bar */}
-        <div className="mb-8 bg-white p-5 rounded-2xl border border-stone-200/90 shadow-xs">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <span className="text-sm font-bold text-[#063028] uppercase tracking-wider">
+        <div className="mb-8 bg-white px-4 py-3.5 sm:px-5 sm:py-4 rounded-2xl border border-stone-200/90 shadow-xs">
+          {/* Always one line: other steps shrink to icons on small screens */}
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs font-bold text-[#063028] uppercase tracking-wider whitespace-nowrap shrink-0">
               Step {currentStep} of 4
             </span>
-            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+            <div className="flex items-center flex-nowrap min-w-0">
               {steps.map((st) => (
-                <div key={st.number} className="flex items-center">
+                <div key={st.number} className="flex items-center shrink-0">
                   <button
                     type="button"
                     onClick={async () => {
@@ -463,7 +464,9 @@ export const SubmitProblem: React.FC = () => {
                         handleNextStep();
                       }
                     }}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+                    title={st.title}
+                    aria-current={currentStep === st.number ? 'step' : undefined}
+                    className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
                       currentStep === st.number
                         ? 'bg-[#063028] text-white shadow-sm'
                         : st.number < currentStep
@@ -471,10 +474,10 @@ export const SubmitProblem: React.FC = () => {
                         : 'bg-stone-100 text-stone-500'
                     }`}
                   >
-                    {st.number < currentStep ? <Check className="h-4 w-4" /> : st.icon}
-                    <span className="hidden md:inline">{st.title}</span>
+                    {st.number < currentStep ? <Check className="h-4 w-4 shrink-0" /> : st.icon}
+                    <span className={currentStep === st.number ? 'hidden sm:inline' : 'hidden lg:inline'}>{st.title}</span>
                   </button>
-                  {st.number < 4 && <ChevronRight className="h-4 w-4 text-stone-300 mx-1 hidden sm:inline" />}
+                  {st.number < 4 && <ChevronRight className="h-3.5 w-3.5 text-stone-300 mx-0.5 sm:mx-1 shrink-0" />}
                 </div>
               ))}
             </div>

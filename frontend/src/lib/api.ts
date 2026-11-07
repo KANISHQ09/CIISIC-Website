@@ -178,7 +178,94 @@ export function saveLocalSolutions(solutions: SolutionSubmission[]) {
   localStorage.setItem('ciisic_solutions', JSON.stringify(solutions));
 }
 
+/** Convert an API proposal into the dashboards' SolutionSubmission shape. */
+function mapBackendProposal(p: any): SolutionSubmission {
+  const lead = p.team?.lead ?? {};
+  const mentor = p.team?.mentor ?? {};
+  const status: SolutionStatus = p.status === 'DRAFT' ? 'SUBMITTED' : p.status;
+  return {
+    id: p.id,
+    challengeId: p.challengeId,
+    challengeTitle: p.challenge?.title ?? 'Industry Problem Statement',
+    industryCompanyName: p.challenge?.organisationName || 'Industry Partner',
+    industrySector: p.challenge?.domain ? formatThemeToSector(p.challenge.domain) : undefined,
+    institutionId: p.institution?.id ?? '',
+    institutionName: p.institution?.name ?? '',
+    teamName: p.team?.name ?? '',
+    // Names / emails are only present for admins and the submitting institution
+    teamLead: {
+      name: lead.name ?? '',
+      email: lead.email ?? '',
+      department: lead.department ?? '',
+      yearOfStudy: lead.yearOfStudy ?? '',
+      phone: lead.phone,
+    },
+    teamMembers: (p.team?.members ?? []).map((m: any) => ({
+      name: m.name ?? m.role ?? 'Team member',
+      email: m.email ?? '',
+      role: m.role,
+    })),
+    facultyMentor: {
+      name: mentor.name ?? '',
+      designation: mentor.designation ?? '',
+      email: mentor.email ?? '',
+      phone: mentor.phone,
+    },
+    title: p.title || p.challenge?.title || 'Solution proposal',
+    summary: p.summary ?? '',
+    detailedApproach: p.detailedApproach ?? '',
+    technologiesUsed: p.technologiesUsed ?? [],
+    deliverablesDescription: '',
+    demoUrl: p.demoUrl ?? undefined,
+    attachmentUrl: p.approachDoc ?? undefined,
+    documentName: p.approachDoc ? 'Solution document' : undefined,
+    status,
+    submittedAt: p.submittedAt,
+    reviewedAt: p.status !== 'SUBMITTED' && p.status !== 'RESUBMITTED' ? p.updatedAt : undefined,
+    industryFeedback: p.feedbackByIndustry ?? undefined,
+    revisionNotes: p.revisionNotes ?? undefined,
+  };
+}
+
+/** All solutions the signed-in user may see (the API scopes this by role). */
+export async function fetchSolutions(): Promise<SolutionSubmission[]> {
+  if (DEMO_MODE) return getLocalSolutions();
+
+  const all: any[] = [];
+  for (let page = 1; page <= 100; page++) {
+    const res = await fetchJSON<{ data?: any[]; pagination?: { totalPages: number } }>(
+      `${API_BASE}/api/proposals?page=${page}&limit=50`
+    );
+    const list = res?.data ?? [];
+    all.push(...list);
+    if (page >= (res?.pagination?.totalPages ?? 1) || list.length === 0) break;
+  }
+  return all.filter((p) => p.status !== 'DRAFT').map(mapBackendProposal);
+}
+
 export async function submitSolution(data: Omit<SolutionSubmission, 'id' | 'submittedAt' | 'status'>): Promise<SolutionSubmission> {
+  if (!DEMO_MODE) {
+    const created = await fetchJSON<any>(`${API_BASE}/api/challenges/${data.challengeId}/proposals`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: data.title,
+        summary: data.summary,
+        detailedApproach: data.detailedApproach,
+        technologiesUsed: data.technologiesUsed,
+        demoUrl: data.demoUrl || '',
+        approachDoc: data.attachmentUrl || undefined,
+        teamName: data.teamName,
+        teamLead: data.teamLead,
+        teamMembers: data.teamMembers,
+        facultyMentor: data.facultyMentor,
+        isDraft: false,
+      }),
+    });
+    return mapBackendProposal(created);
+  }
+
+  // Demo mode (no backend configured): keep it in this browser only
   const solutions = getLocalSolutions();
   const newSolution: SolutionSubmission = {
     ...data,
@@ -189,32 +276,6 @@ export async function submitSolution(data: Omit<SolutionSubmission, 'id' | 'subm
 
   solutions.unshift(newSolution);
   saveLocalSolutions(solutions);
-
-  // Attempt backend API dispatch if API_BASE is configured
-  if (API_BASE) {
-    try {
-      await fetchJSON(`${API_BASE}/api/challenges/${data.challengeId}/proposals`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: data.title,
-          summary: data.summary,
-          detailedApproach: data.detailedApproach,
-          technologiesUsed: data.technologiesUsed,
-          demoUrl: data.demoUrl || '',
-          approachDoc: data.attachmentUrl || '',
-          teamName: data.teamName,
-          teamLead: data.teamLead,
-          teamMembers: data.teamMembers,
-          facultyMentor: data.facultyMentor,
-          isDraft: false,
-        }),
-      });
-    } catch (e) {
-      console.warn('Backend proposal dispatch fallback to local state:', e);
-    }
-  }
-
   return newSolution;
 }
 
@@ -224,6 +285,27 @@ export async function reviewSolution(
   feedback?: string, 
   revisionNotes?: string
 ): Promise<SolutionSubmission> {
+  if (!DEMO_MODE) {
+    if (status === 'SUBMITTED' || status === 'RESUBMITTED') {
+      throw new Error('Choose a decision: under review, revision requested, approved or rejected.');
+    }
+    const updated = await fetchJSON<any>(`${API_BASE}/api/proposals/${solutionId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        status,
+        ...(feedback !== undefined && { feedbackByIndustry: feedback }),
+        ...(revisionNotes !== undefined && { revisionNotes }),
+        // A revision request without separate notes uses the feedback as the notes
+        ...(status === 'REVISION_REQUESTED' && revisionNotes === undefined && feedback
+          ? { revisionNotes: feedback }
+          : {}),
+      }),
+    });
+    return mapBackendProposal(updated);
+  }
+
+  // Demo mode (no backend configured)
   const solutions = getLocalSolutions();
   const index = solutions.findIndex(s => s.id === solutionId);
   if (index === -1) {
@@ -249,21 +331,39 @@ async function fetchJSON<T>(input: RequestInfo, init?: RequestInit): Promise<T> 
     headers.set("Authorization", `Bearer ${authToken}`);
   }
   
-  const response = await fetch(input, {
-    ...init,
-    headers,
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP error ${response.status}`);
+  let response: Response;
+  try {
+    response = await fetch(input, {
+      ...init,
+      headers,
+    });
+  } catch {
+    throw new Error('Could not reach the server. Please check your connection and try again.');
   }
-  
-  const data = await response.json();
-  if (!data.success) {
-    throw new Error(data.message || 'API error');
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data?.success) {
+    throw new Error(apiErrorMessage(data, response.status));
   }
   return data.data as T;
 }
+
+/** Best human-readable message from an API error body. */
+function apiErrorMessage(body: any, status: number): string {
+  const fieldErrors = body?.errors?.fieldErrors as Record<string, string[]> | undefined;
+  const firstFieldError = fieldErrors ? Object.values(fieldErrors).flat()[0] : undefined;
+  if (firstFieldError) return firstFieldError;
+  if (body?.message) return body.message;
+  if (status === 401) return 'Your session has expired. Please log in again.';
+  if (status === 403) return 'You do not have permission to do this.';
+  return `Request failed (${status}). Please try again.`;
+}
+
+/**
+ * Local sample data is only used when no backend is configured (VITE_API_URL unset),
+ * e.g. for a quick UI demo. With a backend configured, every failure is shown to the user.
+ */
+const DEMO_MODE = !API_BASE;
 
 /** Backend user to frontend User mapper */
 export function mapBackendUserToFrontend(backendUser: any): User {
@@ -381,64 +481,35 @@ function saveLocalRegistrations(regs: RegistrationItem[]) {
 }
 
 /** Auth */
+/**
+ * Sign in against the backend. There is no offline/demo fallback: if the server
+ * rejects the credentials or cannot be reached, this throws and nobody is signed in.
+ */
 export async function login(email: string, password: string, _roleHint?: UserRole): Promise<User> {
   const url = API_BASE ? `${API_BASE}/api/auth/login` : '/api/auth/login';
+
+  let response: Response;
   try {
-    const response = await fetch(url, {
+    response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ email: email.trim(), password }),
     });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success) {
-        setAuthToken(data.token);
-        const user = mapBackendUserToFrontend(data.user);
-        localStorage.setItem('ciisic_current_user', JSON.stringify(user));
-        return user;
-      }
-    }
-  } catch (err) {
-    console.warn('Backend login unavailable, proceeding with local credentials fallback:', err);
+  } catch {
+    throw new Error('Could not reach the server. Please check your connection and try again.');
   }
 
-  // Fallback demo authentication:
-  const normalizedEmail = email.trim().toLowerCase();
-  let role: UserRole = _roleHint || 'industry';
-  let name = 'Corporate Innovation Partner';
-  let compName = 'Tata Consultancy Services';
-  let instName = '';
-  
-  if (normalizedEmail.includes('admin') || _roleHint === 'admin') {
-    role = 'admin';
-    name = 'CII Administrator';
-    compName = '';
-  } else if (normalizedEmail.includes('inst') || normalizedEmail.includes('univ') || normalizedEmail.includes('college') || normalizedEmail.includes('edu') || _roleHint === 'institution') {
-    role = 'institution';
-    name = 'Dr. Academic SPOC';
-    instName = 'Indian Institute of Technology, Delhi';
-    compName = '';
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data?.success || !data?.token) {
+    throw new Error(data?.message || 'Invalid email or password');
   }
 
-  const fallbackUser: User = {
-    id: 'usr_' + Date.now(),
-    name: name,
-    email: email.trim(),
-    role: role,
-    companyName: compName,
-    designation: role === 'admin' ? 'Head of CII Operations' : role === 'institution' ? 'Dean of Academic R&D' : 'Lead R&D Director',
-    institutionName: instName,
-    institutionCity: 'New Delhi',
-    department: 'Research & Innovation Cell',
-    phone: '+91 9876543210',
-  };
-
-  setAuthToken('token_local_' + Date.now());
-  localStorage.setItem('ciisic_current_user', JSON.stringify(fallbackUser));
-  return fallbackUser;
+  setAuthToken(data.token);
+  const user = mapBackendUserToFrontend(data.user);
+  localStorage.setItem('ciisic_current_user', JSON.stringify(user));
+  return user;
 }
 
 export async function registerIndustry(data: {
@@ -467,17 +538,17 @@ export async function registerIndustry(data: {
       }),
     });
 
-    if (response.ok) {
-      const resJson = await response.json();
-      if (resJson.success) {
-        return {
-          success: true,
-          requiresApproval: true,
-          message: 'Your enterprise registration has been submitted and is pending CII Administrator review. You will be able to log in once approved.',
-        };
-      }
+    const resJson = await response.json().catch(() => null);
+    if (response.ok && resJson?.success) {
+      return {
+        success: true,
+        requiresApproval: true,
+        message: 'Your enterprise registration has been submitted and is pending CII Administrator review. You will be able to log in once approved.',
+      };
     }
+    throw new Error(apiErrorMessage(resJson, response.status));
   } catch (e) {
+    if (!DEMO_MODE) throw e;
     console.warn('Backend registration failed, saving locally:', e);
   }
 
@@ -534,17 +605,17 @@ export async function registerInstitution(data: {
       }),
     });
 
-    if (response.ok) {
-      const resJson = await response.json();
-      if (resJson.success) {
-        return {
-          success: true,
-          requiresApproval: true,
-          message: 'Your academic institution registration has been submitted and is pending CII Administrator review. You will be able to log in once approved.',
-        };
-      }
+    const resJson = await response.json().catch(() => null);
+    if (response.ok && resJson?.success) {
+      return {
+        success: true,
+        requiresApproval: true,
+        message: 'Your academic institution registration has been submitted and is pending CII Administrator review. You will be able to log in once approved.',
+      };
     }
+    throw new Error(apiErrorMessage(resJson, response.status));
   } catch (e) {
+    if (!DEMO_MODE) throw e;
     console.warn('Backend institution registration failed, saving locally:', e);
   }
 
@@ -582,6 +653,7 @@ export async function changePassword(currentPassword: string, newPassword: strin
       body: JSON.stringify({ currentPassword, newPassword }),
     });
   } catch (e) {
+    if (!DEMO_MODE) throw e;
     console.warn('Backend changePassword offline, simulating success:', e);
     return { success: true, message: 'Password changed successfully.' };
   }
@@ -614,6 +686,7 @@ export async function fetchAdminRegistrations(status?: string, role?: string): P
   try {
     return await fetchJSON<RegistrationItem[]>(url);
   } catch (e) {
+    if (!DEMO_MODE) throw e;
     console.warn('Backend fetchAdminRegistrations offline, returning local list:', e);
     let items = getLocalRegistrations();
     if (status) {
@@ -635,6 +708,7 @@ export async function reviewRegistration(id: string, action: 'APPROVE' | 'REJECT
       body: JSON.stringify({ action, remarks }),
     });
   } catch (e) {
+    if (!DEMO_MODE) throw e;
     console.warn('Backend reviewRegistration offline, updating local list:', e);
     const regs = getLocalRegistrations();
     const idx = regs.findIndex(r => r.id === id);
@@ -685,17 +759,20 @@ export async function getSession(): Promise<User | null> {
 
 /** Challenges */
 export async function fetchChallenges(): Promise<ProblemStatement[]> {
-  if (API_BASE) {
-    try {
-      const res = await fetchJSON<{ data?: any[]; [key: string]: any }>(`${API_BASE}/api/challenges`);
-      const challengesList = Array.isArray(res) ? res : (res?.data || []);
-      return challengesList.map(mapBackendToProblemStatement);
-    } catch (e) {
-      console.warn('Backend fetchChallenges failed, falling back to local data:', e);
-    }
-  }
+  if (DEMO_MODE) return getLocalChallenges();
 
-  return getLocalChallenges();
+  // Fetch every page — the API returns at most 100 problem statements per request
+  const all: any[] = [];
+  for (let page = 1; page <= 100; page++) {
+    const res = await fetchJSON<{ data?: any[]; pagination?: { totalPages: number } }>(
+      `${API_BASE}/api/challenges?page=${page}&limit=100`
+    );
+    const list = Array.isArray(res) ? res : (res?.data || []);
+    all.push(...list);
+    const totalPages = (res as any)?.pagination?.totalPages ?? 1;
+    if (page >= totalPages || list.length === 0) break;
+  }
+  return all.map(mapBackendToProblemStatement);
 }
 
 export async function fetchChallengeById(id: string): Promise<ProblemStatement> {
@@ -704,6 +781,7 @@ export async function fetchChallengeById(id: string): Promise<ProblemStatement> 
       const challenge = await fetchJSON<any>(`${API_BASE}/api/challenges/${id}`);
       return mapBackendToProblemStatement(challenge);
     } catch (e) {
+      if (!DEMO_MODE) throw e;
       console.warn(`Backend fetchChallengeById failed for ${id}, checking local:`, e);
     }
   }
@@ -804,6 +882,7 @@ export async function createChallenge(payload: Omit<ProblemStatement, 'id' | 'st
       });
       return mapBackendToProblemStatement(created);
     } catch (e) {
+      if (!DEMO_MODE) throw e;
       console.warn('Backend createChallenge failed, persisting locally:', e);
     }
   }
@@ -850,6 +929,7 @@ export async function updateChallenge(id: string, payload: Partial<ProblemStatem
       });
       return mapBackendToProblemStatement(updated);
     } catch (e) {
+      if (!DEMO_MODE) throw e;
       console.warn('Backend updateChallenge failed, updating locally:', e);
     }
   }
@@ -892,6 +972,7 @@ export async function reviewChallenge(id: string, status: SubmissionStatus, rema
       });
       return;
     } catch (e) {
+      if (!DEMO_MODE) throw e;
       console.warn('Backend reviewChallenge failed, updating locally:', e);
     }
   }
@@ -919,6 +1000,7 @@ export async function uploadFile(file: File, type: 'LOGO' | 'DOCUMENT'): Promise
       });
       return result;
     } catch (e) {
+      if (!DEMO_MODE) throw e;
       console.warn('Backend uploadFile failed, generating local object URL:', e);
     }
   }

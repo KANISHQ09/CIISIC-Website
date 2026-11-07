@@ -6,7 +6,7 @@ import {
 import { 
   login as apiLogin, logout as apiLogout, getSession, 
   fetchChallenges, createChallenge, updateChallenge, reviewChallenge,
-  getLocalSolutions,
+  fetchSolutions,
   submitSolution as apiSubmitSolution, reviewSolution as apiReviewSolution
 } from '../lib/api';
 
@@ -63,7 +63,7 @@ const mapUserRole = (user: any): User => {
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Load submissions from backend or fallback to localStorage
   const [submissions, setSubmissions] = useState<ProblemStatement[]>([]);
-  const [solutions, setSolutions] = useState<SolutionSubmission[]>(getLocalSolutions);
+  const [solutions, setSolutions] = useState<SolutionSubmission[]>([]);
 
   // Clear browser data left over from the retired student portal and team assignments
   useEffect(() => {
@@ -96,25 +96,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     })();
   }, []);
 
-  // Fetch challenges whenever current user changes
-  useEffect(() => {
-    (async () => {
-      try {
-        const challenges = await fetchChallenges();
-        setSubmissions(challenges);
-      } catch (err) {
-        console.error("Failed to fetch challenges:", err);
-      }
-    })();
-  }, [currentUser]);
-
-  // Sync submissions to localStorage (optional)
-  useEffect(() => {
-    if (submissions.length) {
-      localStorage.setItem('ciisic_submissions', JSON.stringify(submissions));
-    }
-  }, [submissions]);
-
   // Global toast notification state
   const [toast, setToast] = useState<ToastType | null>(null);
 
@@ -125,6 +106,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const hideToast = () => {
     setToast(null);
   };
+
+  // Fetch challenges (and, for signed-in partners/admins, solutions) whenever the user changes
+  useEffect(() => {
+    (async () => {
+      try {
+        const challenges = await fetchChallenges();
+        setSubmissions(challenges);
+      } catch (err: any) {
+        console.error("Failed to fetch challenges:", err);
+        showToast(`Could not load problem statements: ${err?.message || 'please refresh the page.'}`, 'error');
+      }
+    })();
+
+    if (!currentUser) {
+      setSolutions([]);
+      return;
+    }
+    (async () => {
+      try {
+        setSolutions(await fetchSolutions());
+      } catch (err: any) {
+        console.error("Failed to fetch solutions:", err);
+        showToast(`Could not load solutions: ${err?.message || 'please refresh the page.'}`, 'error');
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id]);
+
+  // Sync submissions to localStorage (optional)
+  useEffect(() => {
+    if (submissions.length) {
+      localStorage.setItem('ciisic_submissions', JSON.stringify(submissions));
+    }
+  }, [submissions]);
 
   // Sync to local storage
   useEffect(() => {

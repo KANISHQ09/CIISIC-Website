@@ -98,6 +98,7 @@ export type SafeProposal = {
   challenge?: {
     title: string;
     domain: string;
+    organisationName: string;
   };
 };
 
@@ -287,6 +288,8 @@ export function serializeProposal(
       ? {
           title: proposal.challenge.title,
           domain: proposal.challenge.domain,
+          organisationName:
+            proposal.challenge.organizationName ?? proposal.challenge.industryProfile?.companyName ?? "",
         }
       : undefined,
   };

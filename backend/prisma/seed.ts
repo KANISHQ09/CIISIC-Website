@@ -1,5 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 import * as dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
@@ -11,6 +12,60 @@ const prisma = new PrismaClient();
 
 async function hash(password: string) {
   return bcrypt.hash(password, 12);
+}
+
+/** Random password that satisfies the platform's rules (upper-case letter + digit, 8+ chars). */
+function generatePassword() {
+  return `Ciisic-${randomBytes(9).toString("base64url")}-9A`;
+}
+
+/** Passwords for accounts created in this run, printed once at the end. */
+const createdLogins: Array<{ label: string; email: string; password: string }> = [];
+
+/**
+ * Create a seed account only if it does not exist yet.
+ * Existing accounts are never modified — in particular their passwords are never reset.
+ */
+async function ensureUser(opts: {
+  label: string;
+  email: string;
+  name: string;
+  role: Role;
+  password: string;
+}) {
+  const existing = await prisma.user.findUnique({ where: { email: opts.email } });
+  if (existing) {
+    console.log(`↺ ${opts.label} already exists (${opts.email}) — left unchanged`);
+    return existing;
+  }
+  const user = await prisma.user.create({
+    data: {
+      email: opts.email,
+      name: opts.name,
+      role: opts.role,
+      passwordHash: await hash(opts.password),
+      emailVerified: true,
+      isActive: true,
+    },
+  });
+  createdLogins.push({ label: opts.label, email: opts.email, password: opts.password });
+  console.log(`✅ ${opts.label}: ${opts.email}`);
+  return user;
+}
+
+/**
+ * Admin passwords come from the environment; if unset, a random one is generated
+ * (and printed once). Nothing secret is stored in this file.
+ */
+function adminPassword(envVar: string) {
+  const fromEnv = process.env[envVar]?.trim();
+  if (fromEnv) {
+    if (fromEnv.length < 12) {
+      throw new Error(`${envVar} must be at least 12 characters long`);
+    }
+    return fromEnv;
+  }
+  return generatePassword();
 }
 
 async function main() {
@@ -89,47 +144,31 @@ async function main() {
   console.log(`✅ ${institutions.length} institutions created`);
 
   // ─── Super Admin ──────────────────────────────────────────────────────────
-  const superAdmin = await prisma.user.upsert({
-    where: { email: "superadmin@ciisic.in" },
-    update: { passwordHash: await hash("Admin@1234") },
-    create: {
-      email: "superadmin@ciisic.in",
-      name: "Super Admin",
-      role: "SUPER_ADMIN",
-      passwordHash: await hash("Admin@1234"),
-      emailVerified: true,
-      isActive: true,
-    },
+  const superAdmin = await ensureUser({
+    label: "Super Admin",
+    email: process.env.SEED_SUPER_ADMIN_EMAIL?.trim() || "superadmin@ciisic.in",
+    name: "Super Admin",
+    role: "SUPER_ADMIN",
+    password: adminPassword("SEED_SUPER_ADMIN_PASSWORD"),
   });
-  console.log(`✅ Super admin: ${superAdmin.email}`);
 
   // ─── CII Admin ────────────────────────────────────────────────────────────
-  const ciiAdmin = await prisma.user.upsert({
-    where: { email: "admin@ciisic.in" },
-    update: { passwordHash: await hash("Admin@1234") },
-    create: {
-      email: "admin@ciisic.in",
-      name: "CII Admin",
-      role: "CII_ADMIN",
-      passwordHash: await hash("Admin@1234"),
-      emailVerified: true,
-      isActive: true,
-    },
+  await ensureUser({
+    label: "CII Admin",
+    email: process.env.SEED_CII_ADMIN_EMAIL?.trim() || "admin@ciisic.in",
+    name: "CII Admin",
+    role: "CII_ADMIN",
+    password: adminPassword("SEED_CII_ADMIN_PASSWORD"),
   });
-  console.log(`✅ CII admin: ${ciiAdmin.email}`);
 
   // ─── Institution SPOC ─────────────────────────────────────────────────────
-  const spocUser = await prisma.user.upsert({
-    where: { email: "spoc@jlu.edu.in" },
-    update: { passwordHash: await hash("Spoc@1234") },
-    create: {
-      email: "spoc@jlu.edu.in",
-      name: "Dr. Priya Sharma",
-      role: "INSTITUTION_SPOC",
-      passwordHash: await hash("Spoc@1234"),
-      emailVerified: true,
-      isActive: true,
-    },
+  // Demo partner account (demo password only applies when the account is first created)
+  const spocUser = await ensureUser({
+    label: "Institution SPOC (demo)",
+    email: "spoc@jlu.edu.in",
+    name: "Dr. Priya Sharma",
+    role: "INSTITUTION_SPOC",
+    password: "Spoc@1234",
   });
 
   await prisma.institutionProfile.upsert({
@@ -142,20 +181,15 @@ async function main() {
       department: "Management Studies",
     },
   });
-  console.log(`✅ Institution SPOC: ${spocUser.email}`);
 
   // ─── Industry SPOC ────────────────────────────────────────────────────────
-  const industryUser = await prisma.user.upsert({
-    where: { email: "hr@techcorp.com" },
-    update: { passwordHash: await hash("Industry@1234") },
-    create: {
-      email: "hr@techcorp.com",
-      name: "Rahul Mehta",
-      role: "INDUSTRY_SPOC",
-      passwordHash: await hash("Industry@1234"),
-      emailVerified: true,
-      isActive: true,
-    },
+  // Demo partner account (demo password only applies when the account is first created)
+  const industryUser = await ensureUser({
+    label: "Industry SPOC (demo)",
+    email: "hr@techcorp.com",
+    name: "Rahul Mehta",
+    role: "INDUSTRY_SPOC",
+    password: "Industry@1234",
   });
 
   const industryProfile = await prisma.industryProfile.upsert({
@@ -170,7 +204,6 @@ async function main() {
       memberSince: new Date("2023-01-01"),
     },
   });
-  console.log(`✅ Industry SPOC: ${industryUser.email}`);
 
   // ─── Sample Challenges ────────────────────────────────────────────────────
   const challenge1 = await prisma.challenge.upsert({
@@ -260,12 +293,16 @@ async function main() {
   });
 
   console.log("\n✅ Seed complete!\n");
-  console.log("─── Test Credentials ─────────────────────────────────────────");
-  console.log("Super Admin:       superadmin@ciisic.in   / Admin@1234");
-  console.log("CII Admin:         admin@ciisic.in        / Admin@1234");
-  console.log("Institution SPOC:  spoc@jlu.edu.in        / Spoc@1234");
-  console.log("Industry SPOC:     hr@techcorp.com        / Industry@1234");
-  console.log("──────────────────────────────────────────────────────────────");
+  if (createdLogins.length === 0) {
+    console.log("No new accounts were created; existing passwords were left unchanged.");
+  } else {
+    console.log("─── New accounts (shown once — store these somewhere safe) ───");
+    for (const login of createdLogins) {
+      console.log(`${login.label.padEnd(26)} ${login.email.padEnd(26)} / ${login.password}`);
+    }
+    console.log("──────────────────────────────────────────────────────────────");
+    console.log("Change these passwords after the first login (Change Password in each dashboard).");
+  }
 }
 
 main()

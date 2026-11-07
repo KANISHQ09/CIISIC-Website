@@ -24,8 +24,9 @@ const PROPOSAL_INCLUDE = {
     select: {
       title: true,
       domain: true,
+      organizationName: true,
       industryProfileId: true,
-      industryProfile: { select: { userId: true } },
+      industryProfile: { select: { userId: true, companyName: true } },
     },
   },
 } as const;
@@ -190,7 +191,9 @@ export async function PATCH(
       userAgent,
     });
 
-    return ok(updated);
+    // Return the same shape as GET so dashboards can update in place
+    const full = await prisma.proposal.findUnique({ where: { id }, include: PROPOSAL_INCLUDE });
+    return ok(serializeProposal(full ?? updated, role, session.user.id));
   } catch (err) {
     console.error("[PATCH /api/proposals/[id]]", err);
     return serverError();

@@ -66,7 +66,14 @@ export async function GET(req: NextRequest) {
         orderBy: { submittedAt: "desc" },
         include: {
           institution: { select: { name: true, city: true } },
-          challenge: { select: { title: true, domain: true } },
+          challenge: {
+            select: {
+              title: true,
+              domain: true,
+              organizationName: true,
+              industryProfile: { select: { companyName: true } },
+            },
+          },
         },
       }),
     ]);
