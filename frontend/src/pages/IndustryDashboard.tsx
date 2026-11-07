@@ -559,7 +559,7 @@ export const IndustryDashboard: React.FC = () => {
               }`}
             >
               <GraduationCap className="h-4 w-4" />
-              Student Solutions Received
+              Solutions Received
               <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
                 {mySolutions.length}
               </span>

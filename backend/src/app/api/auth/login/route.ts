@@ -97,7 +97,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Role verification: only admins, industry and institution SPOCs can sign in.
-    // Student accounts were retired at CII's request.
     if (
       user.role !== "CII_ADMIN" &&
       user.role !== "INDUSTRY_SPOC" &&
@@ -105,13 +104,7 @@ export async function POST(req: NextRequest) {
       user.role !== "INSTITUTION_SPOC"
     ) {
       return NextResponse.json(
-        {
-          success: false,
-          message:
-            user.role === "STUDENT"
-              ? "Student accounts are no longer supported. Please contact your institution's CII SPOC."
-              : "Insufficient permissions to access portals",
-        },
+        { success: false, message: "Insufficient permissions to access portals" },
         { status: 403, headers }
       );
     }

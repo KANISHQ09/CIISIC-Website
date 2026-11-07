@@ -63,30 +63,10 @@ model User {
   notifications       Notification[]
   passwordResetTokens PasswordResetToken[]
   sessions            Session[]
-  // Legacy: student accounts are retired; dropped in the clean-up phase
-  studentProfile      StudentProfile?
   submittedProposals  Proposal[]           @relation("ProposalSubmitter")
 
   @@index([email])
   @@index([role])
-}
-
-// Legacy: no longer created or read by the API. Kept only so existing rows
-// survive until they are backfilled onto Proposal.institutionId; removed in the clean-up phase.
-model StudentProfile {
-  id            String      @id @default(cuid())
-  userId        String      @unique
-  enrollmentNo  String      @unique
-  institutionId String
-  department    String
-  course        String?
-  idCardUrl     String?
-  yearOfStudy   Int
-  skills        String[]
-  createdAt     DateTime    @default(now())
-  proposals     Proposal[]
-  institution   Institution @relation(fields: [institutionId], references: [id])
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model IndustryProfile {
@@ -114,7 +94,6 @@ model Institution {
   spocUserId         String?
   createdAt          DateTime            @default(now())
   institutionProfile InstitutionProfile?
-  students           StudentProfile[]
   proposals          Proposal[]
 }
 
@@ -181,16 +160,14 @@ model Challenge {
 }
 
 model Proposal {
-  id                 String          @id @default(cuid())
+  id                 String         @id @default(cuid())
   challengeId        String
   // Institution that submitted the solution (one active solution per institution per challenge,
   // enforced in the API). Nullable only until legacy rows are backfilled.
   institutionId      String?
   // Institution SPOC account that submitted it
   submittedById      String?
-  // Legacy link to a student account — no longer written
-  studentProfileId   String?
-  status             ProposalStatus  @default(SUBMITTED)
+  status             ProposalStatus @default(SUBMITTED)
   title              String?
   approachDoc        String?
   summary            String
@@ -206,15 +183,13 @@ model Proposal {
   facultyMentor      Json?
   revisionNotes      String?
   feedbackByIndustry String?
-  submittedAt        DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
+  submittedAt        DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
   messages           Message[]
-  challenge          Challenge       @relation(fields: [challengeId], references: [id])
-  institution        Institution?    @relation(fields: [institutionId], references: [id])
-  submittedBy        User?           @relation("ProposalSubmitter", fields: [submittedById], references: [id])
-  studentProfile     StudentProfile? @relation(fields: [studentProfileId], references: [id])
+  challenge          Challenge      @relation(fields: [challengeId], references: [id])
+  institution        Institution?   @relation(fields: [institutionId], references: [id])
+  submittedBy        User?          @relation("ProposalSubmitter", fields: [submittedById], references: [id])
 
-  @@unique([challengeId, studentProfileId])
   @@index([status])
   @@index([institutionId])
   @@index([challengeId, institutionId])
@@ -285,7 +260,6 @@ enum Role {
   CII_ADMIN
   INSTITUTION_SPOC
   INDUSTRY_SPOC
-  STUDENT
 }
 
 enum CellTheme {
