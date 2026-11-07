@@ -5,8 +5,21 @@ import { prisma } from "@/lib/prisma";
  * GET /api/cron/deadline-notifications
  * System cron trigger to find challenges with deadlines approaching in < 48 hours
  * and notify relevant users (Industry SPOC owner and participating institutions).
+ * Protected by the CRON_SECRET environment variable.
  */
 export async function GET(req: NextRequest) {
+  // Only the scheduler may run this: it must send "Authorization: Bearer <CRON_SECRET>"
+  const secret = process.env.CRON_SECRET;
+  if (!secret) {
+    return NextResponse.json(
+      { success: false, message: "Scheduled jobs are not configured (CRON_SECRET is not set)" },
+      { status: 503 }
+    );
+  }
+  if (req.headers.get("authorization") !== `Bearer ${secret}`) {
+    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const now = new Date();
     const threshold = new Date(now.getTime() + 48 * 60 * 60 * 1000); // 48 hours from now

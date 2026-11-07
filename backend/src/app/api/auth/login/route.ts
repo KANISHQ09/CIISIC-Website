@@ -68,19 +68,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (user.approvalStatus === "PENDING" || !user.isActive) {
-      const isPending = user.approvalStatus === "PENDING";
-      return NextResponse.json(
-        {
-          success: false,
-          message: isPending
-            ? "Your registration is currently pending approval by the CII Administrator. You will be able to log in once your account is approved."
-            : "Your account has been deactivated or rejected by the CII Administrator.",
-        },
-        { status: 403, headers }
-      );
-    }
-
     if (!user.passwordHash) {
       return NextResponse.json(
         { success: false, message: "This account uses a different sign-in method" },
@@ -93,6 +80,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: false, message: "Invalid email or password" },
         { status: 401, headers }
+      );
+    }
+
+    // Account status is only revealed to someone who knows the password,
+    // so the login form cannot be used to discover which emails are registered.
+    if (user.approvalStatus === "PENDING" || !user.isActive) {
+      const isPending = user.approvalStatus === "PENDING";
+      return NextResponse.json(
+        {
+          success: false,
+          message: isPending
+            ? "Your registration is currently pending approval by the CII Administrator. You will be able to log in once your account is approved."
+            : "Your account has been deactivated or rejected by the CII Administrator.",
+        },
+        { status: 403, headers }
       );
     }
 
