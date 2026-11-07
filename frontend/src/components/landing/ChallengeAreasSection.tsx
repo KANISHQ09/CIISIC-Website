@@ -61,7 +61,7 @@ export const ChallengeAreasSection: React.FC = () => {
                 Browse Problem Statements <ArrowRight className="h-4.5 w-4.5" />
               </Link>
               <Link
-                to="/industry/login"
+                to="/submit-problem"
                 className="inline-flex items-center gap-2 px-6 py-4 rounded-xl text-base font-bold text-[#063028] bg-white border border-[#063028]/20 hover:bg-stone-50 shadow-2xs transition-all duration-200"
               >
                 Submit Your Industry Challenge

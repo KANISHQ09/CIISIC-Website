@@ -89,7 +89,9 @@ export const IndustryDashboard: React.FC = () => {
 
   // Filter submissions to only display those belonging to this logged in industry partner
   const mySubmissions = submissions.filter(
-    (sub) => sub.company.email.toLowerCase() === currentUser?.email?.toLowerCase()
+    (sub) =>
+      sub.ownedByRequester ||
+      (!!sub.company.email && sub.company.email.toLowerCase() === currentUser?.email?.toLowerCase())
   );
 
   const stats = {

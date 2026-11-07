@@ -1,4 +1,5 @@
 import { Role } from "@prisma/client";
+import { emailMatchesCompany } from "@/lib/problem-submission";
 
 // ─── Types returned to clients ────────────────────────────────────────────────
 
@@ -37,11 +38,36 @@ export type SafeChallenge = {
     industry: string;
     logoUrl: string | null;
     isCIIMember: boolean;
-    email?: string;
-    representativeName?: string;
+    email?: string; // admins and the owning company only
+    representativeName?: string; // admins and the owning company only
   };
   _count?: { proposals: number };
   attachmentUrls?: string[];
+  submissionSource: string; // PORTAL | PUBLIC
+  isNewOrganisation: boolean; // submitted as "Other" (no registered account)
+  ownedByRequester: boolean;
+  referenceCode?: string | null; // admins and the owning company only
+  organisation: {
+    name: string;
+    sector: string | null;
+    website: string | null;
+    city: string | null;
+    state: string | null;
+    address?: string | null; // admins and the owning company only
+  };
+  // Person who submitted it — admins and the owning company only
+  contact?: {
+    name: string | null;
+    designation: string | null;
+    email: string | null;
+    phone: string | null;
+  };
+  // Hints for the CII reviewer — admins only
+  review?: {
+    registeredCompany: boolean;
+    emailMatchesCompany: boolean | null;
+    inviteSentAt: Date | null;
+  };
 };
 export type SafeProposal = {
   id: string;
@@ -97,6 +123,8 @@ export function serializeUser(user: any): SafeUser {
 /**
  * Serialize a challenge.
  * - Public visitors (no role): budgetRange is stripped.
+ * - Contact details and the reference ID: CII admins and the owning company only.
+ * - Reviewer hints (registered company? email domain matches?): CII admins only.
  */
 export function serializeChallenge(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -104,6 +132,13 @@ export function serializeChallenge(
   requestingRole?: Role,
   requestingUserId?: string
 ): SafeChallenge {
+  const isAdmin = requestingRole === "SUPER_ADMIN" || requestingRole === "CII_ADMIN";
+  const isOwner =
+    !!requestingUserId &&
+    requestingRole === "INDUSTRY_SPOC" &&
+    challenge.industryProfile?.userId === requestingUserId;
+  const showContact = isAdmin || isOwner;
+
   return {
     id: challenge.id,
     title: challenge.title,
@@ -128,11 +163,44 @@ export function serializeChallenge(
       industry: challenge.industryProfile?.industry ?? "",
       logoUrl: challenge.industryProfile?.logoUrl ?? null,
       isCIIMember: challenge.industryProfile?.isCIIMember ?? false,
-      email: challenge.industryProfile?.user?.email ?? "",
-      representativeName: challenge.industryProfile?.user?.name ?? "",
+      email: showContact ? (challenge.industryProfile?.user?.email ?? "") : undefined,
+      representativeName: showContact ? (challenge.industryProfile?.user?.name ?? "") : undefined,
     },
     _count: challenge._count,
     attachmentUrls: challenge.attachmentUrls ?? [],
+    submissionSource: challenge.submissionSource ?? "PORTAL",
+    isNewOrganisation: challenge.isNewOrganisation ?? false,
+    ownedByRequester: isOwner,
+    referenceCode: showContact ? (challenge.referenceCode ?? null) : undefined,
+    organisation: {
+      name: challenge.organizationName ?? challenge.industryProfile?.companyName ?? "",
+      sector: challenge.orgSector ?? challenge.industryProfile?.industry ?? null,
+      website: challenge.orgWebsite ?? challenge.industryProfile?.websiteUrl ?? null,
+      city: challenge.orgCity ?? null,
+      state: challenge.orgState ?? null,
+      ...(showContact && { address: challenge.orgAddress ?? null }),
+    },
+    contact: showContact
+      ? {
+          name: challenge.contactName ?? challenge.industryProfile?.user?.name ?? null,
+          designation: challenge.contactDesignation ?? null,
+          email: challenge.contactEmail ?? challenge.industryProfile?.user?.email ?? null,
+          phone: challenge.contactPhone ?? null,
+        }
+      : undefined,
+    review: isAdmin
+      ? {
+          registeredCompany: !!challenge.industryProfileId,
+          emailMatchesCompany: challenge.industryProfileId
+            ? emailMatchesCompany(
+                challenge.contactEmail,
+                challenge.industryProfile?.user?.email,
+                challenge.industryProfile?.websiteUrl
+              )
+            : null,
+          inviteSentAt: challenge.inviteSentAt ?? null,
+        }
+      : undefined,
   };
 }
 

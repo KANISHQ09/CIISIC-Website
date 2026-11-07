@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { INDUSTRY_PROFILE_SELECT, generateReferenceCode } from "@/lib/problem-submission";
+import { sendProblemReceivedEmail } from "@/lib/email";
 import {
   ChallengeCreateSchema,
   ChallengeQuerySchema,
@@ -129,22 +131,7 @@ export async function GET(req: NextRequest) {
           [sortBy]: sortOrder,
         },
         include: {
-          industryProfile: {
-            select: {
-              id: true,
-              userId: true,
-              companyName: true,
-              industry: true,
-              logoUrl: true,
-              isCIIMember: true,
-              user: {
-                select: {
-                  email: true,
-                  name: true,
-                },
-              },
-            },
-          },
+          industryProfile: { select: INDUSTRY_PROFILE_SELECT },
           _count: {
             select: {
               proposals: true,
@@ -215,6 +202,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const referenceCode = await generateReferenceCode(prisma);
+    const contactEmail = data.contactEmail || session.user.email;
+    const contactName = data.contactName || session.user.name;
+
     const challenge = await prisma.challenge.create({
       data: {
         title: data.title,
@@ -226,30 +217,30 @@ export async function POST(req: NextRequest) {
         tags: data.tags ?? [],
         attachmentUrls: data.attachmentUrls ?? [],
         industryProfileId: industryProfile.id,
+        // Never published directly: CII must verify first
         status: data.status ?? "PENDING_APPROVAL",
+        submissionSource: "PORTAL",
+        referenceCode,
         organizationName:
           data.organizationName ?? industryProfile.companyName,
+        orgSector: industryProfile.industry,
+        orgWebsite: industryProfile.websiteUrl,
         duration: data.duration ?? null,
+        contactName,
+        contactDesignation: data.contactDesignation || null,
+        contactEmail,
+        contactPhone: data.contactPhone || null,
       },
-      include: {
-        industryProfile: {
-          select: {
-            id: true,
-            userId: true,
-            companyName: true,
-            industry: true,
-            logoUrl: true,
-            isCIIMember: true,
-            user: {
-              select: {
-                email: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
+      include: { industryProfile: { select: INDUSTRY_PROFILE_SELECT } },
     });
+
+    if (challenge.status === "PENDING_APPROVAL" && contactEmail) {
+      try {
+        await sendProblemReceivedEmail(contactEmail, contactName, challenge.title, referenceCode);
+      } catch (err) {
+        console.error("[POST /api/challenges] Failed to send acknowledgement email:", err);
+      }
+    }
 
     const { ipAddress, userAgent } = getRequestMeta(req);
 

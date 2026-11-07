@@ -137,14 +137,9 @@ export default function App() {
                 </IndustryRoute>
               } 
             />
-            <Route 
-              path="/industry/submit" 
-              element={
-                <IndustryRoute>
-                  <SubmitProblem />
-                </IndustryRoute>
-              } 
-            />
+            {/* Problem submission: open to everyone, no login needed (CII verifies before publishing) */}
+            <Route path="/submit-problem" element={<SubmitProblem />} />
+            <Route path="/industry/submit" element={<Navigate to="/submit-problem" replace />} />
 
             {/* CII Administration Portal Routes */}
             <Route 

@@ -55,16 +55,18 @@ export async function GET(req: NextRequest) {
         dateStyle: "medium",
       });
 
-      // 1. Notify Industry SPOC
-      await prisma.notification.create({
-        data: {
-          userId: challenge.industryProfile.userId,
-          title: "Challenge Deadline Approaching",
-          body: `The deadline for your project "${challenge.title}" is approaching on ${deadlineStr}.`,
-          link: challengeLink,
-        },
-      });
-      notificationsCreated++;
+      // 1. Notify Industry SPOC (only when the problem belongs to a registered account)
+      if (challenge.industryProfile) {
+        await prisma.notification.create({
+          data: {
+            userId: challenge.industryProfile.userId,
+            title: "Challenge Deadline Approaching",
+            body: `The deadline for your project "${challenge.title}" is approaching on ${deadlineStr}.`,
+            link: challengeLink,
+          },
+        });
+        notificationsCreated++;
+      }
 
       // 2. Notify each institution that submitted/drafted a proposal for this challenge (once each)
       const institutionUserIds = new Set(

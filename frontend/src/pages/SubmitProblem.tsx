@@ -1,27 +1,44 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { 
   Building2, Settings, FileText, CheckCircle, ArrowLeft, 
-  ArrowRight, ShieldAlert, UploadCloud, X, Check, Sparkles, ChevronRight
+  ArrowRight, ShieldAlert, UploadCloud, X, Check, Sparkles, ChevronRight,
+  UserRound, Copy
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
-import { DifficultyLevel } from '../types';
-import { uploadFile } from '../lib/api';
+import { DifficultyLevel, PublicIndustry } from '../types';
+import {
+  uploadFile, uploadPublicDocument, fetchPublicIndustries,
+  submitPublicProblem, toBackendProblemFields
+} from '../lib/api';
+
+/** Dropdown value for an organisation that is not registered on the portal. */
+const OTHER_ORG = 'OTHER';
+/** Dropdown value used when a logged-in industry user submits for their own company. */
+const OWN_ORG = 'SELF';
 
 // Zod validation schema
 const formSchema = z.object({
-  // Step 1: Company Info
+  // Step 1: Organisation & contact
+  orgChoice: z.string().min(1, 'Select your organisation, or choose "Other"'),
   industryName: z.string().min(1, 'Industry sector category is required'),
-  companyName: z.string().min(1, 'Company name is required'),
-  representativeName: z.string().min(1, 'Representative name is required'),
+  companyName: z.string().min(1, 'Organisation name is required'),
+  representativeName: z.string().min(2, 'Your name is required'),
   designation: z.string().min(2, 'Designation is required'),
-  email: z.string().email('Please enter a valid corporate email'),
-  phone: z.string().min(1, 'Phone number is required'),
-  website: z.string().min(1, 'Website URL is required'),
+  email: z.string().email('Please enter a valid email address'),
+  phone: z
+    .string()
+    .min(7, 'Phone number is required')
+    .regex(/^[+0-9 ()-]+$/, 'Use digits, spaces, +, - and brackets only'),
+  website: z.string().optional(),
   industrySector: z.string().min(2, 'Industry sector is required'),
+  // Only needed for "Other" organisations (checked in validateOrganisation)
+  city: z.string().optional(),
+  state: z.string().optional(),
+  address: z.string().optional(),
 
   // Step 2: Problem Details
   title: z.string().min(25, 'Title must be at least 25 characters'),
@@ -52,6 +69,7 @@ type FormFields = z.infer<typeof formSchema>;
 export const SubmitProblem: React.FC = () => {
   const { addSubmission, currentUser, showToast } = useApp();
   const navigate = useNavigate();
+  const isIndustryUser = currentUser?.role === 'industry';
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -59,24 +77,39 @@ export const SubmitProblem: React.FC = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
+  // Public submission: organisation dropdown + result screen
+  const [industries, setIndustries] = useState<PublicIndustry[]>([]);
+  const [industriesState, setIndustriesState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [orgSearch, setOrgSearch] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const [submitted, setSubmitted] = useState<{ referenceCode: string; email: string; title: string } | null>(null);
+
   // Initialize react-hook-form with Zod validation
   const {
     register,
     handleSubmit: _,
     trigger,
+    setValue,
+    setError,
+    clearErrors,
+    watch,
     formState: { errors },
     getValues
   } = useForm<FormFields>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      orgChoice: isIndustryUser ? OWN_ORG : '',
       industryName: 'Manufacturing',
-      companyName: currentUser?.companyName || '',
-      representativeName: currentUser?.name || '',
-      designation: currentUser?.designation || '',
-      email: currentUser?.email || '',
-      phone: '+91 98765 43210',
-      website: 'https://www.tatamotors.com',
-      industrySector: 'Automotive',
+      companyName: isIndustryUser ? currentUser?.companyName || '' : '',
+      representativeName: isIndustryUser ? currentUser?.name || '' : '',
+      designation: isIndustryUser ? currentUser?.designation || '' : '',
+      email: isIndustryUser ? currentUser?.email || '' : '',
+      phone: isIndustryUser ? currentUser?.phone || '' : '',
+      website: '',
+      industrySector: isIndustryUser ? currentUser?.industry || '' : '',
+      city: '',
+      state: '',
+      address: '',
       difficultyLevel: 'Medium',
       budget: '',
       deadline: '',
@@ -84,19 +117,80 @@ export const SubmitProblem: React.FC = () => {
     }
   });
 
+  const orgChoice = watch('orgChoice');
+  const isOtherOrg = orgChoice === OTHER_ORG;
+  const isRegisteredOrg = !!orgChoice && orgChoice !== OTHER_ORG && orgChoice !== OWN_ORG;
+
+  // Load the registered organisations for the dropdown (public visitors only)
+  useEffect(() => {
+    if (isIndustryUser) return;
+    let cancelled = false;
+    fetchPublicIndustries()
+      .then((list) => {
+        if (cancelled) return;
+        setIndustries(list);
+        setIndustriesState('ready');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // The form still works: the visitor can choose "Other"
+        setIndustriesState('error');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isIndustryUser]);
+
+  const filteredIndustries = industries.filter((org) =>
+    org.companyName.toLowerCase().includes(orgSearch.trim().toLowerCase())
+  );
+
+  const handleOrgChoice = (value: string) => {
+    setValue('orgChoice', value, { shouldValidate: true });
+    clearErrors(['companyName', 'industrySector', 'city', 'state']);
+    if (value === OTHER_ORG || value === '') {
+      setValue('companyName', '');
+      setValue('industrySector', '');
+      setValue('website', '');
+      return;
+    }
+    const org = industries.find((i) => i.id === value);
+    if (org) {
+      setValue('companyName', org.companyName, { shouldValidate: true });
+      setValue('industrySector', org.industry, { shouldValidate: true });
+      setValue('website', org.websiteUrl || '');
+    }
+  };
+
   const steps = [
-    { number: 1, title: 'Company Info', icon: <Building2 className="h-4.5 w-4.5" /> },
+    { number: 1, title: 'Organisation', icon: <Building2 className="h-4.5 w-4.5" /> },
     { number: 2, title: 'Problem Details', icon: <FileText className="h-4.5 w-4.5" /> },
     { number: 3, title: 'Technical Spec', icon: <Settings className="h-4.5 w-4.5" /> },
     { number: 4, title: 'Filing & Consent', icon: <ShieldAlert className="h-4.5 w-4.5" /> }
   ];
+
+  // Extra checks for "Other" organisations (fields that are optional otherwise)
+  const validateOrganisation = (): boolean => {
+    if (!isOtherOrg) return true;
+    const values = getValues();
+    let valid = true;
+    if (!values.city || values.city.trim().length < 2) {
+      setError('city', { message: 'City is required' });
+      valid = false;
+    }
+    if (!values.state || values.state.trim().length < 2) {
+      setError('state', { message: 'State is required' });
+      valid = false;
+    }
+    return valid;
+  };
 
   // Custom step validation before going forward
   const handleNextStep = async () => {
     let fieldsToValidate: Array<keyof FormFields> = [];
 
     if (currentStep === 1) {
-      fieldsToValidate = ['industryName', 'companyName', 'representativeName', 'designation', 'email', 'phone', 'website', 'industrySector'];
+      fieldsToValidate = ['orgChoice', 'industryName', 'companyName', 'representativeName', 'designation', 'email', 'phone', 'industrySector'];
     } else if (currentStep === 2) {
       fieldsToValidate = ['title', 'description', 'businessChallenge', 'existingProcess', 'expectedOutcome', 'projectObjectives'];
     } else if (currentStep === 3) {
@@ -104,7 +198,8 @@ export const SubmitProblem: React.FC = () => {
     }
 
     const isStepValid = await trigger(fieldsToValidate);
-    if (isStepValid) {
+    const isOrgValid = currentStep === 1 ? validateOrganisation() : true;
+    if (isStepValid && isOrgValid) {
       setCurrentStep((prev) => Math.min(prev + 1, 4));
     } else {
       showToast('Please complete the required fields in the current step.', 'error');
@@ -119,7 +214,8 @@ export const SubmitProblem: React.FC = () => {
   const handlePreSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const isFormValid = await trigger();
-    if (isFormValid) {
+    const isOrgValid = validateOrganisation();
+    if (isFormValid && isOrgValid) {
       setIsConfirming(true);
     } else {
       showToast('Form has validation errors. Please check all steps.', 'error');
@@ -144,14 +240,15 @@ export const SubmitProblem: React.FC = () => {
 
       if (uploadedFile) {
         showToast('Uploading document attachment...', 'info');
-        const uploadRes = await uploadFile(uploadedFile, 'DOCUMENT');
+        const uploadRes = isIndustryUser
+          ? await uploadFile(uploadedFile, 'DOCUMENT')
+          : await uploadPublicDocument(uploadedFile);
         attachmentUrl = uploadRes.url;
       }
 
       const formattedNotes = `Budget allocated: ${data.budget}. Target date: ${formatToDDMMYYYY(data.deadline)}${data.additionalNotes ? `. ${data.additionalNotes}` : ''}`;
 
-      // Assemble data matching the state structure and await backend creation
-      await addSubmission({
+      const submission = {
         company: {
           industryName: data.industryName,
           companyName: data.companyName,
@@ -159,7 +256,7 @@ export const SubmitProblem: React.FC = () => {
           designation: data.designation,
           email: data.email,
           phone: data.phone,
-          website: data.website,
+          website: data.website || '',
           industrySector: data.industrySector
         },
         details: {
@@ -184,12 +281,39 @@ export const SubmitProblem: React.FC = () => {
           fileAttachmentName: attachmentUrl,
           declarationAccepted: data.declarationAccepted
         }
+      };
+
+      if (isIndustryUser) {
+        // Logged-in industry partner: goes to their own account, then to CII review
+        await addSubmission(submission);
+        setIsSubmitting(false);
+        setIsConfirming(false);
+        showToast('Problem Statement filed successfully! Status is Pending Approval.', 'success');
+        navigate('/industry/dashboard');
+        return;
+      }
+
+      // Public visitor: no login, CII verifies before anything is published
+      const result = await submitPublicProblem({
+        ...toBackendProblemFields(submission),
+        industryProfileId: isRegisteredOrg ? data.orgChoice : undefined,
+        organisationName: isOtherOrg ? data.companyName : undefined,
+        orgSector: isOtherOrg ? data.industrySector : undefined,
+        orgWebsite: isOtherOrg ? data.website || undefined : undefined,
+        orgCity: data.city || undefined,
+        orgState: data.state || undefined,
+        orgAddress: data.address || undefined,
+        contactName: data.representativeName,
+        contactDesignation: data.designation,
+        contactEmail: data.email,
+        contactPhone: data.phone,
+        companyFax: honeypot,
       });
 
       setIsSubmitting(false);
       setIsConfirming(false);
-      showToast('Problem Statement filed successfully! Status is Pending Approval.', 'success');
-      navigate('/industry/dashboard');
+      setSubmitted({ referenceCode: result.referenceCode, email: data.email, title: data.title });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
       setIsSubmitting(false);
       showToast(err.message || 'An error occurred during submission. Please try again.', 'error');
@@ -197,10 +321,23 @@ export const SubmitProblem: React.FC = () => {
   };
 
   // File Upload Handlers
+  // Only PDFs up to 10MB are accepted by the server
+  const acceptFile = (file: File) => {
+    if (file.type !== 'application/pdf') {
+      showToast('Please attach a PDF document.', 'error');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('The attachment must be 10MB or smaller.', 'error');
+      return;
+    }
+    setUploadedFile(file);
+    showToast(`Selected file: ${file.name}`, 'info');
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setUploadedFile(e.target.files[0]);
-      showToast(`Selected file: ${e.target.files[0].name}`, 'info');
+      acceptFile(e.target.files[0]);
     }
   };
 
@@ -217,8 +354,7 @@ export const SubmitProblem: React.FC = () => {
     e.preventDefault();
     setDragOver(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setUploadedFile(e.dataTransfer.files[0]);
-      showToast(`Dropped file: ${e.dataTransfer.files[0].name}`, 'info');
+      acceptFile(e.dataTransfer.files[0]);
     }
   };
 
@@ -228,20 +364,84 @@ export const SubmitProblem: React.FC = () => {
 
   const allValues = getValues();
 
+  // Shown after a successful public submission
+  if (submitted) {
+    return (
+      <div className="bg-[#faf8f4] min-h-screen py-10 sm:py-14">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6">
+          <div className="bg-white rounded-3xl border border-stone-200/90 shadow-md p-6 sm:p-10 text-center space-y-6">
+            <div className="mx-auto h-16 w-16 rounded-full bg-[#edf4f0] text-[#063028] flex items-center justify-center">
+              <CheckCircle className="h-8 w-8" />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#063028] font-serif">Problem statement received</h1>
+              <p className="text-base text-stone-600 leading-relaxed">
+                Thank you. <strong className="text-stone-800">"{submitted.title}"</strong> is now pending verification by CII officials.
+                It will be published to partner institutions only after it is approved.
+              </p>
+            </div>
+
+            <div className="bg-[#faf8f4] border border-stone-200 rounded-2xl p-5 space-y-2">
+              <p className="text-xs font-bold uppercase tracking-wider text-stone-500">Your reference ID</p>
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                <span className="font-mono text-xl sm:text-2xl font-bold text-[#063028] break-all">{submitted.referenceCode}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(submitted.referenceCode);
+                    showToast('Reference ID copied', 'success');
+                  }}
+                  className="p-2 rounded-lg border border-stone-300 text-stone-600 hover:bg-white cursor-pointer"
+                  aria-label="Copy reference ID"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+              <p className="text-sm text-stone-600">
+                We've emailed a confirmation to <strong className="text-stone-800 break-all">{submitted.email}</strong>.
+                Quote this ID if you contact CII about your submission.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                to="/problem-statements"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white bg-[#063028] hover:bg-[#04201a]"
+              >
+                Browse published problems
+              </Link>
+              <Link
+                to="/"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-stone-700 border border-stone-300 hover:bg-stone-50"
+              >
+                Back to home
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-[#faf8f4] min-h-screen py-10 sm:py-14">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Header info */}
         <div className="mb-10 text-center space-y-3">
-          <Link to="/industry/dashboard" className="inline-flex items-center gap-1.5 text-sm font-semibold text-stone-600 hover:text-[#063028] transition-colors mb-2">
-            <ArrowLeft className="h-4 w-4" /> Back to Industry Partner Dashboard
+          <Link
+            to={isIndustryUser ? '/industry/dashboard' : '/'}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-stone-600 hover:text-[#063028] transition-colors mb-2"
+          >
+            <ArrowLeft className="h-4 w-4" /> {isIndustryUser ? 'Back to Industry Partner Dashboard' : 'Back to home'}
           </Link>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[#063028] tracking-tight font-serif">
-            Post a Problem Statement
+            Submit a Problem Statement
           </h1>
           <p className="text-base text-stone-600 max-w-xl mx-auto leading-relaxed">
-            Specify corporate challenges, technical requirements, and target outcomes for review by CII and distribution to academic institutions.
+            Share your organisation's challenge, technical requirements and target outcomes. CII officials verify every
+            submission before it is published to partner institutions.
+            {!isIndustryUser && ' No login needed.'}
           </p>
         </div>
 
@@ -285,34 +485,137 @@ export const SubmitProblem: React.FC = () => {
         <div className="bg-white rounded-3xl border border-stone-200/90 shadow-md p-6 sm:p-10">
           <form onSubmit={handlePreSubmit} className="space-y-8">
             
-            {/* STEP 1: COMPANY INFORMATION */}
+            {/* STEP 1: ORGANISATION & CONTACT */}
             {currentStep === 1 && (
-              <div className="space-y-6 animate-fade-in">
+              <div className="space-y-8 animate-fade-in">
                 <div className="border-b border-stone-200 pb-4">
                   <h2 className="text-xl font-bold text-[#063028] font-serif flex items-center gap-2.5">
-                    <Building2 className="h-6 w-6 text-[#c48825]" /> Corporate &amp; Representative Profile
+                    <Building2 className="h-6 w-6 text-[#c48825]" /> Organisation &amp; Contact Details
                   </h2>
-                  <p className="text-sm text-stone-600 mt-1">Provide official communication handles for administrative validation.</p>
+                  <p className="text-sm text-stone-600 mt-1">CII uses these details to verify the submission and to contact you.</p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  
-                  <div className="space-y-2">
-                    <label className="block text-sm font-bold text-stone-700">Company Name</label>
-                    <input
-                      type="text"
-                      {...register('companyName')}
-                      className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white"
-                    />
-                    {errors.companyName && <p className="text-sm text-red-600 mt-1">{errors.companyName.message}</p>}
-                  </div>
+                {/* Spam trap: hidden from people, filled in only by bots */}
+                <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
+                  <label htmlFor="companyFax">Company fax</label>
+                  <input
+                    id="companyFax"
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                  />
+                </div>
 
-                  <div className="space-y-2">
-                    <label className="block text-sm font-bold text-stone-700">Industry Category</label>
-                    <select
-                      {...register('industryName')}
-                      className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white cursor-pointer"
-                    >
+                {/* Organisation */}
+                <div className="space-y-5">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-stone-500">Organisation</h3>
+
+                  {isIndustryUser ? (
+                    <div className="p-4 rounded-xl bg-[#edf4f0] border border-[#063028]/15 text-sm text-[#063028]">
+                      Submitting as <strong>{currentUser?.companyName || 'your registered organisation'}</strong>.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <label htmlFor="orgChoice" className="block text-sm font-bold text-stone-700">
+                        Select your organisation <span className="text-red-500">*</span>
+                      </label>
+                      {industries.length > 8 && (
+                        <input
+                          type="search"
+                          value={orgSearch}
+                          onChange={(e) => setOrgSearch(e.target.value)}
+                          placeholder="Search registered organisations..."
+                          className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white"
+                        />
+                      )}
+                      <select
+                        id="orgChoice"
+                        value={orgChoice}
+                        onChange={(e) => handleOrgChoice(e.target.value)}
+                        className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white cursor-pointer"
+                      >
+                        <option value="">
+                          {industriesState === 'loading' ? 'Loading organisations...' : '— Choose an organisation —'}
+                        </option>
+                        {filteredIndustries.map((org) => (
+                          <option key={org.id} value={org.id}>
+                            {org.companyName}{org.industry ? ` (${org.industry})` : ''}
+                          </option>
+                        ))}
+                        <option value={OTHER_ORG}>Other — my organisation is not listed</option>
+                      </select>
+                      <p className="text-xs text-stone-500">
+                        {industriesState === 'error'
+                          ? 'We could not load the list of registered organisations. Choose "Other" to continue.'
+                          : 'Registered CII industry partners are listed. Not listed? Choose "Other" and enter your organisation\'s details.'}
+                      </p>
+                      {errors.orgChoice && <p className="text-sm text-red-600 mt-1">{errors.orgChoice.message}</p>}
+                    </div>
+                  )}
+
+                  {isRegisteredOrg && (
+                    <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 text-sm text-stone-700 space-y-1">
+                      <p><strong className="text-stone-900">{allValues.companyName}</strong></p>
+                      {allValues.industrySector && <p>Sector: {allValues.industrySector}</p>}
+                      {allValues.website && <p className="break-all">Website: {allValues.website}</p>}
+                    </div>
+                  )}
+
+                  {(isOtherOrg || isIndustryUser) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="block text-sm font-bold text-stone-700">
+                          Organisation name <span className="text-red-500">*</span>
+                        </label>
+                        <input type="text" {...register('companyName')} readOnly={isIndustryUser} className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white read-only:bg-stone-100" />
+                        {errors.companyName && <p className="text-sm text-red-600 mt-1">{errors.companyName.message}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-sm font-bold text-stone-700">
+                          Industry sector <span className="text-red-500">*</span>
+                        </label>
+                        <input type="text" {...register('industrySector')} placeholder="e.g. Automotive Engineering" className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white" />
+                        {errors.industrySector && <p className="text-sm text-red-600 mt-1">{errors.industrySector.message}</p>}
+                      </div>
+
+                      {isOtherOrg && (
+                        <>
+                          <div className="space-y-2">
+                            <label className="block text-sm font-bold text-stone-700">
+                              City <span className="text-red-500">*</span>
+                            </label>
+                            <input type="text" {...register('city')} placeholder="e.g. Bhopal" className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white" />
+                            {errors.city && <p className="text-sm text-red-600 mt-1">{errors.city.message}</p>}
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="block text-sm font-bold text-stone-700">
+                              State <span className="text-red-500">*</span>
+                            </label>
+                            <input type="text" {...register('state')} placeholder="e.g. Madhya Pradesh" className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white" />
+                            {errors.state && <p className="text-sm text-red-600 mt-1">{errors.state.message}</p>}
+                          </div>
+
+                          <div className="space-y-2 sm:col-span-2">
+                            <label className="block text-sm font-bold text-stone-700">Address (optional)</label>
+                            <input type="text" {...register('address')} placeholder="Office or plant address" className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white" />
+                          </div>
+
+                          <div className="space-y-2 sm:col-span-2">
+                            <label className="block text-sm font-bold text-stone-700">Website (optional)</label>
+                            <input type="text" {...register('website')} placeholder="https://www.example.com" className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white" />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="space-y-2 sm:max-w-sm">
+                    <label className="block text-sm font-bold text-stone-700">Industry category</label>
+                    <select {...register('industryName')} className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white cursor-pointer">
                       <option value="Manufacturing">Manufacturing</option>
                       <option value="Information Technology">Information Technology</option>
                       <option value="Pharmaceuticals">Pharmaceuticals</option>
@@ -322,68 +625,49 @@ export const SubmitProblem: React.FC = () => {
                     </select>
                     {errors.industryName && <p className="text-sm text-red-600 mt-1">{errors.industryName.message}</p>}
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <label className="block text-sm font-bold text-stone-700">Representative Name</label>
-                    <input
-                      type="text"
-                      {...register('representativeName')}
-                      className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white"
-                    />
-                    {errors.representativeName && <p className="text-sm text-red-600 mt-1">{errors.representativeName.message}</p>}
+                {/* Contact person */}
+                <div className="space-y-5">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-stone-500 flex items-center gap-2">
+                    <UserRound className="h-4 w-4" /> Your contact details
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-bold text-stone-700">
+                        Full name <span className="text-red-500">*</span>
+                      </label>
+                      <input type="text" autoComplete="name" {...register('representativeName')} className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white" />
+                      {errors.representativeName && <p className="text-sm text-red-600 mt-1">{errors.representativeName.message}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-bold text-stone-700">
+                        Designation <span className="text-red-500">*</span>
+                      </label>
+                      <input type="text" autoComplete="organization-title" {...register('designation')} className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white" />
+                      {errors.designation && <p className="text-sm text-red-600 mt-1">{errors.designation.message}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-bold text-stone-700">
+                        Official email <span className="text-red-500">*</span>
+                      </label>
+                      <input type="email" autoComplete="email" {...register('email')} className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white" />
+                      {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>}
+                      {isRegisteredOrg && (
+                        <p className="text-xs text-stone-500">Use your work email — CII checks it against the selected organisation.</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-bold text-stone-700">
+                        Phone number <span className="text-red-500">*</span>
+                      </label>
+                      <input type="tel" autoComplete="tel" {...register('phone')} placeholder="+91 98765 43210" className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white" />
+                      {errors.phone && <p className="text-sm text-red-600 mt-1">{errors.phone.message}</p>}
+                    </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-bold text-stone-700">Representative Designation</label>
-                    <input
-                      type="text"
-                      {...register('designation')}
-                      className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white"
-                    />
-                    {errors.designation && <p className="text-sm text-red-600 mt-1">{errors.designation.message}</p>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-bold text-stone-700">Official Email Address</label>
-                    <input
-                      type="email"
-                      {...register('email')}
-                      className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white"
-                    />
-                    {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-bold text-stone-700">Phone Number</label>
-                    <input
-                      type="text"
-                      {...register('phone')}
-                      className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white"
-                    />
-                    {errors.phone && <p className="text-sm text-red-600 mt-1">{errors.phone.message}</p>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-bold text-stone-700">Company Website URL</label>
-                    <input
-                      type="text"
-                      {...register('website')}
-                      className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white"
-                    />
-                    {errors.website && <p className="text-sm text-red-600 mt-1">{errors.website.message}</p>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-bold text-stone-700">Specific Industry Sector</label>
-                    <input
-                      type="text"
-                      {...register('industrySector')}
-                      placeholder="e.g. Automotive Engineering"
-                      className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white"
-                    />
-                    {errors.industrySector && <p className="text-sm text-red-600 mt-1">{errors.industrySector.message}</p>}
-                  </div>
-
                 </div>
               </div>
             )}
@@ -649,7 +933,7 @@ export const SubmitProblem: React.FC = () => {
                         id="file-upload"
                         className="sr-only"
                         onChange={handleFileChange}
-                        accept=".pdf,.zip,.csv,.xlsx,.docx"
+                        accept=".pdf,application/pdf"
                       />
 
                       {uploadedFile ? (
@@ -674,7 +958,7 @@ export const SubmitProblem: React.FC = () => {
                             <span className="text-base font-bold text-[#c48825] hover:text-[#a6711c] underline">Click to upload</span>
                             <span className="text-base text-stone-600"> or drag and drop</span>
                           </div>
-                          <p className="text-xs text-stone-500">PDF, ZIP, CSV, XLSX, or DOCX (Max 10MB)</p>
+                          <p className="text-xs text-stone-500">PDF only (Max 10MB)</p>
                         </label>
                       )}
                     </div>
@@ -760,6 +1044,7 @@ export const SubmitProblem: React.FC = () => {
                     <div>
                       <h4 className="text-xs font-bold uppercase text-stone-500 tracking-wider">Filing Organization</h4>
                       <p className="font-semibold text-stone-800 mt-1">{allValues.companyName}</p>
+                      <p className="text-xs text-stone-500 mt-0.5 break-all">{allValues.representativeName} • {allValues.email}</p>
                     </div>
                     <div>
                       <h4 className="text-xs font-bold uppercase text-stone-500 tracking-wider">Industry sector</h4>
@@ -810,7 +1095,7 @@ export const SubmitProblem: React.FC = () => {
                     disabled={isSubmitting}
                     className="flex-1 px-5 py-3.5 rounded-xl text-sm font-bold text-white bg-[#063028] hover:bg-[#04201a] transition-all disabled:opacity-50 flex justify-center items-center cursor-pointer shadow-md"
                   >
-                    {isSubmitting ? 'Registering Statement...' : 'Yes, File Statement'}
+                    {isSubmitting ? 'Submitting...' : 'Yes, submit for CII review'}
                   </button>
                 </div>
 

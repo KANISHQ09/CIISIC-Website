@@ -251,7 +251,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                     </Link>
                     {currentUser.role === 'industry' && (
                       <Link
-                        to="/industry/submit"
+                        to="/submit-problem"
                         onClick={() => setDropdownOpen(false)}
                         className="flex items-center gap-2 px-3 py-2.5 font-bold text-stone-700 hover:bg-stone-50 hover:text-[#063028] rounded-lg transition-all text-xs sm:text-sm"
                       >
@@ -336,6 +336,12 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                     className="px-2 xl:px-2.5 py-1.5 border border-stone-800 text-stone-900 bg-transparent hover:bg-stone-50 text-[11px] xl:text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer shadow-2xs"
                   >
                     Industry Login
+                  </Link>
+                  <Link
+                    to="/submit-problem"
+                    className="px-2 xl:px-2.5 py-1.5 border border-[#063028] text-white bg-[#063028] hover:bg-[#04201a] text-[11px] xl:text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer shadow-2xs"
+                  >
+                    Submit a Problem
                   </Link>
                 </>
               ) : (
@@ -438,6 +444,13 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                     >
                       Industry Login
                     </Link>
+                    <Link
+                      to="/submit-problem"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block w-full py-2.5 rounded-lg text-base font-semibold bg-[#063028] text-white text-center hover:bg-[#04201a] transition-all cursor-pointer shadow-xs"
+                    >
+                      Submit a Problem
+                    </Link>
                   </div>
                 </>
               ) : (
@@ -464,7 +477,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                   </Link>
                   {currentUser.role === 'industry' && (
                     <Link
-                      to="/industry/submit"
+                      to="/submit-problem"
                       onClick={() => setMobileMenuOpen(false)}
                       className="block px-3.5 py-2.5 rounded-lg text-base font-bold text-stone-700 hover:bg-stone-50"
                     >

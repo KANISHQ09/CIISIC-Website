@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { INDUSTRY_PROFILE_SELECT } from "@/lib/problem-submission";
 import { ChallengeUpdateSchema } from "@/lib/validations/challenge";
 import { createAuditLog, getRequestMeta } from "@/lib/audit";
 import { serializeChallenge } from "@/lib/serializers";
@@ -14,22 +15,7 @@ import {
 } from "@/lib/api-response";
 
 const CHALLENGE_INCLUDE = {
-  industryProfile: {
-    select: {
-      id: true,
-      userId: true,
-      companyName: true,
-      industry: true,
-      logoUrl: true,
-      isCIIMember: true,
-      user: {
-        select: {
-          email: true,
-          name: true,
-        },
-      },
-    },
-  },
+  industryProfile: { select: INDUSTRY_PROFILE_SELECT },
   _count: { select: { proposals: true } },
 } as const;
 
@@ -59,7 +45,7 @@ export async function GET(
     const isAdmin = role === "SUPER_ADMIN" || role === "CII_ADMIN";
     const isOwner =
       role === "INDUSTRY_SPOC" &&
-      challenge.industryProfile.userId === userId;
+      challenge.industryProfile?.userId === userId;
 
     if (!isAdmin && !isOwner && challenge.status !== "OPEN") {
       return notFound("Challenge not found");
@@ -103,7 +89,7 @@ export async function PATCH(
       session.user.role === "CII_ADMIN";
     const isOwner =
       session.user.role === "INDUSTRY_SPOC" &&
-      challenge.industryProfile.userId === session.user.id;
+      challenge.industryProfile?.userId === session.user.id;
 
     if (!isAdmin && !isOwner) {
       return forbidden("You cannot edit this challenge");
@@ -114,6 +100,29 @@ export async function PATCH(
     if (!parsed.success) return validationError(parsed.error.flatten());
 
     const data = parsed.data;
+
+    // Only CII admins can publish, reject, close or archive. An industry owner may only
+    // keep a problem as a draft or send it (back) for review.
+    if (!isAdmin && data.status && data.status !== "DRAFT" && data.status !== "PENDING_APPROVAL") {
+      return forbidden("Only CII administrators can change a problem statement to this status");
+    }
+
+    // Any content change by the owner after review sends it back to CII for re-verification
+    const changesContent =
+      data.title !== undefined ||
+      data.description !== undefined ||
+      data.problemStatement !== undefined ||
+      data.domain !== undefined ||
+      data.deadline !== undefined ||
+      data.budgetRange !== undefined ||
+      data.tags !== undefined ||
+      data.attachmentUrls !== undefined;
+    const needsReReview =
+      !isAdmin &&
+      changesContent &&
+      challenge.status !== "DRAFT" &&
+      challenge.status !== "PENDING_APPROVAL";
+    const nextStatus = needsReReview ? "PENDING_APPROVAL" : data.status;
 
     const updated = await prisma.challenge.update({
       where: { id },
@@ -126,38 +135,23 @@ export async function PATCH(
         ...(data.budgetRange !== undefined && { budgetRange: data.budgetRange }),
         ...(data.tags && { tags: data.tags }),
         ...(data.attachmentUrls && { attachmentUrls: data.attachmentUrls }),
-        ...(data.status && {
-          status: data.status,
+        ...(nextStatus && {
+          status: nextStatus,
           publishedAt:
-            data.status === "OPEN" && !challenge.publishedAt
+            nextStatus === "OPEN" && !challenge.publishedAt
               ? new Date()
               : challenge.publishedAt,
         }),
       },
       include: {
-        industryProfile: {
-          select: {
-            id: true,
-            userId: true,
-            companyName: true,
-            industry: true,
-            logoUrl: true,
-            isCIIMember: true,
-            user: {
-              select: {
-                email: true,
-                name: true,
-              },
-            },
-          },
-        },
+        industryProfile: { select: INDUSTRY_PROFILE_SELECT },
       },
     });
 
     const { ipAddress, userAgent } = getRequestMeta(req);
-    const auditAction = data.status === "PENDING_APPROVAL"
+    const auditAction = nextStatus === "PENDING_APPROVAL"
       ? "CHALLENGE_SUBMITTED"
-      : data.status
+      : nextStatus
       ? "CHALLENGE_STATUS_CHANGED"
       : "CHALLENGE_UPDATED";
 

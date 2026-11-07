@@ -130,33 +130,54 @@ model InstitutionProfile {
 }
 
 model Challenge {
-  id                String          @id @default(cuid())
-  title             String
-  description       String
-  problemStatement  String
-  domain            CellTheme
-  status            ChallengeStatus @default(DRAFT)
-  deadline          DateTime
-  budgetRange       String?
-  industryProfileId String
-  attachmentUrls    String[]
-  tags              String[]
-  viewCount         Int             @default(0)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  publishedAt       DateTime?
-  organizationName  String?
-  duration          String?
-  reviewRemarks     String?
-  reviewedAt        DateTime?
-  reviewerId        String?
-  industryProfile   IndustryProfile @relation(fields: [industryProfileId], references: [id])
-  reviewer          User?           @relation("ChallengeReviewer", fields: [reviewerId], references: [id])
-  proposals         Proposal[]
+  id                 String           @id @default(cuid())
+  title              String
+  description        String
+  problemStatement   String
+  domain             CellTheme
+  status             ChallengeStatus  @default(DRAFT)
+  deadline           DateTime
+  budgetRange        String?
+  // Registered industry account this problem belongs to. Null when submitted publicly
+  // by an organisation that is not registered on the portal ("Other").
+  industryProfileId  String?
+  // PORTAL = submitted by a logged-in industry user, PUBLIC = submitted without login
+  submissionSource   String           @default("PORTAL")
+  // Human-friendly ID given to the submitter, e.g. CII-2026-4F7K2Q
+  referenceCode      String?          @unique
+  // Organisation details typed by the submitter (always filled for "Other" submissions)
+  isNewOrganisation  Boolean          @default(false)
+  orgSector          String?
+  orgWebsite         String?
+  orgCity            String?
+  orgState           String?
+  orgAddress         String?
+  // Person who submitted the problem (shown only to CII admins and the owning company)
+  contactName        String?
+  contactDesignation String?
+  contactEmail       String?
+  contactPhone       String?
+  // When CII invited an unregistered organisation to create an industry account
+  inviteSentAt       DateTime?
+  attachmentUrls     String[]
+  tags               String[]
+  viewCount          Int              @default(0)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  publishedAt        DateTime?
+  organizationName   String?
+  duration           String?
+  reviewRemarks      String?
+  reviewedAt         DateTime?
+  reviewerId         String?
+  industryProfile    IndustryProfile? @relation(fields: [industryProfileId], references: [id])
+  reviewer           User?            @relation("ChallengeReviewer", fields: [reviewerId], references: [id])
+  proposals          Proposal[]
 
   @@index([status])
   @@index([domain])
   @@index([deadline])
+  @@index([contactEmail])
 }
 
 model Proposal {

@@ -54,7 +54,7 @@ export async function GET(
     const isAdmin = role === "SUPER_ADMIN" || role === "CII_ADMIN";
     const isIndustryOwner =
       role === "INDUSTRY_SPOC" &&
-      proposal.challenge.industryProfile.userId === userId;
+      proposal.challenge.industryProfile?.userId === userId;
 
     let requestingUserInstitutionId: string | undefined;
     let isInstitutionSpocOwner = false;
@@ -125,7 +125,7 @@ export async function PATCH(
     });
     if (!proposal) return notFound("Proposal not found");
 
-    if (isIndustry && proposal.challenge.industryProfile.userId !== session.user.id) {
+    if (isIndustry && proposal.challenge.industryProfile?.userId !== session.user.id) {
       return forbidden("This proposal is not for your challenge");
     }
 

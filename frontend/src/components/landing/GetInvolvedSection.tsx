@@ -71,11 +71,15 @@ export const GetInvolvedSection: React.FC = () => {
 
             <div className="pt-8">
               <Link
-                to="/industry/login"
+                to="/submit-problem"
                 className="w-full inline-flex items-center justify-center gap-2 px-5 py-4 bg-[#063028] hover:bg-[#04201a] text-white text-sm sm:text-base font-bold uppercase tracking-wider rounded-xl transition-colors shadow-xs"
               >
-                Enter Industry Portal <ArrowRight className="h-4.5 w-4.5" />
+                Submit a Problem Statement <ArrowRight className="h-4.5 w-4.5" />
               </Link>
+              <p className="mt-3 text-center text-xs text-stone-500">
+                No login needed.{' '}
+                <Link to="/industry/login" className="font-semibold text-[#063028] hover:underline">Industry partner login</Link>
+              </p>
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { 
   Building2, Lock, Mail, ArrowLeft, ArrowRight, 
   Globe, User, Phone, CheckCircle2, ShieldCheck, 
@@ -23,7 +23,9 @@ const INDUSTRY_SECTORS = [
 export const IndustryRegister: React.FC = () => {
   const navigate = useNavigate();
 
-  const [companyName, setCompanyName] = useState('');
+  // An invitation email from CII links here with ?company=<organisation name>
+  const [searchParams] = useSearchParams();
+  const [companyName, setCompanyName] = useState(() => (searchParams.get('company') || '').slice(0, 150));
   const [industry, setIndustry] = useState(INDUSTRY_SECTORS[0]);
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [isCIIMember, setIsCIIMember] = useState(true);
