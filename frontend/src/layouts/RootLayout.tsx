@@ -203,11 +203,6 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                   <GraduationCap className="h-4 w-4 text-amber-300 shrink-0" />
                   {currentUser.institutionName || 'Academic Institution'}
                 </span>
-              ) : currentUser.role === 'student' ? (
-                <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-200 uppercase tracking-wider">
-                  <GraduationCap className="h-4 w-4 text-amber-300 shrink-0" />
-                  Student Innovator ({currentUser.enrollmentNo || currentUser.institutionName || 'Portal'})
-                </span>
               ) : (
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-stone-200 uppercase tracking-wider">
                   <Building className="h-4 w-4 text-stone-300 shrink-0" />
@@ -233,7 +228,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                   <div className="px-4 py-3 bg-stone-50/70">
                     <p className="font-extrabold text-stone-900 truncate text-sm">{currentUser.name}</p>
                     <p className="text-xs text-[#063028] font-bold uppercase tracking-wider mt-0.5">
-                      {currentUser.role === 'admin' ? 'CII Admin' : currentUser.role === 'institution' ? 'Institution SPOC' : currentUser.role === 'student' ? 'Student Innovator' : 'Industry Partner'}
+                      {currentUser.role === 'admin' ? 'CII Admin' : currentUser.role === 'institution' ? 'Institution SPOC' : 'Industry Partner'}
                     </p>
                     <p className="text-xs text-stone-600 font-medium truncate mt-1">{currentUser.email}</p>
                   </div>
@@ -246,8 +241,6 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                           ? '/admin/dashboard' 
                           : currentUser.role === 'institution' 
                           ? '/institution/dashboard' 
-                          : currentUser.role === 'student'
-                          ? '/student/dashboard'
                           : '/industry/dashboard'
                       }
                       onClick={() => setDropdownOpen(false)}
@@ -332,13 +325,6 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
               {!currentUser ? (
                 <>
                   <Link
-                    to="/student/login"
-                    className="px-2 xl:px-2.5 py-1.5 border border-stone-300 text-stone-800 bg-transparent hover:bg-stone-50 text-[11px] xl:text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer shadow-2xs flex items-center gap-1"
-                  >
-                    <GraduationCap className="w-3.5 h-3.5 text-[#063028]" />
-                    Student Login
-                  </Link>
-                  <Link
                     to="/institution/login"
                     className="px-2 xl:px-2.5 py-1.5 border border-[#063028]/25 text-[#063028] bg-transparent hover:bg-[#edf4f0] text-[11px] xl:text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer shadow-2xs flex items-center gap-1"
                   >
@@ -359,8 +345,6 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                       ? '/admin/dashboard' 
                       : currentUser.role === 'institution' 
                       ? '/institution/dashboard' 
-                      : currentUser.role === 'student'
-                      ? '/student/dashboard'
                       : '/industry/dashboard'
                   }
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all border ${
@@ -440,22 +424,6 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
                   <div className="border-t border-stone-200 my-3 pt-3 space-y-2.5 px-0.5">
                     <Link
-                      to="/student/register"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-base font-semibold bg-[#063028] text-white text-center hover:bg-[#04201a] transition-all cursor-pointer shadow-xs"
-                    >
-                      <GraduationCap className="w-4 h-4 text-emerald-300" />
-                      Student Registration
-                    </Link>
-                    <Link
-                      to="/student/login"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-base font-semibold border border-stone-300 text-stone-800 text-center hover:bg-stone-50 transition-all cursor-pointer"
-                    >
-                      <GraduationCap className="w-4 h-4 text-[#063028]" />
-                      Student Login
-                    </Link>
-                    <Link
                       to="/institution/login"
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-base font-semibold border border-[#063028]/30 text-[#063028] text-center hover:bg-[#edf4f0] transition-all cursor-pointer"
@@ -480,8 +448,6 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                         ? '/admin/dashboard' 
                         : currentUser.role === 'institution' 
                         ? '/institution/dashboard' 
-                        : currentUser.role === 'student'
-                        ? '/student/dashboard'
                         : '/industry/dashboard'
                     }
                     onClick={() => setMobileMenuOpen(false)}

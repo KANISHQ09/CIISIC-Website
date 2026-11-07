@@ -673,7 +673,7 @@ export const SubmissionDetails: React.FC = () => {
               </div>
             </div>
           ) : (
-            /* Public Visitor / Student / Faculty Actions Panel */
+            /* Public Visitor / Institution Actions Panel */
             <div className="space-y-6 sticky top-24">
               <div className="bg-white rounded-2xl border border-stone-200/90 shadow-sm p-6 space-y-5">
                 <div className="flex items-center justify-between border-b border-stone-100 pb-3">
@@ -690,7 +690,7 @@ export const SubmissionDetails: React.FC = () => {
                     Interested in Solving this Challenge?
                   </h3>
                   <p className="text-xs text-stone-600 leading-relaxed">
-                    Students from partner institutions can collaborate with faculty mentors to build a working prototype addressing this industry problem statement.
+                    Partner institutions can form a faculty-mentored team to build a working prototype addressing this industry problem statement.
                   </p>
                   <ul className="space-y-2 text-xs text-stone-700 font-medium">
                     <li className="flex items-start gap-2">
@@ -699,7 +699,7 @@ export const SubmissionDetails: React.FC = () => {
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#c48825] mt-1.5 shrink-0"></span>
-                      <span>Connect with your college CII Innovation SPOC</span>
+                      <span>Log in through your institution's CII Innovation SPOC account</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#c48825] mt-1.5 shrink-0"></span>
@@ -709,7 +709,7 @@ export const SubmissionDetails: React.FC = () => {
                 </div>
 
                 <div className="pt-2 space-y-2.5 border-t border-stone-100">
-                  {currentUser?.role === 'student' ? (
+                  {currentUser?.role === 'institution' ? (
                     <>
                       <Link
                         to={`/institution/submit-solution/${submission.id}`}
@@ -718,42 +718,19 @@ export const SubmissionDetails: React.FC = () => {
                         <GraduationCap className="h-4 w-4 text-[#c48825]" /> Submit Solution Proposal
                       </Link>
                       <Link
-                        to="/student/dashboard"
+                        to="/institution/dashboard"
                         className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-semibold transition-all"
                       >
-                        Go to Student Dashboard
-                      </Link>
-                    </>
-                  ) : currentUser?.role === 'institution' ? (
-                    <>
-                      <Link
-                        to={`/institution/dashboard?assignChallengeId=${submission.id}`}
-                        className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#063028] hover:bg-[#04201a] text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-xs"
-                      >
-                        <GraduationCap className="h-4 w-4 text-[#c48825]" /> Assign to Student Team
-                      </Link>
-                      <Link
-                        to={`/institution/submit-solution/${submission.id}`}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-[#c48825] hover:bg-[#b0781e] text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-xs"
-                      >
-                        Submit Solution Proposal
+                        Go to Institution Dashboard
                       </Link>
                     </>
                   ) : (
-                    <>
-                      <Link
-                        to="/student/login"
-                        className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#063028] hover:bg-[#04201a] text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-xs"
-                      >
-                        <GraduationCap className="h-4 w-4 text-[#c48825]" /> Student Login to Innovate
-                      </Link>
-                      <Link
-                        to={`/institution/login?redirect=/institution/dashboard?assignChallengeId=${submission.id}`}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-semibold transition-all"
-                      >
-                        Institution Coordinator Login
-                      </Link>
-                    </>
+                    <Link
+                      to="/institution/login"
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#063028] hover:bg-[#04201a] text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-xs"
+                    >
+                      <GraduationCap className="h-4 w-4 text-[#c48825]" /> Institution Coordinator Login
+                    </Link>
                   )}
 
                   <div className="grid grid-cols-2 gap-2 pt-1">

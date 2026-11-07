@@ -1,7 +1,6 @@
 import {
   ProblemStatement, User, SubmissionStatus, UserRole,
-  ProblemAssignment, SolutionSubmission, SolutionStatus,
-  RegisteredStudent
+  SolutionSubmission, SolutionStatus
 } from '../types';
 
 /**
@@ -161,37 +160,6 @@ function saveLocalChallenges(challenges: ProblemStatement[]) {
   localStorage.setItem('ciisic_submissions', JSON.stringify(challenges));
 }
 
-/** Problem Assignments (Institutions assigning challenges to student teams) */
-export function getLocalAssignments(): ProblemAssignment[] {
-  const saved = localStorage.getItem('ciisic_assignments');
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) return parsed;
-    } catch {
-      // ignore
-    }
-  }
-  return [];
-}
-
-export function saveLocalAssignments(assignments: ProblemAssignment[]) {
-  localStorage.setItem('ciisic_assignments', JSON.stringify(assignments));
-}
-
-export function createAssignment(data: Omit<ProblemAssignment, 'id' | 'assignedDate' | 'status'>): ProblemAssignment {
-  const assignments = getLocalAssignments();
-  const newAssignment: ProblemAssignment = {
-    ...data,
-    id: 'ASG-' + Date.now().toString(36).toUpperCase(),
-    assignedDate: new Date().toISOString(),
-    status: 'ASSIGNED',
-  };
-  assignments.unshift(newAssignment);
-  saveLocalAssignments(assignments);
-  return newAssignment;
-}
-
 /** Solutions Submissions (Institutions/Teams submitting proposals to Industry challenges) */
 export function getLocalSolutions(): SolutionSubmission[] {
   const saved = localStorage.getItem('ciisic_solutions');
@@ -221,17 +189,6 @@ export async function submitSolution(data: Omit<SolutionSubmission, 'id' | 'subm
 
   solutions.unshift(newSolution);
   saveLocalSolutions(solutions);
-
-  // If this solution is linked to an assignment, update assignment status
-  if (data.assignmentId) {
-    const assignments = getLocalAssignments();
-    const idx = assignments.findIndex(a => a.id === data.assignmentId);
-    if (idx !== -1) {
-      assignments[idx].status = 'SUBMITTED';
-      assignments[idx].solutionId = newSolution.id;
-      saveLocalAssignments(assignments);
-    }
-  }
 
   // Attempt backend API dispatch if API_BASE is configured
   if (API_BASE) {
@@ -307,19 +264,15 @@ export function mapBackendUserToFrontend(backendUser: any): User {
     role = 'admin';
   } else if (backendUser.role === 'INSTITUTION_SPOC' || backendUser.role === 'institution') {
     role = 'institution';
-  } else if (backendUser.role === 'STUDENT' || backendUser.role === 'student') {
-    role = 'student';
   } else if (backendUser.role === 'INDUSTRY_SPOC' || backendUser.role === 'industry') {
     role = 'industry';
   }
 
   const instName =
-    backendUser.studentProfile?.institution?.name ||
     backendUser.institutionProfile?.institution?.name ||
     backendUser.institutionName ||
     '';
   const instCity =
-    backendUser.studentProfile?.institution?.city ||
     backendUser.institutionProfile?.institution?.city ||
     backendUser.institutionCity ||
     '';
@@ -328,14 +281,11 @@ export function mapBackendUserToFrontend(backendUser: any): User {
     backendUser.companyName ||
     '';
   const desig =
-    role === 'student'
-      ? (backendUser.studentProfile?.enrollmentNo ? `Student Innovator (${backendUser.studentProfile.enrollmentNo})` : 'Student Innovator')
-      : (backendUser.industryProfile?.designation ||
-         backendUser.institutionProfile?.designation ||
-         backendUser.designation ||
-         '');
+    backendUser.industryProfile?.designation ||
+    backendUser.institutionProfile?.designation ||
+    backendUser.designation ||
+    '';
   const dept =
-    backendUser.studentProfile?.department ||
     backendUser.institutionProfile?.department ||
     backendUser.department ||
     '';
@@ -356,9 +306,6 @@ export function mapBackendUserToFrontend(backendUser: any): User {
     institutionCity: instCity,
     department: dept,
     phone,
-    enrollmentNo: backendUser.studentProfile?.enrollmentNo,
-    yearOfStudy: backendUser.studentProfile?.yearOfStudy,
-    skills: backendUser.studentProfile?.skills,
   };
 }
 
@@ -461,11 +408,6 @@ export async function login(email: string, password: string, _roleHint?: UserRol
     role = 'admin';
     name = 'CII Administrator';
     compName = '';
-  } else if (_roleHint === 'student' || normalizedEmail.includes('student') || normalizedEmail.includes('stud')) {
-    role = 'student';
-    name = 'Arjun Verma';
-    instName = 'Jagran Lakecity University';
-    compName = '';
   } else if (normalizedEmail.includes('inst') || normalizedEmail.includes('univ') || normalizedEmail.includes('college') || normalizedEmail.includes('edu') || _roleHint === 'institution') {
     role = 'institution';
     name = 'Dr. Academic SPOC';
@@ -479,14 +421,11 @@ export async function login(email: string, password: string, _roleHint?: UserRol
     email: email.trim(),
     role: role,
     companyName: compName,
-    designation: role === 'admin' ? 'Head of CII Operations' : role === 'institution' ? 'Dean of Academic R&D' : role === 'student' ? 'Student Innovator (JLU2024CS001)' : 'Lead R&D Director',
+    designation: role === 'admin' ? 'Head of CII Operations' : role === 'institution' ? 'Dean of Academic R&D' : 'Lead R&D Director',
     institutionName: instName,
-    institutionCity: role === 'student' ? 'Bhopal' : 'New Delhi',
-    department: role === 'student' ? 'Computer Science & Engineering' : 'Research & Innovation Cell',
+    institutionCity: 'New Delhi',
+    department: 'Research & Innovation Cell',
     phone: '+91 9876543210',
-    enrollmentNo: role === 'student' ? 'JLU2024CS001' : undefined,
-    yearOfStudy: role === 'student' ? 3 : undefined,
-    skills: role === 'student' ? ['Python', 'Machine Learning', 'React', 'Data Analysis'] : undefined,
   };
 
   setAuthToken('token_local_' + Date.now());
@@ -624,322 +563,6 @@ export async function registerInstitution(data: {
     requiresApproval: true,
     message: 'Your academic institution registration has been submitted and is pending CII Administrator review. You will be able to log in once approved.',
   };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Student Registration & Management Store
-// ─────────────────────────────────────────────────────────────────────────────
-
-const DEFAULT_STUDENTS: RegisteredStudent[] = [
-  {
-    id: 'std-001',
-    name: 'Aarav Sharma',
-    email: 'aarav.sharma@jlu.edu.in',
-    phone: '+91 9826012345',
-    institutionId: 'inst_jlu',
-    institutionName: 'Jagran Lakecity University',
-    institutionCity: 'Bhopal',
-    enrollmentNo: 'JLU2023CS042',
-    department: 'Computer Science & Engineering',
-    course: 'B.Tech',
-    yearOfStudy: 3,
-    idCardUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80',
-    idCardFileName: 'aarav_jlu_id.jpg',
-    skills: ['Python', 'Computer Vision', 'PyTorch', 'FastAPI'],
-    createdAt: '2026-02-14T09:30:00.000Z',
-    status: 'VERIFIED',
-  },
-  {
-    id: 'std-002',
-    name: 'Priya Patel',
-    email: 'priya.patel@jlu.edu.in',
-    phone: '+91 9755123456',
-    institutionId: 'inst_jlu',
-    institutionName: 'Jagran Lakecity University',
-    institutionCity: 'Bhopal',
-    enrollmentNo: 'JLU2023AI018',
-    department: 'Artificial Intelligence & Machine Learning',
-    course: 'B.Tech',
-    yearOfStudy: 3,
-    idCardUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
-    idCardFileName: 'priya_id_card.png',
-    skills: ['Machine Learning', 'TensorFlow', 'NLP', 'Data Science'],
-    createdAt: '2026-02-18T11:15:00.000Z',
-    status: 'VERIFIED',
-  },
-  {
-    id: 'std-003',
-    name: 'Rohan Mehra',
-    email: 'rohan.mehra@lnct.ac.in',
-    phone: '+91 9425098765',
-    institutionId: 'inst_lnct',
-    institutionName: 'Lakshmi Narain College of Technology',
-    institutionCity: 'Bhopal',
-    enrollmentNo: '0103CS221089',
-    department: 'Computer Science & Engineering',
-    course: 'B.Tech',
-    yearOfStudy: 4,
-    idCardUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80',
-    idCardFileName: 'rohan_lnct_id.jpg',
-    skills: ['React', 'Node.js', 'PostgreSQL', 'Docker'],
-    createdAt: '2026-02-20T14:45:00.000Z',
-    status: 'VERIFIED',
-  },
-  {
-    id: 'std-004',
-    name: 'Divya Suryavanshi',
-    email: 'divya.s@rntu.ac.in',
-    phone: '+91 9111223344',
-    institutionId: 'inst_rntu',
-    institutionName: 'Rabindranath Tagore University (RNTU)',
-    institutionCity: 'Bhopal',
-    enrollmentNo: 'RNTU2024AG012',
-    department: 'Agricultural Engineering',
-    course: 'B.Tech',
-    yearOfStudy: 2,
-    idCardUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&auto=format&fit=crop&q=80',
-    idCardFileName: 'divya_rntu_id.jpg',
-    skills: ['IoT Firmware', 'Agritech', 'Sensors', 'Embedded C'],
-    createdAt: '2026-02-22T16:20:00.000Z',
-    status: 'VERIFIED',
-  },
-  {
-    id: 'std-005',
-    name: 'Harsh Vardhan',
-    email: 'harsh.v@iiti.ac.in',
-    phone: '+91 9988776655',
-    institutionId: 'inst_iit_indore',
-    institutionName: 'Indian Institute of Technology (IIT), Indore',
-    institutionCity: 'Indore',
-    enrollmentNo: 'IIT22ME004',
-    department: 'Mechanical Engineering',
-    course: 'B.Tech',
-    yearOfStudy: 4,
-    idCardUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&auto=format&fit=crop&q=80',
-    idCardFileName: 'harsh_iiti_id.jpg',
-    skills: ['CAD/CAM', 'ANSYS', 'SolidWorks', 'Thermal Modeling'],
-    createdAt: '2026-02-24T10:00:00.000Z',
-    status: 'VERIFIED',
-  },
-];
-
-export function getLocalStudents(): RegisteredStudent[] {
-  const saved = localStorage.getItem('ciisic_registered_students');
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    } catch {
-      // ignore
-    }
-  }
-  localStorage.setItem('ciisic_registered_students', JSON.stringify(DEFAULT_STUDENTS));
-  return DEFAULT_STUDENTS;
-}
-
-export function saveLocalStudents(students: RegisteredStudent[]) {
-  localStorage.setItem('ciisic_registered_students', JSON.stringify(students));
-}
-
-/** Check if email or enrollment number is already registered */
-export function checkStudentRegistered(email: string, enrollmentNo: string): { exists: boolean; reason?: 'email' | 'enrollment' } {
-  const students = getLocalStudents();
-  const normalizedEmail = email.trim().toLowerCase();
-  const normalizedEnroll = enrollmentNo.trim().toUpperCase();
-
-  const foundEmail = students.find(s => s.email.trim().toLowerCase() === normalizedEmail);
-  if (foundEmail) return { exists: true, reason: 'email' };
-
-  const foundEnroll = students.find(s => s.enrollmentNo.trim().toUpperCase() === normalizedEnroll);
-  if (foundEnroll) return { exists: true, reason: 'enrollment' };
-
-  return { exists: false };
-}
-
-/** Upload Student ID Card (backend API with data URL fallback) */
-export async function uploadStudentIdCard(file: File): Promise<{ url: string; fileName: string }> {
-  const url = API_BASE ? `${API_BASE}/api/upload` : '/api/upload';
-
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('type', 'ID_CARD');
-
-    const response = await fetch(url, {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (response.ok) {
-      const res = await response.json();
-      if (res.success && res.data?.url) {
-        return {
-          url: res.data.url,
-          fileName: res.data.fileName || file.name,
-        };
-      }
-    }
-  } catch (err) {
-    console.warn('Backend upload unavailable, falling back to local object storage:', err);
-  }
-
-  // Fallback to data URL for seamless preview and offline operation
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      resolve({
-        url: reader.result as string,
-        fileName: file.name,
-      });
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-export interface StudentRegistrationPayload {
-  name: string;
-  email: string;
-  phone?: string;
-  password: string;
-  institutionId?: string;
-  institutionName: string;
-  institutionCity?: string;
-  enrollmentNo: string;
-  department: string;
-  course: string;
-  yearOfStudy: number | string;
-  idCardUrl?: string;
-  idCardFileName?: string;
-  skills: string[];
-}
-
-/** Register Student */
-export async function registerStudent(
-  data: StudentRegistrationPayload
-): Promise<{ success: boolean; alreadyRegistered?: boolean; message: string; student?: RegisteredStudent }> {
-  // 1. Check local collision first
-  const check = checkStudentRegistered(data.email, data.enrollmentNo);
-  if (check.exists) {
-    return {
-      success: false,
-      alreadyRegistered: true,
-      message: check.reason === 'email' 
-        ? 'An account with this email is already registered. Please sign in to your student account.'
-        : 'This enrollment number is already registered. Please sign in to your student account.',
-    };
-  }
-
-  // 2. Dispatch to Backend API
-  const url = API_BASE ? `${API_BASE}/api/auth/register` : '/api/auth/register';
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: data.email.trim(),
-        password: data.password,
-        name: data.name.trim(),
-        role: 'STUDENT',
-        enrollmentNo: data.enrollmentNo.trim().toUpperCase(),
-        institutionId: data.institutionId || data.institutionName,
-        department: data.department,
-        course: data.course,
-        idCardUrl: data.idCardUrl || '',
-        phone: data.phone || '',
-        yearOfStudy: typeof data.yearOfStudy === 'number' ? data.yearOfStudy : parseInt(String(data.yearOfStudy)) || 1,
-        skills: data.skills || [],
-      }),
-    });
-
-    if (response.status === 409) {
-      const errJson = await response.json().catch(() => null);
-      return {
-        success: false,
-        alreadyRegistered: true,
-        message: errJson?.message || 'An account with this email or enrollment number is already registered. Please sign in.',
-      };
-    }
-
-    if (!response.ok) {
-      const errJson = await response.json().catch(() => null);
-      if (errJson?.message) {
-        throw new Error(errJson.message);
-      }
-    }
-  } catch (err: any) {
-    if (err.message && (err.message.includes('already exists') || err.message.includes('already registered'))) {
-      return {
-        success: false,
-        alreadyRegistered: true,
-        message: err.message,
-      };
-    }
-    console.warn('Backend student registration failed, persisting to local store:', err);
-  }
-
-  // 3. Persist new student locally
-  const newStudent: RegisteredStudent = {
-    id: 'std-' + Date.now().toString(36).toUpperCase(),
-    name: data.name.trim(),
-    email: data.email.trim(),
-    phone: data.phone || '',
-    institutionId: data.institutionId || 'inst_' + Date.now().toString(36),
-    institutionName: data.institutionName,
-    institutionCity: data.institutionCity || 'Bhopal',
-    enrollmentNo: data.enrollmentNo.trim().toUpperCase(),
-    department: data.department,
-    course: data.course,
-    yearOfStudy: typeof data.yearOfStudy === 'number' ? data.yearOfStudy : parseInt(String(data.yearOfStudy)) || 1,
-    idCardUrl: data.idCardUrl || '',
-    idCardFileName: data.idCardFileName || 'student_id_card.png',
-    skills: data.skills,
-    createdAt: new Date().toISOString(),
-    status: 'VERIFIED',
-  };
-
-  const students = getLocalStudents();
-  students.unshift(newStudent);
-  saveLocalStudents(students);
-
-  return {
-    success: true,
-    alreadyRegistered: false,
-    message: 'Student Innovator registered successfully! You can now log in.',
-    student: newStudent,
-  };
-}
-
-/** Fetch Registered Students for an Institution */
-export async function fetchInstitutionStudents(
-  institutionIdentifier?: string
-): Promise<RegisteredStudent[]> {
-  const localList = getLocalStudents();
-
-  if (institutionIdentifier && API_BASE) {
-    try {
-      const res = await fetchJSON<{ students?: RegisteredStudent[]; [key: string]: any }>(
-        `${API_BASE}/api/institutions/${encodeURIComponent(institutionIdentifier)}/students`
-      );
-      if (res?.students && Array.isArray(res.students)) {
-        return res.students;
-      }
-    } catch (e) {
-      console.warn('Backend fetchInstitutionStudents unavailable, filtering local:', e);
-    }
-  }
-
-  if (!institutionIdentifier || institutionIdentifier === 'All') {
-    return localList;
-  }
-
-  const query = institutionIdentifier.toLowerCase().trim();
-  const filtered = localList.filter((s) => {
-    const sName = (s.institutionName || '').toLowerCase();
-    const sId = (s.institutionId || '').toLowerCase();
-    return sName.includes(query) || query.includes(sName) || sId === query;
-  });
-
-  return filtered.length > 0 ? filtered : localList;
 }
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> {
