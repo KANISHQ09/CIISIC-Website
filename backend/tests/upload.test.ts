@@ -30,7 +30,7 @@ describe("File Upload validations", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(auth as any).mockResolvedValue({
-      user: { id: "user-1", role: "STUDENT", email: "student@jlu.edu.in", name: "Student" },
+      user: { id: "user-1", role: "INSTITUTION_SPOC", email: "spoc@jlu.edu.in", name: "SPOC" },
       expires: "",
     });
   });

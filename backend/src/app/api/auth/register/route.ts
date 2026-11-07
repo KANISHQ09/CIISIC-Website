@@ -38,41 +38,6 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = await hashPassword(data.password);
 
-    // Role-specific validation
-    let resolvedInstitutionId = data.institutionId;
-    if (data.role === "STUDENT") {
-      if (!data.enrollmentNo || !data.institutionId || !data.department) {
-        return badRequest(
-          "Students must provide enrollmentNo, institutionId, and department"
-        );
-      }
-      let institution = await prisma.institution.findFirst({
-        where: {
-          OR: [
-            { id: data.institutionId },
-            { name: { equals: data.institutionId, mode: "insensitive" } },
-            { name: { contains: data.institutionId, mode: "insensitive" } },
-          ],
-        },
-      });
-      if (!institution) {
-        institution = await prisma.institution.create({
-          data: {
-            name: data.institutionId,
-            city: "Madhya Pradesh",
-          },
-        });
-      }
-      resolvedInstitutionId = institution.id;
-
-      const existingEnrollment = await prisma.studentProfile.findUnique({
-        where: { enrollmentNo: data.enrollmentNo },
-      });
-      if (existingEnrollment) {
-        return conflict("This enrollment number is already registered. Please sign in.");
-      }
-    }
-
     if (data.role === "INDUSTRY_SPOC" && !data.companyName) {
       return badRequest("Industry users must provide company name");
     }
@@ -81,7 +46,8 @@ export async function POST(req: NextRequest) {
       return badRequest("Institution SPOCs must provide their institution ID");
     }
 
-    const requiresApproval = data.role === "INDUSTRY_SPOC" || data.role === "INSTITUTION_SPOC";
+    // Every self-registered partner account waits for CII Administrator approval
+    const requiresApproval = true;
 
     // Create user + profile in transaction
     const user = await prisma.$transaction(async (tx) => {
@@ -96,20 +62,7 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      if (data.role === "STUDENT") {
-        await tx.studentProfile.create({
-          data: {
-            userId: newUser.id,
-            enrollmentNo: data.enrollmentNo!,
-            institutionId: resolvedInstitutionId!,
-            department: data.department!,
-            course: data.course || "B.Tech",
-            idCardUrl: data.idCardUrl || null,
-            yearOfStudy: data.yearOfStudy ?? 1,
-            skills: data.skills ?? [],
-          },
-        });
-      } else if (data.role === "INDUSTRY_SPOC") {
+      if (data.role === "INDUSTRY_SPOC") {
         await tx.industryProfile.create({
           data: {
             userId: newUser.id,

@@ -14,7 +14,7 @@ import {
 
 /**
  * GET /api/institutions/[id]
- * Public — get a single institution with student count.
+ * Public — get a single institution with its solution count.
  */
 export async function GET(
   _req: NextRequest,
@@ -26,7 +26,7 @@ export async function GET(
     const institution = await prisma.institution.findUnique({
       where: { id },
       include: {
-        _count: { select: { students: true } },
+        _count: { select: { proposals: true } },
         institutionProfile: {
           include: {
             user: { select: { id: true, name: true, email: true } },
@@ -109,7 +109,7 @@ export async function PATCH(
 /**
  * DELETE /api/institutions/[id]
  * Super Admin only — permanently deletes an institution (cascades).
- * Caution: this will fail if students are still linked.
+ * Caution: this will fail if proposals are still linked.
  */
 export async function DELETE(
   req: NextRequest,

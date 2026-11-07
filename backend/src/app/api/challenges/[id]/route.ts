@@ -36,7 +36,7 @@ const CHALLENGE_INCLUDE = {
 /**
  * GET /api/challenges/[id]
  * Anyone can view OPEN challenges. Admins see all statuses.
- * Increments view count for students/public.
+ * Increments view count for public visitors.
  */
 export async function GET(
   req: NextRequest,
@@ -72,7 +72,7 @@ export async function GET(
         .catch(console.error);
     }
 
-    return ok(serializeChallenge(challenge, (role as never) ?? "STUDENT", userId));
+    return ok(serializeChallenge(challenge, role, userId));
   } catch (err) {
     console.error("[GET /api/challenges/[id]]", err);
     return serverError();

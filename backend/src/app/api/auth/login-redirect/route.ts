@@ -16,9 +16,7 @@ export async function GET(req: Request) {
   const baseUrl = new URL(req.url).origin;
 
   let redirectUrl = "/dashboard";
-  if (role === "STUDENT") {
-    redirectUrl = "/dashboard/student";
-  } else if (role === "INDUSTRY_SPOC") {
+  if (role === "INDUSTRY_SPOC") {
     redirectUrl = "/dashboard/industry";
   } else if (role === "SUPER_ADMIN" || role === "CII_ADMIN") {
     redirectUrl = "/dashboard/admin";

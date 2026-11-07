@@ -1,12 +1,42 @@
 import { z } from "zod";
 import { ProposalStatus } from "@prisma/client";
 
+const TeamLeadSchema = z.object({
+  name: z.string().trim().min(2, "Team lead name is required").max(100),
+  email: z.string().trim().email("Team lead email is invalid"),
+  department: z.string().trim().max(100).optional().default(""),
+  yearOfStudy: z.string().trim().max(50).optional().default(""),
+  phone: z.string().trim().max(20).optional(),
+});
+
+const TeamMemberSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  email: z.string().trim().email("Team member email is invalid"),
+  role: z.string().trim().max(60).optional(),
+});
+
+const FacultyMentorSchema = z.object({
+  name: z.string().trim().max(100).optional().default(""),
+  designation: z.string().trim().max(100).optional().default(""),
+  email: z.string().trim().email("Mentor email is invalid").optional().or(z.literal("")),
+  phone: z.string().trim().max(20).optional(),
+});
+
+/** Solution submitted by an Institution SPOC on behalf of its team. */
 export const ProposalCreateSchema = z.object({
+  title: z.string().trim().max(200).optional(),
   summary: z
     .string()
     .min(20, "Summary must be at least 20 characters")
-    .max(500, "Summary must be 500 characters or fewer"),
+    .max(3000, "Summary must be 3000 characters or fewer"),
+  detailedApproach: z.string().max(20000).optional(),
+  technologiesUsed: z.array(z.string().trim().min(1).max(50)).max(20).optional(),
+  demoUrl: z.string().url("Demo link must be a valid URL").optional().or(z.literal("")),
   approachDoc: z.string().optional(), // file URL/key — populated after upload
+  teamName: z.string().trim().min(2, "Team name is required").max(100),
+  teamLead: TeamLeadSchema,
+  teamMembers: z.array(TeamMemberSchema).max(10).optional(),
+  facultyMentor: FacultyMentorSchema.optional(),
   isDraft: z.boolean().default(false),
 });
 

@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
         take: limit,
         orderBy: { name: "asc" },
         include: {
-          _count: { select: { students: true } },
+          _count: { select: { proposals: true } },
         },
       }),
     ]);

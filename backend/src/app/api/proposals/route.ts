@@ -13,9 +13,8 @@ import {
 /**
  * GET /api/proposals
  * Returns proposals scoped to the requesting user's role:
- * - Student: own proposals only
  * - Industry SPOC: proposals for their challenges
- * - Institution SPOC: proposals from their institution's students
+ * - Institution SPOC: proposals submitted by their institution
  * - Admin: all proposals
  */
 export async function GET(req: NextRequest) {
@@ -40,14 +39,7 @@ export async function GET(req: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = status ? { status } : {};
 
-    if (role === "STUDENT") {
-      const profile = await prisma.studentProfile.findUnique({
-        where: { userId },
-        select: { id: true },
-      });
-      if (!profile) return ok({ data: [], pagination: { total: 0, page, limit, totalPages: 0 } });
-      where.studentProfileId = profile.id;
-    } else if (role === "INDUSTRY_SPOC") {
+    if (role === "INDUSTRY_SPOC") {
       const profile = await prisma.industryProfile.findUnique({
         where: { userId },
         select: { id: true },
@@ -60,7 +52,7 @@ export async function GET(req: NextRequest) {
         select: { institutionId: true },
       });
       if (!profile) return ok({ data: [], pagination: { total: 0, page, limit, totalPages: 0 } });
-      where.studentProfile = { institutionId: profile.institutionId };
+      where.institutionId = profile.institutionId;
       requestingUserInstitutionId = profile.institutionId;
     }
     // SUPER_ADMIN and CII_ADMIN: no filter (see all)
@@ -73,16 +65,7 @@ export async function GET(req: NextRequest) {
         take: limit,
         orderBy: { submittedAt: "desc" },
         include: {
-          studentProfile: {
-            select: {
-              userId: true,
-              department: true,
-              yearOfStudy: true,
-              skills: true,
-              institutionId: true,
-              user: { select: { name: true, email: true } },
-            },
-          },
+          institution: { select: { name: true, city: true } },
           challenge: { select: { title: true, domain: true } },
         },
       }),

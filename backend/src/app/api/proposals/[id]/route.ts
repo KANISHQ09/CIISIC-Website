@@ -19,18 +19,7 @@ import {
 import { sendProposalStatusEmail } from "@/lib/email";
 
 const PROPOSAL_INCLUDE = {
-  studentProfile: {
-    select: {
-      userId: true,
-      enrollmentNo: true,
-      department: true,
-      yearOfStudy: true,
-      skills: true,
-      institutionId: true,
-      institution: { select: { name: true, city: true } },
-      user: { select: { name: true, email: true } },
-    },
-  },
+  institution: { select: { name: true, city: true } },
   challenge: {
     select: {
       title: true,
@@ -43,7 +32,7 @@ const PROPOSAL_INCLUDE = {
 
 /**
  * GET /api/proposals/[id]
- * Student: own proposal | Industry: their challenge's proposal | Institution SPOC: their student's proposal | Admin: all
+ * Industry: their challenge's proposal | Institution SPOC: their institution's proposal | Admin: all
  */
 export async function GET(
   _req: NextRequest,
@@ -63,7 +52,6 @@ export async function GET(
     const role = session.user.role;
     const userId = session.user.id;
     const isAdmin = role === "SUPER_ADMIN" || role === "CII_ADMIN";
-    const isOwner = proposal.studentProfile.userId === userId;
     const isIndustryOwner =
       role === "INDUSTRY_SPOC" &&
       proposal.challenge.industryProfile.userId === userId;
@@ -77,15 +65,13 @@ export async function GET(
       });
       if (spocProfile) {
         requestingUserInstitutionId = spocProfile.institutionId;
-        if (
-          requestingUserInstitutionId === proposal.studentProfile.institutionId
-        ) {
+        if (requestingUserInstitutionId === proposal.institutionId) {
           isInstitutionSpocOwner = true;
         }
       }
     }
 
-    if (!isAdmin && !isOwner && !isIndustryOwner && !isInstitutionSpocOwner) {
+    if (!isAdmin && !isIndustryOwner && !isInstitutionSpocOwner) {
       return forbidden("Access denied");
     }
 
@@ -127,10 +113,12 @@ export async function PATCH(
             industryProfile: { select: { userId: true } },
           },
         },
-        studentProfile: {
+        submittedBy: { select: { id: true, name: true, email: true } },
+        institution: {
           select: {
-            userId: true,
-            user: { select: { name: true, email: true } },
+            institutionProfile: {
+              select: { user: { select: { id: true, name: true, email: true } } },
+            },
           },
         },
       },
@@ -161,23 +149,26 @@ export async function PATCH(
       },
     });
 
-    // Notify the student
-    await prisma.notification.create({
-      data: {
-        userId: proposal.studentProfile.userId,
-        title: `Proposal ${status.replace(/_/g, " ").toLowerCase()}`,
-        body: revisionNotes
-          ? `Revision requested: ${revisionNotes.slice(0, 100)}`
-          : `Your proposal status has been updated to: ${status}`,
-        link: `/api/proposals/${id}`,
-      },
-    });
+    // Notify the institution contact who submitted it (or the institution's current SPOC)
+    const recipient =
+      proposal.submittedBy ?? proposal.institution?.institutionProfile?.user ?? null;
 
-    if (proposal.studentProfile.user) {
+    if (recipient) {
+      await prisma.notification.create({
+        data: {
+          userId: recipient.id,
+          title: `Proposal ${status.replace(/_/g, " ").toLowerCase()}`,
+          body: revisionNotes
+            ? `Revision requested: ${revisionNotes.slice(0, 100)}`
+            : `Your proposal status has been updated to: ${status}`,
+          link: `/api/proposals/${id}`,
+        },
+      });
+
       try {
         await sendProposalStatusEmail(
-          proposal.studentProfile.user.email,
-          proposal.studentProfile.user.name,
+          recipient.email,
+          recipient.name,
           status,
           proposal.challenge.title,
           revisionNotes

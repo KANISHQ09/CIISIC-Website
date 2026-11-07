@@ -17,7 +17,7 @@ const UserUpdateSchema = z.object({
   name: z.string().min(2).max(100).optional(),
   isActive: z.boolean().optional(),
   role: z
-    .enum(["SUPER_ADMIN", "CII_ADMIN", "INSTITUTION_SPOC", "INDUSTRY_SPOC", "STUDENT"])
+    .enum(["SUPER_ADMIN", "CII_ADMIN", "INSTITUTION_SPOC", "INDUSTRY_SPOC"])
     .optional(),
   avatarUrl: z.string().url().optional().or(z.literal("")),
 });
@@ -45,7 +45,6 @@ export async function GET(
     const user = await prisma.user.findUnique({
       where: { id },
       include: {
-        studentProfile: { include: { institution: true } },
         industryProfile: true,
         institutionProfile: { include: { institution: true } },
       },

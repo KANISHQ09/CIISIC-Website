@@ -16,10 +16,25 @@ import {
   validationError,
 } from "@/lib/api-response";
 
+const PARTICIPANTS_INCLUDE = {
+  institution: { select: { institutionProfile: { select: { userId: true } } } },
+  challenge: {
+    include: { industryProfile: { select: { userId: true } } },
+  },
+} as const;
+
+/** The institution-side participant: the current SPOC of the submitting institution. */
+function institutionSpocId(proposal: {
+  submittedById: string | null;
+  institution: { institutionProfile: { userId: string } | null } | null;
+}): string | null {
+  return proposal.institution?.institutionProfile?.userId ?? proposal.submittedById ?? null;
+}
+
 /**
  * GET /api/proposals/[id]/messages
  * Returns the message thread for a proposal.
- * Accessible by: proposal student, challenge industry SPOC, admins.
+ * Accessible by: the submitting institution's SPOC, the challenge's industry SPOC, admins.
  */
 export async function GET(
   req: NextRequest,
@@ -32,24 +47,20 @@ export async function GET(
 
     const proposal = await prisma.proposal.findUnique({
       where: { id },
-      include: {
-        studentProfile: { select: { userId: true } },
-        challenge: {
-          include: { industryProfile: { select: { userId: true } } },
-        },
-      },
+      include: PARTICIPANTS_INCLUDE,
     });
     if (!proposal) return notFound("Proposal not found");
 
     const role = session.user.role;
     const userId = session.user.id;
     const isAdmin = role === "SUPER_ADMIN" || role === "CII_ADMIN";
-    const isStudent = proposal.studentProfile.userId === userId;
+    const isInstitution =
+      role === "INSTITUTION_SPOC" && institutionSpocId(proposal) === userId;
     const isIndustry =
       role === "INDUSTRY_SPOC" &&
       proposal.challenge.industryProfile.userId === userId;
 
-    if (!isAdmin && !isStudent && !isIndustry) {
+    if (!isAdmin && !isInstitution && !isIndustry) {
       return forbidden("Access denied to this message thread");
     }
 
@@ -96,7 +107,7 @@ export async function GET(
 /**
  * POST /api/proposals/[id]/messages
  * Send a message on a proposal thread.
- * Only student (QUERY) and industry SPOC (RESPONSE) can send.
+ * Only the institution SPOC (QUERY) and industry SPOC (RESPONSE) can send.
  * Contact info is automatically redacted.
  */
 export async function POST(
@@ -111,27 +122,24 @@ export async function POST(
     const role = session.user.role;
     const userId = session.user.id;
 
-    if (role !== "STUDENT" && role !== "INDUSTRY_SPOC") {
-      return forbidden("Only students and industry SPOCs can send messages");
+    if (role !== "INSTITUTION_SPOC" && role !== "INDUSTRY_SPOC") {
+      return forbidden("Only institution and industry SPOCs can send messages");
     }
 
     const proposal = await prisma.proposal.findUnique({
       where: { id },
-      include: {
-        studentProfile: { select: { userId: true } },
-        challenge: {
-          include: { industryProfile: { select: { userId: true } } },
-        },
-      },
+      include: PARTICIPANTS_INCLUDE,
     });
     if (!proposal) return notFound("Proposal not found");
 
-    const isStudent = proposal.studentProfile.userId === userId;
+    const institutionUserId = institutionSpocId(proposal);
+    const isInstitution =
+      role === "INSTITUTION_SPOC" && institutionUserId === userId;
     const isIndustry =
       role === "INDUSTRY_SPOC" &&
       proposal.challenge.industryProfile.userId === userId;
 
-    if (!isStudent && !isIndustry) {
+    if (!isInstitution && !isIndustry) {
       return forbidden("You are not a participant in this proposal thread");
     }
 
@@ -156,18 +164,20 @@ export async function POST(
     });
 
     // Notify the other party
-    const recipientId = isStudent
+    const recipientId = isInstitution
       ? proposal.challenge.industryProfile.userId
-      : proposal.studentProfile.userId;
+      : institutionUserId;
 
-    await prisma.notification.create({
-      data: {
-        userId: recipientId,
-        title: "New Message",
-        body: `${session.user.name} sent a message on a proposal`,
-        link: `/api/proposals/${id}/messages`,
-      },
-    });
+    if (recipientId) {
+      await prisma.notification.create({
+        data: {
+          userId: recipientId,
+          title: "New Message",
+          body: `${session.user.name} sent a message on a proposal`,
+          link: `/api/proposals/${id}/messages`,
+        },
+      });
+    }
 
     const { ipAddress, userAgent } = getRequestMeta(req);
     await createAuditLog({

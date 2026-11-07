@@ -19,9 +19,9 @@ import {
 
 /**
  * GET /api/challenges/[id]/proposals
- * - Industry SPOC: see proposals for own challenge (student PII hidden)
+ * - Industry SPOC: see proposals for own challenge (team contact details hidden)
+ * - Institution SPOC: see only their own institution's proposals
  * - Admin: see all proposals for challenge
- * - Students: forbidden (use /api/proposals for own)
  */
 export async function GET(
   req: NextRequest,
@@ -80,7 +80,7 @@ export async function GET(
           pagination: { total: 0, page, limit, totalPages: 0 },
         });
       }
-      where.studentProfile = { institutionId: spocProfile.institutionId };
+      where.institutionId = spocProfile.institutionId;
       requestingUserInstitutionId = spocProfile.institutionId;
     }
 
@@ -92,17 +92,7 @@ export async function GET(
         take: limit,
         orderBy: { submittedAt: "desc" },
         include: {
-          studentProfile: {
-            select: {
-              userId: true,
-              department: true,
-              yearOfStudy: true,
-              skills: true,
-              institutionId: true,
-              institution: { select: { name: true, city: true } },
-              user: { select: { name: true, email: true } },
-            },
-          },
+          institution: { select: { name: true, city: true } },
         },
       }),
     ]);
@@ -128,8 +118,8 @@ export async function GET(
 
 /**
  * POST /api/challenges/[id]/proposals
- * Student only — submit a proposal.
- * One proposal per student per challenge enforced by DB unique constraint.
+ * Institution SPOC only — submit (or update a draft / revision of) their team's solution.
+ * One active proposal per institution per challenge.
  */
 export async function POST(
   req: NextRequest,
@@ -139,8 +129,8 @@ export async function POST(
     const { id } = await params;
     const session = await auth();
     if (!session?.user?.id) return unauthorized();
-    if (session.user.role !== "STUDENT" && session.user.role !== "INSTITUTION_SPOC") {
-      return forbidden("Only students or institutions can submit proposals");
+    if (session.user.role !== "INSTITUTION_SPOC") {
+      return forbidden("Only institutions can submit solutions");
     }
 
     const challenge = await prisma.challenge.findUnique({ where: { id } });
@@ -152,51 +142,36 @@ export async function POST(
       return badRequest("The deadline for this challenge has passed");
     }
 
-    let studentProfile = await prisma.studentProfile.findUnique({
+    const instProfile = await prisma.institutionProfile.findUnique({
       where: { userId: session.user.id },
+      select: { institutionId: true },
     });
-
-    if (!studentProfile && session.user.role === "INSTITUTION_SPOC") {
-      const instProfile = await prisma.institutionProfile.findUnique({
-        where: { userId: session.user.id },
-      });
-      if (!instProfile) {
-        return badRequest("Institution profile not found");
-      }
-      studentProfile = await prisma.studentProfile.findFirst({
-        where: { institutionId: instProfile.institutionId },
-      });
-      if (!studentProfile) {
-        studentProfile = await prisma.studentProfile.create({
-          data: {
-            userId: session.user.id,
-            institutionId: instProfile.institutionId,
-            enrollmentNo: `INST-${Date.now().toString(36).toUpperCase()}`,
-            department: instProfile.department || "Engineering",
-            yearOfStudy: 4,
-          },
-        });
-      }
+    if (!instProfile) {
+      return badRequest("Institution profile not found — please complete registration");
     }
-
-    if (!studentProfile) {
-      return badRequest("Student profile not found — please complete registration");
-    }
+    const institutionId = instProfile.institutionId;
 
     const body = await req.json();
     const parsed = ProposalCreateSchema.safeParse(body);
     if (!parsed.success) return validationError(parsed.error.flatten());
 
-    const { summary, approachDoc, isDraft } = parsed.data;
+    const { isDraft, ...fields } = parsed.data;
+    const proposalFields = {
+      title: fields.title || null,
+      summary: fields.summary,
+      detailedApproach: fields.detailedApproach || null,
+      technologiesUsed: fields.technologiesUsed ?? [],
+      demoUrl: fields.demoUrl || null,
+      teamName: fields.teamName,
+      teamLead: fields.teamLead,
+      teamMembers: fields.teamMembers ?? [],
+      facultyMentor: fields.facultyMentor ?? undefined,
+    };
 
-    // Check for duplicate or existing draft/revision request
-    const existing = await prisma.proposal.findUnique({
-      where: {
-        challengeId_studentProfileId: {
-          challengeId: id,
-          studentProfileId: studentProfile.id,
-        },
-      },
+    // Check for an existing proposal from this institution (draft or revision request)
+    const existing = await prisma.proposal.findFirst({
+      where: { challengeId: id, institutionId },
+      orderBy: { submittedAt: "desc" },
     });
 
     let proposal;
@@ -210,7 +185,7 @@ export async function POST(
         existing.status === "APPROVED" ||
         existing.status === "REJECTED"
       ) {
-        return conflict(`You have already submitted a proposal for this challenge (current status: ${existing.status})`);
+        return conflict(`Your institution has already submitted a solution for this challenge (current status: ${existing.status})`);
       }
 
       let nextStatus: ProposalStatus = existing.status;
@@ -225,8 +200,9 @@ export async function POST(
       proposal = await prisma.proposal.update({
         where: { id: existing.id },
         data: {
-          summary,
-          approachDoc: approachDoc ?? existing.approachDoc,
+          ...proposalFields,
+          approachDoc: fields.approachDoc ?? existing.approachDoc,
+          submittedById: session.user.id,
           status: nextStatus,
         },
       });
@@ -235,10 +211,11 @@ export async function POST(
       const initialStatus = isDraft ? "DRAFT" : "SUBMITTED";
       proposal = await prisma.proposal.create({
         data: {
+          ...proposalFields,
           challengeId: id,
-          studentProfileId: studentProfile.id,
-          summary,
-          approachDoc,
+          institutionId,
+          submittedById: session.user.id,
+          approachDoc: fields.approachDoc,
           status: initialStatus,
         },
       });

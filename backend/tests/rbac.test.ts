@@ -84,9 +84,9 @@ describe("RBAC & Object-Level Access Control", () => {
       expect(json.data.title).toBe("Open Challenge");
     });
 
-    it("should block a student from viewing a DRAFT challenge", async () => {
+    it("should block an institution SPOC from viewing a DRAFT challenge", async () => {
       vi.mocked(auth as any).mockResolvedValue({
-        user: { id: "student-1", role: "STUDENT", email: "student@jlu.edu.in", name: "Student" },
+        user: { id: "spoc-user-1", role: "INSTITUTION_SPOC", email: "spoc@jlu.edu.in", name: "SPOC" },
         expires: "",
       });
 
@@ -124,15 +124,15 @@ describe("RBAC & Object-Level Access Control", () => {
   });
 
   describe("Proposal Authorization & Filtering", () => {
-    it("should block an unauthorized user from viewing a proposal details", async () => {
+    it("should block an industry SPOC from viewing a proposal on another company's challenge", async () => {
       vi.mocked(auth as any).mockResolvedValue({
-        user: { id: "student-2", role: "STUDENT", email: "stud2@jlu.edu.in", name: "Student 2" },
+        user: { id: "industry-user-2", role: "INDUSTRY_SPOC", email: "other@corp.com", name: "Other Industry" },
         expires: "",
       });
 
       vi.mocked(prisma.proposal.findUnique).mockResolvedValue({
         id: "prop-1",
-        studentProfile: { userId: "student-1", institutionId: "inst-1" },
+        institutionId: "inst-1",
         challenge: { industryProfile: { userId: "industry-user-1" } },
       } as any);
 
@@ -142,15 +142,15 @@ describe("RBAC & Object-Level Access Control", () => {
       expect(res.status).toBe(403);
     });
 
-    it("should allow student owner to view their own proposal details", async () => {
+    it("should allow the challenge's industry SPOC to view a proposal", async () => {
       vi.mocked(auth as any).mockResolvedValue({
-        user: { id: "student-1", role: "STUDENT", email: "stud1@jlu.edu.in", name: "Student 1" },
+        user: { id: "industry-user-1", role: "INDUSTRY_SPOC", email: "hr@techcorp.com", name: "Industry" },
         expires: "",
       });
 
       vi.mocked(prisma.proposal.findUnique).mockResolvedValue({
         id: "prop-1",
-        studentProfile: { userId: "student-1", institutionId: "inst-1" },
+        institutionId: "inst-1",
         challenge: { industryProfile: { userId: "industry-user-1" } },
       } as any);
 
@@ -160,7 +160,7 @@ describe("RBAC & Object-Level Access Control", () => {
       expect(res.status).toBe(200);
     });
 
-    it("should allow institution SPOC to view proposal details of their own institution student", async () => {
+    it("should allow institution SPOC to view their own institution's proposal", async () => {
       vi.mocked(auth as any).mockResolvedValue({
         user: { id: "spoc-user-1", role: "INSTITUTION_SPOC", email: "spoc@jlu.edu.in", name: "SPOC" },
         expires: "",
@@ -172,7 +172,7 @@ describe("RBAC & Object-Level Access Control", () => {
 
       vi.mocked(prisma.proposal.findUnique).mockResolvedValue({
         id: "prop-1",
-        studentProfile: { userId: "student-1", institutionId: "inst-1" },
+        institutionId: "inst-1",
         challenge: { industryProfile: { userId: "industry-user-1" } },
       } as any);
 
@@ -182,7 +182,7 @@ describe("RBAC & Object-Level Access Control", () => {
       expect(res.status).toBe(200);
     });
 
-    it("should block institution SPOC from viewing proposals of students from other institutions", async () => {
+    it("should block institution SPOC from viewing another institution's proposal", async () => {
       vi.mocked(auth as any).mockResolvedValue({
         user: { id: "spoc-user-1", role: "INSTITUTION_SPOC", email: "spoc@jlu.edu.in", name: "SPOC" },
         expires: "",
@@ -194,7 +194,7 @@ describe("RBAC & Object-Level Access Control", () => {
 
       vi.mocked(prisma.proposal.findUnique).mockResolvedValue({
         id: "prop-1",
-        studentProfile: { userId: "student-1", institutionId: "inst-1" },
+        institutionId: "inst-1",
         challenge: { industryProfile: { userId: "industry-user-1" } },
       } as any);
 
@@ -207,7 +207,7 @@ describe("RBAC & Object-Level Access Control", () => {
 });
 
 describe("Data Privacy & Serializers", () => {
-  it("should strip challenge budget range from students", () => {
+  it("should strip challenge budget range from public visitors", () => {
     const rawChallenge = {
       id: "ch-1",
       title: "Test Challenge",
@@ -219,43 +219,47 @@ describe("Data Privacy & Serializers", () => {
       },
     };
 
-    const studentSerialized = serializeChallenge(rawChallenge, "STUDENT", "student-1");
-    expect(studentSerialized.budgetRange).toBeUndefined();
+    const publicSerialized = serializeChallenge(rawChallenge, undefined, undefined);
+    expect(publicSerialized.budgetRange).toBeUndefined();
 
     const adminSerialized = serializeChallenge(rawChallenge, "CII_ADMIN", "admin-1");
     expect(adminSerialized.budgetRange).toBe("₹1,00,000");
   });
 
-  it("should strip student PII from industry SPOC", () => {
+  it("should strip team contact details from industry SPOC", () => {
     const rawProposal = {
       id: "prop-1",
       status: "SUBMITTED",
       summary: "Approach summary",
-      studentProfile: {
-        userId: "student-1",
-        enrollmentNo: "JLU2024CS001",
-        department: "CS",
-        yearOfStudy: 3,
-        skills: ["React"],
-        user: {
-          name: "Arjun Verma",
-          email: "arjun@jlu.edu.in",
-        },
-      },
+      institutionId: "inst-1",
+      institution: { name: "Jagran Lakecity University", city: "Bhopal" },
+      teamName: "JLU Data Insights Lab",
+      teamLead: { name: "Arjun Verma", email: "arjun@jlu.edu.in", department: "CS", yearOfStudy: "3rd Year" },
+      teamMembers: [{ name: "Neha Tiwari", email: "neha@jlu.edu.in", role: "ML Engineer" }],
+      facultyMentor: { name: "Dr. Priya Sharma", designation: "Associate Professor", email: "spoc@jlu.edu.in" },
     };
 
-    // Serialize for industry SPOC
-    const industrySerialized = serializeProposal(rawProposal, "INDUSTRY_SPOC", "industry-1");
-    expect(industrySerialized.student?.name).toBeUndefined();
-    expect(industrySerialized.student?.email).toBeUndefined();
-    expect(industrySerialized.student?.enrollmentNo).toBeUndefined();
-    expect(industrySerialized.student?.department).toBe("CS");
+    // Industry SPOC: team composition only
+    const industry = serializeProposal(rawProposal, "INDUSTRY_SPOC", "industry-1");
+    expect(industry.team?.name).toBe("JLU Data Insights Lab");
+    expect(industry.team?.lead.name).toBeUndefined();
+    expect(industry.team?.lead.email).toBeUndefined();
+    expect(industry.team?.lead.department).toBe("CS");
+    expect(industry.team?.members[0].name).toBeUndefined();
+    expect(industry.team?.members[0].role).toBe("ML Engineer");
+    expect(industry.team?.mentor?.email).toBeUndefined();
+    expect(industry.institution?.name).toBe("Jagran Lakecity University");
 
-    // Serialize for admin
-    const adminSerialized = serializeProposal(rawProposal, "CII_ADMIN", "admin-1");
-    expect(adminSerialized.student?.name).toBe("Arjun Verma");
-    expect(adminSerialized.student?.email).toBe("arjun@jlu.edu.in");
-    expect(adminSerialized.student?.enrollmentNo).toBe("JLU2024CS001");
+    // Admin: everything
+    const admin = serializeProposal(rawProposal, "CII_ADMIN", "admin-1");
+    expect(admin.team?.lead.name).toBe("Arjun Verma");
+    expect(admin.team?.members[0].email).toBe("neha@jlu.edu.in");
+
+    // Owning institution SPOC: everything; another institution: no PII
+    const owner = serializeProposal(rawProposal, "INSTITUTION_SPOC", "spoc-1", "inst-1");
+    expect(owner.team?.lead.email).toBe("arjun@jlu.edu.in");
+    const other = serializeProposal(rawProposal, "INSTITUTION_SPOC", "spoc-2", "inst-2");
+    expect(other.team?.lead.email).toBeUndefined();
   });
 });
 

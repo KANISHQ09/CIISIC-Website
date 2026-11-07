@@ -56,8 +56,8 @@ export async function GET(req: NextRequest) {
 
     const where: Prisma.ChallengeWhereInput = {};
 
-    if (!role || role === "STUDENT") {
-      // Students and public can only view OPEN challenges
+    if (!role) {
+      // Public visitors can only view OPEN challenges
       where.status = "OPEN";
     } else if (role === "INDUSTRY_SPOC" && userId) {
       const profile = await prisma.industryProfile.findUnique({
@@ -157,7 +157,7 @@ export async function GET(req: NextRequest) {
     const serialized = challenges.map((challenge) =>
       serializeChallenge(
         challenge,
-        (role as never) ?? "STUDENT",
+        role,
         userId
       )
     );

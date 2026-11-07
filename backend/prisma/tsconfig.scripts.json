@@ -1,0 +1,12 @@
+{
+  "//": "Used by one-off ts-node scripts in this folder (npm run db:backfill-proposals). Kept in a file because inline JSON in npm scripts breaks under Windows cmd.",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "target": "ES2020",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": ["./*.ts"]
+}

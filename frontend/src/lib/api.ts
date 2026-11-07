@@ -197,8 +197,16 @@ export async function submitSolution(data: Omit<SolutionSubmission, 'id' | 'subm
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          title: data.title,
           summary: data.summary,
-          approachDoc: data.attachmentUrl || data.demoUrl || '',
+          detailedApproach: data.detailedApproach,
+          technologiesUsed: data.technologiesUsed,
+          demoUrl: data.demoUrl || '',
+          approachDoc: data.attachmentUrl || '',
+          teamName: data.teamName,
+          teamLead: data.teamLead,
+          teamMembers: data.teamMembers,
+          facultyMentor: data.facultyMentor,
           isDraft: false,
         }),
       });
