@@ -53,7 +53,6 @@ export async function GET(req: NextRequest) {
         take: limit,
         orderBy: { createdAt: "desc" },
         include: {
-          studentProfile: { select: { enrollmentNo: true, department: true } },
           industryProfile: { select: { companyName: true, industry: true } },
           institutionProfile: { select: { designation: true } },
         },

@@ -10,37 +10,34 @@ import { createAuditLog, getRequestMeta } from "@/lib/audit";
 import { storageProvider } from "@/lib/storage";
 
 const MAX_LOGO_SIZE = 2 * 1024 * 1024; // 2MB
-const MAX_ID_CARD_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_DOC_SIZE = 10 * 1024 * 1024; // 10MB
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 const ALLOWED_DOC_TYPES = ["application/pdf"];
-const ALLOWED_ID_CARD_TYPES = [...ALLOWED_IMAGE_TYPES, "application/pdf"];
 
 /**
  * POST /api/upload
  * Secure file upload with strict validation:
  * - Logos/Images: Max 2MB, formats: JPEG, PNG, WebP
- * - Student ID Card: Max 5MB, formats: JPEG, PNG, WebP, PDF (available during registration)
  * - Documents: Max 10MB, formats: PDF
  */
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
-    const uploadType = formData.get("type") as string | null; // "LOGO", "DOCUMENT", or "ID_CARD"
+    const uploadType = formData.get("type") as string | null; // "LOGO" or "DOCUMENT"
 
     if (!file) {
       return badRequest("No file uploaded");
     }
 
-    if (!uploadType || (uploadType !== "LOGO" && uploadType !== "DOCUMENT" && uploadType !== "ID_CARD")) {
-      return badRequest("Invalid upload type. Must be 'LOGO', 'DOCUMENT', or 'ID_CARD'");
+    if (!uploadType || (uploadType !== "LOGO" && uploadType !== "DOCUMENT")) {
+      return badRequest("Invalid upload type. Must be 'LOGO' or 'DOCUMENT'");
     }
 
-    // Require session for LOGO and DOCUMENT uploads. ID_CARD is used during student registration.
+    // All uploads require a signed-in user
     const session = await auth();
-    if (uploadType !== "ID_CARD" && !session?.user?.id) {
+    if (!session?.user?.id) {
       return unauthorized();
     }
 
@@ -54,13 +51,6 @@ export async function POST(req: NextRequest) {
       }
       if (!ALLOWED_IMAGE_TYPES.includes(mimeType)) {
         return badRequest("Invalid logo format. Allowed: JPEG, JPG, PNG, WebP");
-      }
-    } else if (uploadType === "ID_CARD") {
-      if (size > MAX_ID_CARD_SIZE) {
-        return badRequest("ID Card file size exceeds the 5MB limit");
-      }
-      if (!ALLOWED_ID_CARD_TYPES.includes(mimeType)) {
-        return badRequest("Invalid ID Card format. Allowed: JPEG, JPG, PNG, WebP, PDF");
       }
     } else {
       if (size > MAX_DOC_SIZE) {

@@ -58,9 +58,6 @@ export async function POST(req: NextRequest) {
         institutionProfile: {
           include: { institution: true },
         },
-        studentProfile: {
-          include: { institution: true },
-        },
       },
     });
 
@@ -99,16 +96,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Role verification: Only CII_ADMIN, INDUSTRY_SPOC, SUPER_ADMIN, INSTITUTION_SPOC, and STUDENT allowed to authenticate
+    // Role verification: only admins, industry and institution SPOCs can sign in.
+    // Student accounts were retired at CII's request.
     if (
       user.role !== "CII_ADMIN" &&
       user.role !== "INDUSTRY_SPOC" &&
       user.role !== "SUPER_ADMIN" &&
-      user.role !== "INSTITUTION_SPOC" &&
-      user.role !== "STUDENT"
+      user.role !== "INSTITUTION_SPOC"
     ) {
       return NextResponse.json(
-        { success: false, message: "Insufficient permissions to access portals" },
+        {
+          success: false,
+          message:
+            user.role === "STUDENT"
+              ? "Student accounts are no longer supported. Please contact your institution's CII SPOC."
+              : "Insufficient permissions to access portals",
+        },
         { status: 403, headers }
       );
     }
@@ -145,7 +148,6 @@ export async function POST(req: NextRequest) {
           avatarUrl: user.avatarUrl || null,
           industryProfile: user.industryProfile,
           institutionProfile: user.institutionProfile,
-          studentProfile: user.studentProfile,
         },
       },
       { status: 200, headers }

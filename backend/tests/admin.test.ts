@@ -30,9 +30,9 @@ describe("Admin Challenge Review Workflow", () => {
     vi.clearAllMocks();
   });
 
-  it("should block a student from reviewing a challenge", async () => {
+  it("should block a non-admin (institution SPOC) from reviewing a challenge", async () => {
     vi.mocked(auth).mockResolvedValue({
-      user: { id: "student-1", role: "STUDENT", email: "student@jlu.edu.in", name: "Student", avatarUrl: null },
+      user: { id: "spoc-user-1", role: "INSTITUTION_SPOC", email: "spoc@jlu.edu.in", name: "SPOC", avatarUrl: null },
     });
 
     const req = new NextRequest("http://ciisic.test/api/admin/challenges/challenge-1/review", {

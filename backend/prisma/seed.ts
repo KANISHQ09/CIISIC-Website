@@ -172,34 +172,6 @@ async function main() {
   });
   console.log(`✅ Industry SPOC: ${industryUser.email}`);
 
-  // ─── Student ──────────────────────────────────────────────────────────────
-  const studentUser = await prisma.user.upsert({
-    where: { email: "student@jlu.edu.in" },
-    update: { passwordHash: await hash("Student@1234") },
-    create: {
-      email: "student@jlu.edu.in",
-      name: "Arjun Verma",
-      role: "STUDENT",
-      passwordHash: await hash("Student@1234"),
-      emailVerified: true,
-      isActive: true,
-    },
-  });
-
-  await prisma.studentProfile.upsert({
-    where: { userId: studentUser.id },
-    update: {},
-    create: {
-      userId: studentUser.id,
-      enrollmentNo: "JLU2024CS001",
-      institutionId: institutions[0].id,
-      department: "Computer Science & Engineering",
-      yearOfStudy: 3,
-      skills: ["Python", "Machine Learning", "React", "Data Analysis"],
-    },
-  });
-  console.log(`✅ Student: ${studentUser.email}`);
-
   // ─── Sample Challenges ────────────────────────────────────────────────────
   const challenge1 = await prisma.challenge.upsert({
     where: { id: "seed-challenge-001" },
@@ -245,6 +217,37 @@ async function main() {
 
   console.log(`✅ Sample challenges created: ${challenge1.title}, ${challenge2.title}`);
 
+  // ─── Sample Solution (submitted by the institution SPOC for its team) ─────
+  await prisma.proposal.upsert({
+    where: { id: "seed-proposal-001" },
+    update: {},
+    create: {
+      id: "seed-proposal-001",
+      challengeId: challenge1.id,
+      institutionId: institutions[0].id,
+      submittedById: spocUser.id,
+      status: "SUBMITTED",
+      title: "Gradient-boosted churn early-warning system",
+      summary:
+        "We propose a gradient-boosted model on 18 months of usage and billing signals, with weekly risk scores surfaced in a lightweight dashboard for the customer success team.",
+      technologiesUsed: ["Python", "XGBoost", "FastAPI", "React"],
+      teamName: "JLU Data Insights Lab",
+      teamLead: {
+        name: "Arjun Verma",
+        email: "arjun.verma@jlu.edu.in",
+        department: "Computer Science & Engineering",
+        yearOfStudy: "3rd Year UG",
+      },
+      teamMembers: [{ name: "Neha Tiwari", email: "neha.tiwari@jlu.edu.in", role: "ML Engineer" }],
+      facultyMentor: {
+        name: "Dr. Priya Sharma",
+        designation: "Associate Professor",
+        email: "spoc@jlu.edu.in",
+      },
+    },
+  });
+  console.log("✅ Sample solution created for challenge 1");
+
   // ─── Audit log seeds ──────────────────────────────────────────────────────
   await prisma.auditLog.create({
     data: {
@@ -262,7 +265,6 @@ async function main() {
   console.log("CII Admin:         admin@ciisic.in        / Admin@1234");
   console.log("Institution SPOC:  spoc@jlu.edu.in        / Spoc@1234");
   console.log("Industry SPOC:     hr@techcorp.com        / Industry@1234");
-  console.log("Student:           student@jlu.edu.in     / Student@1234");
   console.log("──────────────────────────────────────────────────────────────");
 }
 

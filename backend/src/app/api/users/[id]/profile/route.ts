@@ -15,12 +15,6 @@ import {
 
 // ─── Per-role update schemas ──────────────────────────────────────────────────
 
-const StudentProfileUpdateSchema = z.object({
-  department: z.string().min(2).max(100).optional(),
-  yearOfStudy: z.number().int().min(1).max(6).optional(),
-  skills: z.array(z.string().max(50)).max(20).optional(),
-});
-
 const IndustryProfileUpdateSchema = z.object({
   companyName: z.string().min(2).max(200).optional(),
   industry: z.string().min(2).max(100).optional(),
@@ -59,11 +53,6 @@ export async function GET(
       select: {
         id: true,
         role: true,
-        studentProfile: {
-          include: {
-            institution: { select: { id: true, name: true, city: true, cellTheme: true } },
-          },
-        },
         industryProfile: true,
         institutionProfile: {
           include: {
@@ -86,7 +75,6 @@ export async function GET(
  * Updates the role-specific profile for a user.
  * Self (own profile) or Admin can update.
  *
- * Students  → update: department, yearOfStudy, skills
  * Industry  → update: companyName, industry, websiteUrl, logoUrl, isCIIMember
  * Inst SPOC → update: designation, department
  */
@@ -110,7 +98,6 @@ export async function PATCH(
       select: {
         id: true,
         role: true,
-        studentProfile: { select: { id: true } },
         industryProfile: { select: { id: true } },
         institutionProfile: { select: { id: true } },
       },
@@ -122,27 +109,7 @@ export async function PATCH(
     const { ipAddress, userAgent } = getRequestMeta(req);
     let updatedProfile;
 
-    if (user.role === "STUDENT") {
-      if (!user.studentProfile) {
-        return badRequest("Student profile not found");
-      }
-      const parsed = StudentProfileUpdateSchema.safeParse(body);
-      if (!parsed.success) return validationError(parsed.error.flatten());
-
-      updatedProfile = await prisma.studentProfile.update({
-        where: { id: user.studentProfile.id },
-        data: {
-          ...(parsed.data.department && { department: parsed.data.department }),
-          ...(parsed.data.yearOfStudy !== undefined && {
-            yearOfStudy: parsed.data.yearOfStudy,
-          }),
-          ...(parsed.data.skills && { skills: parsed.data.skills }),
-        },
-        include: {
-          institution: { select: { id: true, name: true, city: true } },
-        },
-      });
-    } else if (user.role === "INDUSTRY_SPOC") {
+    if (user.role === "INDUSTRY_SPOC") {
       if (!user.industryProfile) {
         return badRequest("Industry profile not found");
       }

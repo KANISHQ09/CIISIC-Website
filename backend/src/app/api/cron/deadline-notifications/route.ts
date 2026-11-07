@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 /**
  * GET /api/cron/deadline-notifications
  * System cron trigger to find challenges with deadlines approaching in < 48 hours
- * and notify relevant users (Industry SPOC owner and participating students).
+ * and notify relevant users (Industry SPOC owner and participating institutions).
  */
 export async function GET(req: NextRequest) {
   try {
@@ -23,8 +23,9 @@ export async function GET(req: NextRequest) {
       include: {
         industryProfile: true,
         proposals: {
-          include: {
-            studentProfile: true,
+          select: {
+            submittedById: true,
+            institution: { select: { institutionProfile: { select: { userId: true } } } },
           },
         },
       },
@@ -65,11 +66,16 @@ export async function GET(req: NextRequest) {
       });
       notificationsCreated++;
 
-      // 2. Notify all students who submitted/drafted proposals for this challenge
-      for (const proposal of challenge.proposals) {
+      // 2. Notify each institution that submitted/drafted a proposal for this challenge (once each)
+      const institutionUserIds = new Set(
+        challenge.proposals
+          .map((p) => p.institution?.institutionProfile?.userId ?? p.submittedById)
+          .filter((uid): uid is string => !!uid)
+      );
+      for (const userId of institutionUserIds) {
         await prisma.notification.create({
           data: {
-            userId: proposal.studentProfile.userId,
+            userId,
             title: "Challenge Deadline Approaching",
             body: `The deadline for the project "${challenge.title}" you applied to is approaching on ${deadlineStr}.`,
             link: challengeLink,
