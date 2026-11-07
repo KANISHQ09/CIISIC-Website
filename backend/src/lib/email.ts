@@ -68,17 +68,19 @@ export async function sendPasswordResetEmail(
 ) {
   const subject = "Reset your CIISIC Password";
   const text = `Hello ${name},\n\nYou requested a password reset. Please use the following link to reset your password:\n${resetUrl}\n\nThis link will expire in 1 hour. If you did not request this, please ignore this email.`;
+  const safeName = escapeHtml(name);
+  const safeUrl = escapeHtml(resetUrl);
   const html = `
     <div style="font-family: sans-serif; padding: 20px; color: #333;">
       <h2>Password Reset Request</h2>
-      <p>Hello ${name},</p>
+      <p>Hello ${safeName},</p>
       <p>You requested a password reset for your CIISIC platform account.</p>
       <p>Please click the button below to reset your password:</p>
       <div style="margin: 20px 0;">
-        <a href="${resetUrl}" style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Reset Password</a>
+        <a href="${safeUrl}" style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Reset Password</a>
       </div>
       <p>Or copy and paste this URL into your browser:</p>
-      <p style="word-break: break-all; color: #64748b;">${resetUrl}</p>
+      <p style="word-break: break-all; color: #64748b;">${safeUrl}</p>
       <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
       <p style="font-size: 12px; color: #94a3b8;">This link will expire in 1 hour. If you did not make this request, you can safely ignore this email.</p>
     </div>
@@ -103,7 +105,7 @@ export async function sendProposalStatusEmail(
     noteHtml = `
       <div style="background-color: #fef08a; border-left: 4px solid #eab308; padding: 15px; margin: 15px 0; border-radius: 4px;">
         <h4 style="margin: 0 0 10px 0; color: #854d0e;">Revision Required:</h4>
-        <p style="margin: 0; color: #713f12;">${revisionNotes}</p>
+        <p style="margin: 0; color: #713f12;">${escapeHtml(revisionNotes)}</p>
       </div>
     `;
   }
@@ -112,10 +114,10 @@ export async function sendProposalStatusEmail(
   const html = `
     <div style="font-family: sans-serif; padding: 20px; color: #333;">
       <h2>Proposal Status Update</h2>
-      <p>Hello ${name},</p>
-      <p>The status of your proposal for the challenge <strong>"${challengeTitle}"</strong> has been updated to:</p>
+      <p>Hello ${escapeHtml(name)},</p>
+      <p>The status of your proposal for the challenge <strong>"${escapeHtml(challengeTitle)}"</strong> has been updated to:</p>
       <div style="margin: 15px 0;">
-        <span style="font-size: 16px; font-weight: bold; background-color: #e2e8f0; padding: 6px 12px; border-radius: 4px; display: inline-block;">${status.replace(/_/g, " ")}</span>
+        <span style="font-size: 16px; font-weight: bold; background-color: #e2e8f0; padding: 6px 12px; border-radius: 4px; display: inline-block;">${escapeHtml(status.replace(/_/g, " "))}</span>
       </div>
       ${noteHtml}
       <p>Please log in to the CIISIC portal to check the updates and continue the process.</p>
@@ -126,8 +128,8 @@ export async function sendProposalStatusEmail(
 
 // ─── Public problem submission emails ─────────────────────────────────────────
 
-/** Escape text typed by the public before placing it in an HTML email. */
-function escapeHtml(value: string): string {
+/** Escape text typed by users before placing it in an HTML email. */
+export function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")

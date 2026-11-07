@@ -20,8 +20,8 @@ const RESET_TOKEN_TTL_MINUTES = 60; // 1 hour
  * POST /api/auth/forgot-password
  * Public — generates a password reset token.
  *
- * NOTE: Email delivery is stubbed. When Nodemailer is integrated,
- * replace the console.log block with the actual email send call.
+ * The reset link is only ever sent by email (printed in the server terminal while
+ * SMTP is not configured) — never returned in the response.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -75,11 +75,6 @@ export async function POST(req: NextRequest) {
     return ok({
       message:
         "If an account with that email exists, a reset link has been sent.",
-      // Only expose token in development for testing without email
-      ...(process.env.NODE_ENV === "development" && {
-        _dev_token: token,
-        _dev_resetUrl: resetUrl,
-      }),
     });
   } catch (err) {
     console.error("[POST /api/auth/forgot-password]", err);

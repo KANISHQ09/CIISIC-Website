@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { InstitutionUpdateSchema } from "@/lib/validations/institution";
 import { createAuditLog, getRequestMeta } from "@/lib/audit";
+import { PUBLIC_INSTITUTION_SELECT } from "@/lib/public-fields";
 import {
   ok,
   forbidden,
@@ -14,7 +15,8 @@ import {
 
 /**
  * GET /api/institutions/[id]
- * Public — get a single institution with its solution count.
+ * Public — a single institution with its solution count.
+ * The contact person's details (name, email, designation) are included only for CII admins.
  */
 export async function GET(
   _req: NextRequest,
@@ -22,18 +24,26 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const session = await auth();
+    const isAdmin =
+      session?.user?.role === "SUPER_ADMIN" || session?.user?.role === "CII_ADMIN";
 
-    const institution = await prisma.institution.findUnique({
-      where: { id },
-      include: {
-        _count: { select: { proposals: true } },
-        institutionProfile: {
+    const institution = isAdmin
+      ? await prisma.institution.findUnique({
+          where: { id },
           include: {
-            user: { select: { id: true, name: true, email: true } },
+            _count: { select: { proposals: true } },
+            institutionProfile: {
+              include: {
+                user: { select: { id: true, name: true, email: true } },
+              },
+            },
           },
-        },
-      },
-    });
+        })
+      : await prisma.institution.findUnique({
+          where: { id },
+          select: PUBLIC_INSTITUTION_SELECT,
+        });
 
     if (!institution) return notFound("Institution not found");
     return ok(institution);

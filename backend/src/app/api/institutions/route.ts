@@ -5,6 +5,7 @@ import {
   InstitutionCreateSchema,
 } from "@/lib/validations/institution";
 import { createAuditLog, getRequestMeta } from "@/lib/audit";
+import { PUBLIC_INSTITUTION_SELECT } from "@/lib/public-fields";
 import {
   ok,
   created,
@@ -17,7 +18,7 @@ import {
 
 /**
  * GET /api/institutions
- * Public — anyone can list institutions.
+ * Public — anyone can list institutions (public fields only, no contact details).
  * Query: page, limit, cellTheme, search
  */
 export async function GET(req: NextRequest) {
@@ -46,9 +47,7 @@ export async function GET(req: NextRequest) {
         skip,
         take: limit,
         orderBy: { name: "asc" },
-        include: {
-          _count: { select: { proposals: true } },
-        },
+        select: PUBLIC_INSTITUTION_SELECT,
       }),
     ]);
 
