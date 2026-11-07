@@ -34,7 +34,7 @@ export const Institutions: React.FC = () => {
             </div>
             <h3 className="text-xl font-bold font-serif">Are you a Faculty SPOC or University Coordinator?</h3>
             <p className="text-xs text-emerald-100/80 max-w-md">
-              Log in to view live industry problem statements, assign student teams, and submit research solutions directly to corporate partners.
+              Log in to view live industry problem statements and submit your faculty-mentored team's research solutions directly to corporate partners.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto shrink-0">

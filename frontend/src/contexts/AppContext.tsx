@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
-  ProblemStatement, User, SubmissionStatus, UserRole, 
-  ProblemAssignment, SolutionSubmission, SolutionStatus 
+  ProblemStatement, User, SubmissionStatus, UserRole,
+  SolutionSubmission, SolutionStatus
 } from '../types';
 import { 
   login as apiLogin, logout as apiLogout, getSession, 
   fetchChallenges, createChallenge, updateChallenge, reviewChallenge,
-  getLocalAssignments, createAssignment, getLocalSolutions,
+  getLocalSolutions,
   submitSolution as apiSubmitSolution, reviewSolution as apiReviewSolution
 } from '../lib/api';
 
@@ -18,7 +18,6 @@ export interface ToastType {
 interface AppContextType {
   currentUser: User | null;
   submissions: ProblemStatement[];
-  assignments: ProblemAssignment[];
   solutions: SolutionSubmission[];
   toast: ToastType | null;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
@@ -28,7 +27,6 @@ interface AppContextType {
   addSubmission: (submission: Omit<ProblemStatement, 'id' | 'status' | 'submittedDate'>) => Promise<string>;
   updateSubmissionStatus: (id: string, status: SubmissionStatus, remarks?: string) => Promise<void>;
   updateSubmission: (submission: ProblemStatement) => Promise<void>;
-  assignChallenge: (assignmentData: Omit<ProblemAssignment, 'id' | 'assignedDate' | 'status'>) => Promise<ProblemAssignment>;
   submitSolution: (solutionData: Omit<SolutionSubmission, 'id' | 'submittedAt' | 'status'>) => Promise<SolutionSubmission>;
   reviewSolution: (solutionId: string, status: SolutionStatus, feedback?: string, revisionNotes?: string) => Promise<SolutionSubmission>;
   resetData: () => void;
@@ -42,8 +40,6 @@ const mapUserRole = (user: any): User => {
     SUPER_ADMIN: 'admin',
     CII_ADMIN: 'admin',
     INSTITUTION_SPOC: 'institution',
-    STUDENT: 'student',
-    student: 'student',
     industry: 'industry',
     admin: 'admin',
     institution: 'institution',
@@ -55,26 +51,25 @@ const mapUserRole = (user: any): User => {
     email: user.email,
     role,
     companyName: user.industryProfile?.companyName ?? user.companyName,
-    designation:
-      role === 'student'
-        ? (user.studentProfile?.enrollmentNo ? `Student Innovator (${user.studentProfile.enrollmentNo})` : 'Student Innovator')
-        : (user.industryProfile?.designation ?? user.institutionProfile?.designation ?? user.designation),
+    designation: user.industryProfile?.designation ?? user.institutionProfile?.designation ?? user.designation,
     industry: user.industryProfile?.industry ?? user.industry,
-    institutionName: user.studentProfile?.institution?.name ?? user.institutionProfile?.institution?.name ?? user.institutionName,
-    institutionCity: user.studentProfile?.institution?.city ?? user.institutionProfile?.institution?.city ?? user.institutionCity,
-    department: user.studentProfile?.department ?? user.institutionProfile?.department ?? user.department,
+    institutionName: user.institutionProfile?.institution?.name ?? user.institutionName,
+    institutionCity: user.institutionProfile?.institution?.city ?? user.institutionCity,
+    department: user.institutionProfile?.department ?? user.department,
     phone: user.phone,
-    enrollmentNo: user.studentProfile?.enrollmentNo ?? user.enrollmentNo,
-    yearOfStudy: user.studentProfile?.yearOfStudy ?? user.yearOfStudy,
-    skills: user.studentProfile?.skills ?? user.skills,
   };
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Load submissions from backend or fallback to localStorage
   const [submissions, setSubmissions] = useState<ProblemStatement[]>([]);
-  const [assignments, setAssignments] = useState<ProblemAssignment[]>(getLocalAssignments);
   const [solutions, setSolutions] = useState<SolutionSubmission[]>(getLocalSolutions);
+
+  // Clear browser data left over from the retired student portal and team assignments
+  useEffect(() => {
+    localStorage.removeItem('ciisic_assignments');
+    localStorage.removeItem('ciisic_registered_students');
+  }, []);
 
   // Load current user session
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -177,18 +172,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
-  const assignChallenge = async (assignmentData: Omit<ProblemAssignment, 'id' | 'assignedDate' | 'status'>): Promise<ProblemAssignment> => {
-    const created = createAssignment(assignmentData);
-    setAssignments((prev) => [created, ...prev]);
-    showToast(`Assigned ${assignmentData.challengeTitle} to ${assignmentData.teamName}`, 'success');
-    return created;
-  };
-
   const submitSolution = async (solutionData: Omit<SolutionSubmission, 'id' | 'submittedAt' | 'status'>): Promise<SolutionSubmission> => {
     const created = await apiSubmitSolution(solutionData);
     setSolutions((prev) => [created, ...prev]);
-    // Refresh assignments in case one was linked
-    setAssignments(getLocalAssignments());
     showToast('Solution submitted successfully to Industry and CII review!', 'success');
     return created;
   };
@@ -210,11 +196,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const resetData = () => {
     setCurrentUser(null);
     setSubmissions([]);
-    setAssignments([]);
     setSolutions([]);
     localStorage.removeItem('ciisic_current_user');
     localStorage.removeItem('ciisic_submissions');
-    localStorage.removeItem('ciisic_assignments');
     localStorage.removeItem('ciisic_solutions');
   };
 
@@ -223,7 +207,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       value={{
         currentUser,
         submissions,
-        assignments,
         solutions,
         toast,
         showToast,
@@ -233,7 +216,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addSubmission,
         updateSubmissionStatus,
         updateSubmission,
-        assignChallenge,
         submitSolution,
         reviewSolution,
         resetData

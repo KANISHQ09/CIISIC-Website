@@ -49,7 +49,7 @@ export interface ProblemStatement {
   editedByAdmin?: boolean;
 }
 
-export type UserRole = 'industry' | 'admin' | 'institution' | 'student';
+export type UserRole = 'industry' | 'admin' | 'institution';
 
 export interface User {
   id: string;
@@ -62,35 +62,8 @@ export interface User {
   institutionName?: string;
   institutionCity?: string;
   department?: string;
-  course?: string;
-  idCardUrl?: string;
   phone?: string;
-  enrollmentNo?: string;
-  yearOfStudy?: number | string;
-  skills?: string[];
 }
-
-export interface RegisteredStudent {
-  id: string;
-  userId?: string;
-  name: string;
-  email: string;
-  phone?: string;
-  institutionId?: string;
-  institutionName: string;
-  institutionCity?: string;
-  enrollmentNo: string;
-  department: string;
-  course: string;
-  yearOfStudy: number | string;
-  idCardUrl?: string;
-  idCardFileName?: string;
-  skills: string[];
-  createdAt: string;
-  status: 'VERIFIED' | 'PENDING' | 'REJECTED';
-}
-
-export type AssignmentStatus = 'ASSIGNED' | 'IN_PROGRESS' | 'SUBMITTED';
 
 export interface StudentTeamLead {
   name: string;
@@ -113,24 +86,6 @@ export interface FacultyMentor {
   phone?: string;
 }
 
-export interface ProblemAssignment {
-  id: string;
-  challengeId: string;
-  challengeTitle: string;
-  industryCompanyName: string;
-  industrySector?: string;
-  institutionId: string;
-  institutionName: string;
-  teamName: string;
-  teamLead: StudentTeamLead;
-  teamMembers: StudentTeamMember[];
-  facultyMentor: FacultyMentor;
-  assignedDate: string;
-  status: AssignmentStatus;
-  notes?: string;
-  solutionId?: string;
-}
-
 export type SolutionStatus = 
   | 'SUBMITTED' 
   | 'UNDER_REVIEW' 
@@ -146,7 +101,6 @@ export interface SolutionSubmission {
   industrySector?: string;
   institutionId: string;
   institutionName: string;
-  assignmentId?: string;
   teamName: string;
   teamLead: StudentTeamLead;
   teamMembers: StudentTeamMember[];

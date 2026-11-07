@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { 
   Building2, ArrowLeft, Send, CheckCircle2, AlertCircle, 
@@ -10,13 +10,19 @@ import { StudentTeamLead, StudentTeamMember, FacultyMentor } from '../types';
 
 export const SubmitSolution: React.FC = () => {
   const { challengeId } = useParams<{ challengeId: string }>();
-  const [searchParams] = useSearchParams();
-  const assignmentId = searchParams.get('assignmentId');
   const navigate = useNavigate();
-  const { challenges, assignments, user, submitSolution } = useApp();
+  const { submissions, currentUser, submitSolution } = useApp();
 
-  const challenge = challenges.find((c) => c.id === challengeId);
-  const assignment = assignments.find((a) => a.id === assignmentId || a.challengeId === challengeId);
+  const problem = submissions.find((c) => c.id === challengeId);
+  const challenge = problem
+    ? {
+        id: problem.id,
+        title: problem.details.title,
+        description: problem.details.description,
+        industryCompanyName: problem.company.companyName,
+        industrySector: problem.company.industrySector || problem.company.industryName,
+      }
+    : undefined;
 
   // Form states
   const [title, setTitle] = useState('');
@@ -29,28 +35,22 @@ export const SubmitSolution: React.FC = () => {
   const [attachmentUrl, setAttachmentUrl] = useState('');
   const [documentName, setDocumentName] = useState('');
 
-  // Team states (pre-populated from assignment if available)
-  const [teamName, setTeamName] = useState(assignment?.teamName || '');
-  const [teamLead, setTeamLead] = useState<StudentTeamLead>(
-    assignment?.teamLead || {
-      name: '',
-      email: '',
-      department: '',
-      yearOfStudy: '',
-      phone: '',
-    }
-  );
-  const [teamMembers, setTeamMembers] = useState<StudentTeamMember[]>(
-    assignment?.teamMembers || []
-  );
-  const [facultyMentor, setFacultyMentor] = useState<FacultyMentor>(
-    assignment?.facultyMentor || {
-      name: '',
-      designation: '',
-      email: '',
-      phone: '',
-    }
-  );
+  // Team details entered directly by the institution
+  const [teamName, setTeamName] = useState('');
+  const [teamLead, setTeamLead] = useState<StudentTeamLead>({
+    name: '',
+    email: '',
+    department: '',
+    yearOfStudy: '',
+    phone: '',
+  });
+  const [teamMembers, setTeamMembers] = useState<StudentTeamMember[]>([]);
+  const [facultyMentor, setFacultyMentor] = useState<FacultyMentor>({
+    name: '',
+    designation: '',
+    email: '',
+    phone: '',
+  });
 
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
@@ -59,15 +59,6 @@ export const SubmitSolution: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
-  useEffect(() => {
-    if (assignment) {
-      setTeamName(assignment.teamName);
-      setTeamLead(assignment.teamLead);
-      setTeamMembers(assignment.teamMembers || []);
-      setFacultyMentor(assignment.facultyMentor);
-    }
-  }, [assignment]);
 
   const handleAddTech = (e: React.KeyboardEvent | React.MouseEvent) => {
     if ('key' in e && e.key !== 'Enter') return;
@@ -123,9 +114,8 @@ export const SubmitSolution: React.FC = () => {
         challengeTitle: challenge?.title || 'Industry Problem Statement',
         industryCompanyName: challenge?.industryCompanyName || 'CII Partner Industry',
         industrySector: challenge?.industrySector || 'Technology & Manufacturing',
-        institutionId: user?.institutionId || assignment?.institutionId || 'INST-UNKNOWN',
-        institutionName: user?.institutionName || assignment?.institutionName || 'Affiliated Institution',
-        assignmentId: assignment?.id || assignmentId || undefined,
+        institutionId: currentUser?.id || 'INST-UNKNOWN',
+        institutionName: currentUser?.institutionName || 'Affiliated Institution',
         teamName,
         teamLead,
         teamMembers,
@@ -239,9 +229,9 @@ export const SubmitSolution: React.FC = () => {
                 <Users className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-900">Institution & Student Team</h2>
+                <h2 className="text-lg font-bold text-gray-900">Institution & Team Details</h2>
                 <p className="text-xs text-gray-500">
-                  {user?.institutionName || assignment?.institutionName || 'Your academic institution'}
+                  {currentUser?.institutionName || 'Your academic institution'}
                 </p>
               </div>
             </div>
@@ -249,7 +239,7 @@ export const SubmitSolution: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
-                  Assigned Team Name *
+                  Team Name *
                 </label>
                 <input
                   type="text"

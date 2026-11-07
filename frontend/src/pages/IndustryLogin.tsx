@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Building2, Lock, Mail, ArrowLeft, ShieldCheck, ArrowRight, GraduationCap } from 'lucide-react';
+import { Building2, Lock, Mail, ArrowLeft, ShieldCheck, ArrowRight } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 
 export const IndustryLogin: React.FC = () => {
@@ -182,14 +182,6 @@ export const IndustryLogin: React.FC = () => {
         {/* Portal Switchers */}
         <div className="text-center pt-4">
           <p className="text-sm text-stone-600 inline-flex items-center justify-center gap-3 flex-wrap">
-            <Link 
-              to="/student/login" 
-              className="font-semibold text-stone-600 hover:text-[#063028] hover:underline inline-flex items-center gap-1.5"
-              id="student-portal-link"
-            >
-              <GraduationCap className="h-4 w-4 text-[#063028]" /> Student Login
-            </Link>
-            <span className="text-stone-300">•</span>
             <Link 
               to="/institution/login" 
               className="font-semibold text-stone-600 hover:text-[#063028] hover:underline inline-flex items-center gap-1.5"
