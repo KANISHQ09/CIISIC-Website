@@ -159,7 +159,7 @@ export const SubmissionDetails: React.FC = () => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editTitle.trim() || editTitle.trim().length < 25) {
       showToast('Title must be at least 25 characters.', 'error');
       return;
@@ -196,9 +196,13 @@ export const SubmissionDetails: React.FC = () => {
       editedByAdmin: true
     };
 
-    updateSubmission(updatedSubmission);
-    setIsEditing(false);
-    showToast('Submission details updated and marked as Edited by CII Admin.', 'success');
+    try {
+      await updateSubmission(updatedSubmission);
+      setIsEditing(false);
+      showToast('Submission details updated and marked as Edited by CII Admin.', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Could not save the changes. Please try again.', 'error');
+    }
   };
 
   const handleCancel = () => {
@@ -411,13 +415,24 @@ export const SubmissionDetails: React.FC = () => {
                   />
                 </div>
 
-                <div className="space-y-1 pt-2 border-t border-stone-100">
-                  <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Expected Outcome</span>
-                  <div 
-                    className="text-stone-700 leading-relaxed font-medium html-content space-y-2 mt-1"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHTML(submission.details.expectedOutcome) }}
-                  />
-                </div>
+                {[
+                  { label: 'Business Challenge', value: submission.details.businessChallenge },
+                  { label: 'Existing Process', value: submission.details.existingProcess },
+                  { label: 'Project Objectives', value: submission.details.projectObjectives },
+                  { label: 'Expected Outcome', value: submission.details.expectedOutcome },
+                ].map(({ label, value }) => (
+                  <div key={label} className="space-y-1 pt-2 border-t border-stone-100">
+                    <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">{label}</span>
+                    {value && value.trim() ? (
+                      <div
+                        className="text-stone-700 leading-relaxed font-medium html-content space-y-2 mt-1 whitespace-pre-line"
+                        dangerouslySetInnerHTML={{ __html: sanitizeHTML(value) }}
+                      />
+                    ) : (
+                      <p className="mt-1"><span className="text-stone-400 italic font-normal">Not provided</span></p>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -443,6 +458,7 @@ export const SubmissionDetails: React.FC = () => {
               <div>
                 <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Key Skillsets</span>
                 <div className="flex flex-wrap gap-2 mt-1.5">
+                  {submission.technical.requiredSkills.length === 0 && <span className="text-stone-400 italic font-normal">Not provided</span>}
                   {submission.technical.requiredSkills.map((skill, idx) => (
                     <span key={idx} className="bg-stone-100 text-stone-700 border border-stone-200 px-2.5 py-1 rounded text-xs font-medium">
                       {skill}
@@ -461,9 +477,35 @@ export const SubmissionDetails: React.FC = () => {
               <div>
                 <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Project Timeline / Difficulty</span>
                 <p className="text-stone-800 font-semibold mt-1">
-                  {submission.technical.expectedDuration} • {submission.technical.difficultyLevel} Tier
+                  {[
+                    submission.technical.expectedDuration,
+                    submission.technical.difficultyLevel && `${submission.technical.difficultyLevel} Tier`,
+                  ].filter(Boolean).join(' • ') || <span className="text-stone-400 italic font-normal">Not provided</span>}
                 </p>
               </div>
+
+              <div>
+                <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Preferred Academic Year</span>
+                <p className="text-stone-800 font-semibold mt-1">
+                  {submission.technical.preferredAcademicYear || <span className="text-stone-400 italic font-normal">Not provided</span>}
+                </p>
+              </div>
+
+              <div>
+                <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Solution Deadline</span>
+                <p className="text-stone-800 font-semibold mt-1">
+                  {submission.additional.deadline
+                    ? new Date(submission.additional.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+                    : <span className="text-stone-400 italic font-normal">Not provided</span>}
+                </p>
+              </div>
+
+              {submission.additional.budget && (
+                <div>
+                  <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Budget / Funding Offered</span>
+                  <p className="text-stone-800 font-semibold mt-1">{submission.additional.budget}</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -476,12 +518,14 @@ export const SubmissionDetails: React.FC = () => {
             <div className="space-y-5 text-sm sm:text-base">
               <div>
                 <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Expected Project Deliverables</span>
-                <p className="text-stone-700 mt-1 leading-relaxed font-medium">{submission.additional.expectedDeliverables}</p>
+                <p className="text-stone-700 mt-1 leading-relaxed font-medium whitespace-pre-line">
+                  {submission.additional.expectedDeliverables || <span className="text-stone-400 italic font-normal">Not provided</span>}
+                </p>
               </div>
 
               {submission.additional.additionalNotes && (
                 <div>
-                  <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Additional Notes &amp; Funding</span>
+                  <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Additional Notes</span>
                   <p className="text-stone-700 mt-1 leading-relaxed font-medium italic">{submission.additional.additionalNotes}</p>
                 </div>
               )}

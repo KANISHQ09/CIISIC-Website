@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { PublicChallengeSchema } from "@/lib/validations/challenge";
+import { PublicChallengeSchema, problemDetailData } from "@/lib/validations/challenge";
 import { getRequestMeta } from "@/lib/audit";
 import { isRateLimited } from "@/lib/rate-limit";
 import { generateReferenceCode } from "@/lib/problem-submission";
@@ -103,6 +103,7 @@ export async function POST(req: NextRequest) {
         contactDesignation: data.contactDesignation,
         contactEmail: data.contactEmail,
         contactPhone: data.contactPhone,
+        ...problemDetailData(data),
       },
       select: { id: true, referenceCode: true, title: true, status: true },
     });

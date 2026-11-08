@@ -30,6 +30,7 @@ export const ProposalCreateSchema = z.object({
     .min(20, "Summary must be at least 20 characters")
     .max(3000, "Summary must be 3000 characters or fewer"),
   detailedApproach: z.string().max(20000).optional(),
+  deliverables: z.string().max(5000).optional(),
   technologiesUsed: z.array(z.string().trim().min(1).max(50)).max(20).optional(),
   demoUrl: z.string().url("Demo link must be a valid URL").optional().or(z.literal("")),
   approachDoc: z.string().optional(), // file URL/key — populated after upload

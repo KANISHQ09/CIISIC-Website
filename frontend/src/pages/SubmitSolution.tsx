@@ -124,7 +124,7 @@ export const SubmitSolution: React.FC = () => {
         summary,
         detailedApproach,
         technologiesUsed,
-        deliverablesDescription: deliverablesDescription || 'Complete technical report, architecture diagrams, and prototype source code.',
+        deliverablesDescription: deliverablesDescription.trim(),
         demoUrl: demoUrl || undefined,
         attachmentUrl: attachmentUrl || undefined,
         documentName: documentName || (attachmentUrl ? 'Solution_Proposal_Document.pdf' : undefined),

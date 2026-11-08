@@ -30,13 +30,18 @@ export interface TechnicalDetails {
   requiredSkills: string[];
   preferredBranches: string[];
   preferredAcademicYear: string;
-  difficultyLevel: DifficultyLevel;
+  // '' when the submitter didn't choose one (older problems)
+  difficultyLevel: DifficultyLevel | '';
   expectedDuration: string;
 }
 
 export interface AdditionalDetails {
   expectedDeliverables: string;
   additionalNotes: string;
+  // Budget / funding offered (hidden from public visitors by the API)
+  budget?: string;
+  // Solution deadline, ISO date string
+  deadline?: string;
   fileAttachmentName?: string;
   declarationAccepted: boolean;
 }

@@ -85,6 +85,8 @@ export const IndustryRegister: React.FC = () => {
         contactPerson: contactPerson.trim(),
         email: email.trim().toLowerCase(),
         password,
+        phone: phone.trim() || undefined,
+        designation: designation.trim() || undefined,
       });
 
       setIsSubmitted(true);

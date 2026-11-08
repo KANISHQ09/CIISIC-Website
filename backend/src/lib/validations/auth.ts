@@ -13,7 +13,7 @@ export const RegisterSchema = z.object({
   role: z.enum(["INSTITUTION_SPOC", "INDUSTRY_SPOC"]),
   // Shared
   department: z.string().optional(),
-  phone: z.string().optional(),
+  phone: z.string().trim().max(20).optional(),
   // Industry-specific
   companyName: z.string().optional(),
   industry: z.string().optional(),

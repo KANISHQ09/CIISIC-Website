@@ -215,7 +215,7 @@ function mapBackendProposal(p: any): SolutionSubmission {
     summary: p.summary ?? '',
     detailedApproach: p.detailedApproach ?? '',
     technologiesUsed: p.technologiesUsed ?? [],
-    deliverablesDescription: '',
+    deliverablesDescription: p.deliverables ?? '',
     demoUrl: p.demoUrl ?? undefined,
     attachmentUrl: p.approachDoc ?? undefined,
     documentName: p.approachDoc ? 'Solution document' : undefined,
@@ -252,6 +252,7 @@ export async function submitSolution(data: Omit<SolutionSubmission, 'id' | 'subm
         title: data.title,
         summary: data.summary,
         detailedApproach: data.detailedApproach,
+        deliverables: data.deliverablesDescription || undefined,
         technologiesUsed: data.technologiesUsed,
         demoUrl: data.demoUrl || '',
         approachDoc: data.attachmentUrl || undefined,
@@ -520,6 +521,8 @@ export async function registerIndustry(data: {
   contactPerson: string;
   email: string;
   password: string;
+  phone?: string;
+  designation?: string;
 }): Promise<{ success: boolean; message: string; requiresApproval: boolean }> {
   const url = API_BASE ? `${API_BASE}/api/auth/register` : '/api/auth/register';
   try {
@@ -531,6 +534,8 @@ export async function registerIndustry(data: {
         password: data.password,
         name: data.contactPerson,
         role: 'INDUSTRY_SPOC',
+        phone: data.phone || undefined,
+        designation: data.designation || undefined,
         companyName: data.companyName,
         industry: data.industry,
         websiteUrl: data.websiteUrl || '',
@@ -601,6 +606,7 @@ export async function registerInstitution(data: {
         role: 'INSTITUTION_SPOC',
         spocInstitutionId: data.institutionName,
         institutionCity: data.institutionCity,
+        phone: data.phone || undefined,
         department: data.department,
         designation: data.designation,
       }),
@@ -818,6 +824,16 @@ function mapSectorToCellTheme(sector: string): string {
   return "RESEARCH_INNOVATION";
 }
 
+/** A YYYY-MM-DD date from a date picker → end of that day as ISO (so "today" is still valid). */
+function toDeadlineISO(value: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, d] = value.split('-').map(Number);
+    return new Date(y, m - 1, d, 23, 59, 0).toISOString();
+  }
+  return new Date(value).toISOString();
+}
+
+/** Legacy: read "Target date: DD/MM/YYYY" out of the notes text. */
 function getDeadline(payload: any): string {
   const notes = payload.additional?.additionalNotes || '';
   const match = notes.match(/Target date:\s*(\d{2})\/(\d{2})\/(\d{4})/);
@@ -848,8 +864,9 @@ function flattenChallengePayload(payload: any): any {
     description: payload.details?.description || 'No Description Provided',
     problemStatement: payload.details?.businessChallenge || payload.details?.description || 'No Problem Statement Provided',
     domain: mapSectorToCellTheme(payload.company?.industrySector || payload.company?.industryName || ''),
-    deadline: getDeadline(payload),
-    budgetRange: getBudgetRange(payload),
+    // Prefer the real fields; the "Budget allocated / Target date" text is only for old data
+    deadline: payload.additional?.deadline ? toDeadlineISO(payload.additional.deadline) : getDeadline(payload),
+    budgetRange: payload.additional?.budget?.trim() || getBudgetRange(payload),
     tags: payload.technical?.requiredTechnologies || [],
     attachmentUrls: payload.additional?.fileAttachmentName ? [payload.additional.fileAttachmentName] : [],
     organizationName: payload.company?.companyName || 'Unknown Organization',
@@ -858,6 +875,16 @@ function flattenChallengePayload(payload: any): any {
     contactDesignation: payload.company?.designation || undefined,
     contactEmail: payload.company?.email || undefined,
     contactPhone: payload.company?.phone || undefined,
+    // Details from the submission form
+    existingProcess: payload.details?.existingProcess || undefined,
+    expectedOutcome: payload.details?.expectedOutcome || undefined,
+    projectObjectives: payload.details?.projectObjectives || undefined,
+    requiredSkills: payload.technical?.requiredSkills ?? undefined,
+    preferredBranches: payload.technical?.preferredBranches ?? undefined,
+    preferredAcademicYear: payload.technical?.preferredAcademicYear || undefined,
+    difficultyLevel: payload.technical?.difficultyLevel || undefined,
+    expectedDeliverables: payload.additional?.expectedDeliverables || undefined,
+    additionalNotes: payload.additional?.additionalNotes || undefined,
   };
 
   if (payload.status) {
@@ -913,10 +940,17 @@ export async function updateChallenge(id: string, payload: Partial<ProblemStatem
       if (payload.details?.description) (flatPayload as any).description = tempFlat.description;
       if (payload.details?.businessChallenge) (flatPayload as any).problemStatement = tempFlat.problemStatement;
       if (payload.company?.industrySector || payload.company?.industryName) (flatPayload as any).domain = tempFlat.domain;
-      if (payload.additional?.additionalNotes) {
-        (flatPayload as any).budgetRange = tempFlat.budgetRange;
-        (flatPayload as any).deadline = tempFlat.deadline;
-      }
+      if (payload.additional?.budget !== undefined) (flatPayload as any).budgetRange = tempFlat.budgetRange;
+      if (payload.additional?.deadline) (flatPayload as any).deadline = tempFlat.deadline;
+      if (payload.additional?.additionalNotes !== undefined) (flatPayload as any).additionalNotes = payload.additional.additionalNotes;
+      if (payload.additional?.expectedDeliverables !== undefined) (flatPayload as any).expectedDeliverables = payload.additional.expectedDeliverables;
+      if (payload.details?.existingProcess !== undefined) (flatPayload as any).existingProcess = payload.details.existingProcess;
+      if (payload.details?.expectedOutcome !== undefined) (flatPayload as any).expectedOutcome = payload.details.expectedOutcome;
+      if (payload.details?.projectObjectives !== undefined) (flatPayload as any).projectObjectives = payload.details.projectObjectives;
+      if (payload.technical?.requiredSkills) (flatPayload as any).requiredSkills = payload.technical.requiredSkills;
+      if (payload.technical?.preferredBranches) (flatPayload as any).preferredBranches = payload.technical.preferredBranches;
+      if (payload.technical?.preferredAcademicYear !== undefined) (flatPayload as any).preferredAcademicYear = payload.technical.preferredAcademicYear;
+      if (payload.technical?.difficultyLevel !== undefined) (flatPayload as any).difficultyLevel = payload.technical.difficultyLevel;
       if (payload.technical?.requiredTechnologies) (flatPayload as any).tags = tempFlat.tags;
       if (payload.additional?.fileAttachmentName) (flatPayload as any).attachmentUrls = tempFlat.attachmentUrls;
       if (payload.company?.companyName) (flatPayload as any).organizationName = tempFlat.organizationName;
@@ -1050,21 +1084,23 @@ function mapBackendToProblemStatement(backend: any): ProblemStatement {
       title: backend.title ?? '',
       description: backend.description ?? '',
       businessChallenge: backend.problemStatement ?? '',
-      existingProcess: '',
-      expectedOutcome: backend.description ?? '',
-      projectObjectives: '',
+      existingProcess: backend.existingProcess ?? '',
+      expectedOutcome: backend.expectedOutcome ?? '',
+      projectObjectives: backend.projectObjectives ?? '',
     },
     technical: {
       requiredTechnologies: backend.tags ?? [],
-      requiredSkills: [],
-      preferredBranches: [],
-      preferredAcademicYear: '',
-      difficultyLevel: 'Medium',
+      requiredSkills: backend.requiredSkills ?? [],
+      preferredBranches: backend.preferredBranches ?? [],
+      preferredAcademicYear: backend.preferredAcademicYear ?? '',
+      difficultyLevel: ['Easy', 'Medium', 'Hard'].includes(backend.difficultyLevel) ? backend.difficultyLevel : '',
       expectedDuration: backend.duration ?? '',
     },
     additional: {
-      expectedDeliverables: '',
-      additionalNotes: backend.budgetRange ?? '',
+      expectedDeliverables: backend.expectedDeliverables ?? '',
+      additionalNotes: backend.additionalNotes ?? '',
+      budget: backend.budgetRange ?? undefined,
+      deadline: backend.deadline ?? undefined,
       fileAttachmentName: backend.attachmentUrls?.[0] ?? '',
       declarationAccepted: true,
     },
@@ -1154,6 +1190,15 @@ export interface PublicProblemPayload {
   tags?: string[];
   attachmentUrls?: string[];
   duration?: string;
+  existingProcess?: string;
+  expectedOutcome?: string;
+  projectObjectives?: string;
+  requiredSkills?: string[];
+  preferredBranches?: string[];
+  preferredAcademicYear?: string;
+  difficultyLevel?: string;
+  expectedDeliverables?: string;
+  additionalNotes?: string;
   // Spam trap — always empty for real users
   companyFax?: string;
 }
@@ -1182,6 +1227,15 @@ export function toBackendProblemFields(payload: Omit<ProblemStatement, 'id' | 's
     tags: flat.tags,
     attachmentUrls: flat.attachmentUrls,
     duration: flat.duration,
+    existingProcess: flat.existingProcess,
+    expectedOutcome: flat.expectedOutcome,
+    projectObjectives: flat.projectObjectives,
+    requiredSkills: flat.requiredSkills,
+    preferredBranches: flat.preferredBranches,
+    preferredAcademicYear: flat.preferredAcademicYear,
+    difficultyLevel: flat.difficultyLevel,
+    expectedDeliverables: flat.expectedDeliverables,
+    additionalNotes: flat.additionalNotes,
   };
 }
 

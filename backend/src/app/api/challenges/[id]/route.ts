@@ -2,7 +2,10 @@ import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { INDUSTRY_PROFILE_SELECT } from "@/lib/problem-submission";
-import { ChallengeUpdateSchema } from "@/lib/validations/challenge";
+import { ChallengeUpdateSchema, ProblemDetailSchema, problemDetailData } from "@/lib/validations/challenge";
+
+const DETAIL_KEYS = Object.keys(ProblemDetailSchema.shape) as Array<keyof typeof ProblemDetailSchema.shape>;
+type DetailKey = (typeof DETAIL_KEYS)[number];
 import { createAuditLog, getRequestMeta } from "@/lib/audit";
 import { serializeChallenge } from "@/lib/serializers";
 import {
@@ -116,7 +119,8 @@ export async function PATCH(
       data.deadline !== undefined ||
       data.budgetRange !== undefined ||
       data.tags !== undefined ||
-      data.attachmentUrls !== undefined;
+      data.attachmentUrls !== undefined ||
+      DETAIL_KEYS.some((key) => data[key] !== undefined);
     const needsReReview =
       !isAdmin &&
       changesContent &&
@@ -135,6 +139,10 @@ export async function PATCH(
         ...(data.budgetRange !== undefined && { budgetRange: data.budgetRange }),
         ...(data.tags && { tags: data.tags }),
         ...(data.attachmentUrls && { attachmentUrls: data.attachmentUrls }),
+        // Only the detail fields that were sent are changed
+        ...Object.fromEntries(
+          Object.entries(problemDetailData(data)).filter(([key]) => data[key as DetailKey] !== undefined)
+        ),
         ...(nextStatus && {
           status: nextStatus,
           publishedAt:
