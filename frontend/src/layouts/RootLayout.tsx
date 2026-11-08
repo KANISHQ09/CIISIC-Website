@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, LogOut, Building, LayoutDashboard, Home, ChevronDown } from 'lucide-react';
+import { Link, useNavigate, useLocation, useNavigationType } from 'react-router-dom';
+import { Menu, X, LogOut, Building, Factory, LayoutDashboard, Home, ChevronDown } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { CiiLogo } from '../components/CiiLogo';
 import { Toast } from '../components/Toast';
+import { FullScreenLoader } from '../components/common/Loader';
 
 export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser, logout, showToast } = useApp();
@@ -12,6 +13,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string>('hero');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   const getInitials = (name: string) => {
     return name
@@ -48,6 +50,16 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
+
+  // Every link or button that navigates starts the page at its top — also when it points
+  // to the page you're already on (each navigation has a new location.key). The browser's
+  // own back/forward ("POP") keeps its position restore.
+  const navigationType = useNavigationType();
+  useEffect(() => {
+    if (navigationType !== 'POP') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, [location.key, navigationType]);
 
   const navItems = [
     { id: 'hero', label: 'Home' },
@@ -102,16 +114,20 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
         'get-involved',
       ];
 
-      // If scrolled to very bottom of document (within 60px), activate last section
-      const isBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 60;
-      if (isBottom) {
-        setActiveSection('get-involved');
+      // Near the top (including right after the page opens): Home
+      if (window.scrollY < 80) {
+        setActiveSection('hero');
         return;
       }
 
-      // If near top of page, activate hero
-      if (window.scrollY < 80) {
-        setActiveSection('hero');
+      // Scrolled to the very bottom (within 60px): last section. Only when the page is
+      // actually taller than the screen — while the home page is still loading it is short,
+      // and that must not count as "at the bottom".
+      const pageHeight = document.documentElement.scrollHeight;
+      const isScrollable = pageHeight > window.innerHeight + 200;
+      const isBottom = window.innerHeight + window.scrollY >= pageHeight - 60;
+      if (isScrollable && isBottom) {
+        setActiveSection('get-involved');
         return;
       }
 
@@ -136,11 +152,19 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
     return () => window.removeEventListener('scroll', handleScroll);
   }, [location.pathname]);
 
-  const handleLogout = () => {
-    logout();
-    showToast('Signed out successfully.', 'info');
-    navigate('/');
+  // Sign-out covers the screen with a loader until the server has ended the session, so the
+  // page never shows a half-signed-out state (old header on the home page, or a flash of a
+  // login screen from the dashboard's sign-in guard). Leave the dashboard first, then sign out.
+  const handleLogout = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    setDropdownOpen(false);
     setMobileMenuOpen(false);
+    navigate('/');
+    // Keep the loader up briefly even on a fast server, so it doesn't just flicker
+    await Promise.all([logout(), new Promise((resolve) => setTimeout(resolve, 600))]);
+    setSigningOut(false);
+    showToast('Signed out successfully.', 'info');
   };
 
   // Signed-in users get a minimal header: logo + profile menu only
@@ -204,10 +228,15 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
     if (location.pathname !== '/') {
       navigate('/');
-      // Wait a moment for the page to transition, then scroll
-      setTimeout(() => {
-        scrollToSection(sectionId);
-      }, 150);
+      // The home page loads on demand: wait until the section exists (up to ~3s), then scroll
+      const scrollWhenReady = (attempt: number) => {
+        if (document.getElementById(sectionId)) {
+          scrollToSection(sectionId);
+        } else if (attempt < 30) {
+          setTimeout(() => scrollWhenReady(attempt + 1), 100);
+        }
+      };
+      setTimeout(() => scrollWhenReady(0), 50);
     } else {
       scrollToSection(sectionId);
     }
@@ -215,6 +244,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
   return (
     <div className="min-h-screen bg-[#faf7f0] flex flex-col font-sans selection:bg-[#c48825]/20 selection:text-[#063028]">
+      {signingOut && <FullScreenLoader label="Signing you out…" />}
       {/* Sticky Premium Navbar - Full Width & Adaptive */}
       <nav id="platform-navbar" className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#e8e4dc] shadow-xs w-full">
         <div className="w-full px-3 sm:px-5 lg:px-4 xl:px-6 2xl:px-8">
@@ -263,15 +293,16 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                 <div className="hidden lg:flex items-center space-x-1 xl:space-x-1.5 shrink-0 pl-1 xl:pl-2">
                   <Link
                     to="/institution/login"
-                    className="px-2 xl:px-2.5 py-1.5 border border-[#063028]/25 text-[#063028] bg-transparent hover:bg-[#edf4f0] text-[11px] xl:text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer shadow-2xs flex items-center gap-1"
+                    className="px-2 xl:px-2.5 py-1.5 border border-stone-800 text-[#063028] bg-transparent hover:bg-[#edf4f0] text-[11px] xl:text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer shadow-2xs flex items-center gap-1"
                   >
                     <Building className="w-3.5 h-3.5 text-[#c48825]" />
                     Institution Portal
                   </Link>
                   <Link
                     to="/industry/login"
-                    className="px-2 xl:px-2.5 py-1.5 border border-stone-800 text-stone-900 bg-transparent hover:bg-stone-50 text-[11px] xl:text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer shadow-2xs"
+                    className="px-2 xl:px-2.5 py-1.5 border border-stone-800 text-stone-900 bg-transparent hover:bg-stone-50 text-[11px] xl:text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer shadow-2xs flex items-center gap-1"
                   >
+                    <Factory className="w-3.5 h-3.5 text-[#c48825]" />
                     Industry Login
                   </Link>
                   <Link
@@ -443,7 +474,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                     <Link
                       to="/institution/login"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-base font-semibold border border-[#063028]/30 text-[#063028] text-center hover:bg-[#edf4f0] transition-all cursor-pointer"
+                      className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-base font-semibold border border-stone-800 text-[#063028] text-center hover:bg-[#edf4f0] transition-all cursor-pointer"
                     >
                       <Building className="w-4 h-4 text-[#c48825]" />
                       Institution Portal
@@ -451,8 +482,9 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                     <Link
                       to="/industry/login"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block w-full py-2.5 rounded-lg text-base font-semibold border border-stone-800 text-stone-900 text-center hover:bg-stone-50 transition-all cursor-pointer"
+                      className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-base font-semibold border border-stone-800 text-stone-900 text-center hover:bg-stone-50 transition-all cursor-pointer"
                     >
+                      <Factory className="w-4 h-4 text-[#c48825]" />
                       Industry Login
                     </Link>
                     <Link

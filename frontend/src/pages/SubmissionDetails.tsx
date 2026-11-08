@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   Building2, FileText, Settings, ShieldAlert, ArrowLeft, CheckCircle, 
   XCircle, Clock, MessageSquare, AlertTriangle,
@@ -22,16 +22,26 @@ export const SubmissionDetails: React.FC = () => {
   const [isLoading, setIsLoading] = useState(!submission);
   const [error, setError] = useState<string | null>(null);
 
-  const backLink = currentUser?.role === 'admin' 
-    ? '/admin/dashboard' 
-    : currentUser?.role === 'industry'
-    ? '/industry/dashboard'
-    : '/problem-statements';
-  const backLinkText = currentUser?.role === 'admin' 
-    ? 'Back to Admin Command Ledger' 
-    : currentUser?.role === 'industry'
-    ? 'Back to Industry Workspace'
-    : 'Back to Problem Statements Directory';
+  // "Back" returns to the page the problem was opened from. Without one (a shared or
+  // typed-in link), signed-in users go to their own dashboard, visitors to the directory.
+  const location = useLocation();
+  const backLabels: Record<string, string> = {
+    '/admin/dashboard': 'Back to Admin Command Ledger',
+    '/industry/dashboard': 'Back to Industry Workspace',
+    '/institution/dashboard': 'Back to Institution Portal',
+    '/problem-statements': 'Back to Problem Statements Directory',
+  };
+  const roleHome: Record<string, string> = {
+    admin: '/admin/dashboard',
+    industry: '/industry/dashboard',
+    institution: '/institution/dashboard',
+  };
+  const cameFrom = (location.state as { from?: string } | null)?.from;
+  const backLink =
+    cameFrom && backLabels[cameFrom]
+      ? cameFrom
+      : (currentUser && roleHome[currentUser.role]) || '/problem-statements';
+  const backLinkText = backLabels[backLink];
 
   const [remarks, setRemarks] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -254,10 +264,7 @@ export const SubmissionDetails: React.FC = () => {
           <Link to={backLink} className="inline-flex items-center gap-1.5 text-sm font-bold text-stone-600 hover:text-[#063028] transition-colors mb-1">
             <ArrowLeft className="h-4 w-4" /> {backLinkText}
           </Link>
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="font-mono text-xs font-bold text-[#063028] bg-[#edf4f0] border border-[#063028]/20 px-2.5 py-1 rounded">
-              REF ID: {submission.id}
-            </span>
+          <div className="flex items-center gap-3 flex-wrap">
             <span className="text-xs text-stone-500 font-medium">Submitted on {new Date(submission.submittedDate).toLocaleString()}</span>
             {submission.editedByAdmin && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-amber-100 text-amber-800 border border-amber-300">

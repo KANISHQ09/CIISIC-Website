@@ -150,6 +150,14 @@ export async function PATCH(
               ? new Date()
               : challenge.publishedAt,
         }),
+        // An admin approving or rejecting here is recorded as the reviewer, the same as
+        // from the review screen (so "Approved" always means a CII official approved it)
+        ...(isAdmin &&
+          (nextStatus === "OPEN" || nextStatus === "REJECTED") &&
+          nextStatus !== challenge.status && {
+            reviewerId: session.user.id,
+            reviewedAt: new Date(),
+          }),
       },
       include: {
         industryProfile: { select: INDUSTRY_PROFILE_SELECT },

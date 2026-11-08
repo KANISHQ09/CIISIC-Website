@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, History, RotateCcw, Search } from 'lucide-react';
 import { AuditEntry, fetchAuditLog } from '../../lib/api';
+import { InlineLoader } from '../common/Loader';
 
 const PAGE_SIZE = 20;
 
@@ -83,7 +84,7 @@ export const ActivityLog: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   // Filters: the form values, and the ones actually applied
@@ -186,7 +187,7 @@ export const ActivityLog: React.FC = () => {
       {/* Entries */}
       <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden">
         {isLoading && entries.length === 0 ? (
-          <p className="p-8 text-center text-sm text-stone-500">Loading activity…</p>
+          <InlineLoader label="Loading activity…" />
         ) : entries.length === 0 ? (
           <p className="p-8 text-center text-sm text-stone-500">No activity matches these filters.</p>
         ) : (

@@ -1,7 +1,8 @@
 import React, { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './contexts/AppContext';
 import { RootLayout } from './layouts/RootLayout';
+import { PageLoader } from './components/common/Loader';
 // Each page is downloaded only when it is first opened (keeps the first load small)
 const page = <T extends React.ComponentType<any>>(load: () => Promise<Record<string, T>>, name: string) =>
   lazy(() => load().then((module) => ({ default: module[name] })));
@@ -24,19 +25,26 @@ const SubmitSolution = page(() => import('./pages/SubmitSolution'), 'SubmitSolut
 const ForgotPassword = page(() => import('./pages/ForgotPassword'), 'ForgotPassword');
 const ResetPassword = page(() => import('./pages/ResetPassword'), 'ResetPassword');
 
-/** Shown for the moment it takes to download a page. */
-const PageLoading: React.FC = () => (
-  <div className="min-h-[60vh] flex items-center justify-center" role="status" aria-live="polite">
-    <div className="flex items-center gap-3 text-sm font-semibold text-stone-500">
-      <span className="h-5 w-5 rounded-full border-2 border-stone-300 border-t-[#063028] animate-spin" />
-      Loading…
-    </div>
-  </div>
-);
+/**
+ * Shows the loader while the next page downloads. Keyed by path so that moving to another
+ * page shows it too (otherwise the old page just sits there until the new one is ready).
+ */
+const PageSuspense: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { pathname } = useLocation();
+  return (
+    <Suspense key={pathname} fallback={<PageLoader />}>
+      {children}
+    </Suspense>
+  );
+};
+
+/** Signed-in pages wait for the saved sign-in to be checked, instead of flashing a login page. */
+const CheckingSignIn: React.FC = () => <PageLoader label="Checking your sign-in…" />;
 
 // Role-based Protected Route for Industry Partners
 const IndustryRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser } = useApp();
+  const { currentUser, sessionChecked } = useApp();
+  if (!sessionChecked) return <CheckingSignIn />;
 
   if (!currentUser) {
     return <Navigate to="/industry/login" replace />;
@@ -51,7 +59,8 @@ const IndustryRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
 // Role-based Protected Route for CII Administrators
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser } = useApp();
+  const { currentUser, sessionChecked } = useApp();
+  if (!sessionChecked) return <CheckingSignIn />;
 
   if (!currentUser) {
     return <Navigate to="/admin/login" replace />;
@@ -66,7 +75,8 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 // Role-based Protected Route for Academic Institutions
 const InstitutionRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser } = useApp();
+  const { currentUser, sessionChecked } = useApp();
+  if (!sessionChecked) return <CheckingSignIn />;
 
   if (!currentUser) {
     return <Navigate to="/institution/login" replace />;
@@ -83,7 +93,8 @@ const InstitutionRoute: React.FC<{ children: React.ReactNode }> = ({ children })
 // portal's page they opened) is sent to their own dashboard instead.
 // `role` only documents which portal the page belongs to.
 const GuestRoute: React.FC<{ children: React.ReactNode; role: 'industry' | 'admin' | 'institution' }> = ({ children }) => {
-  const { currentUser } = useApp();
+  const { currentUser, sessionChecked } = useApp();
+  if (!sessionChecked) return <CheckingSignIn />;
 
   if (currentUser) {
     const dashboard =
@@ -103,7 +114,7 @@ export default function App() {
     <AppProvider>
       <BrowserRouter>
         <RootLayout>
-          <Suspense fallback={<PageLoading />}>
+          <PageSuspense>
           <Routes>
             {/* Public Hub Website */}
             <Route path="/" element={<Home />} />
@@ -215,7 +226,7 @@ export default function App() {
             {/* Fallback Catch-All */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-          </Suspense>
+          </PageSuspense>
         </RootLayout>
       </BrowserRouter>
     </AppProvider>

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useScrollIntoViewOnChange } from '../lib/useScrollIntoViewOnChange';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -72,6 +73,9 @@ export const SubmitProblem: React.FC = () => {
   const isIndustryUser = currentUser?.role === 'industry';
 
   const [currentStep, setCurrentStep] = useState(1);
+  // Moving to another step starts it at the top (the Next button is at the bottom)
+  const stepperRef = useRef<HTMLDivElement>(null);
+  useScrollIntoViewOnChange(stepperRef, currentStep);
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -438,7 +442,7 @@ export const SubmitProblem: React.FC = () => {
         </div>
 
         {/* Progress Stepper Bar */}
-        <div className="mb-8 bg-white px-4 py-3.5 sm:px-5 sm:py-4 rounded-2xl border border-stone-200/90 shadow-xs">
+        <div ref={stepperRef} className="mb-8 bg-white px-4 py-3.5 sm:px-5 sm:py-4 rounded-2xl border border-stone-200/90 shadow-xs">
           {/* Always one line: other steps shrink to icons on small screens */}
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs font-bold text-[#063028] uppercase tracking-wider whitespace-nowrap shrink-0">

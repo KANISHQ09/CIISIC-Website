@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useScrollIntoViewOnChange } from '../lib/useScrollIntoViewOnChange';
 import { Link } from 'react-router-dom';
 import { 
   FileText, CheckCircle, AlertTriangle, Search, 
@@ -77,9 +78,10 @@ const VerificationBadges: React.FC<{
 import { ChangePasswordModal } from '../components/common/ChangePasswordModal';
 import { AdminOverview } from '../components/admin/AdminOverview';
 import { ActivityLog } from '../components/admin/ActivityLog';
+import { InlineLoader } from '../components/common/Loader';
 
 export const AdminDashboard: React.FC = () => {
-  const { submissions, updateSubmissionStatus, showToast, currentUser, solutions, reviewSolution } = useApp();
+  const { submissions, updateSubmissionStatus, showToast, currentUser, solutions, reviewSolution, submissionsLoading, solutionsLoading } = useApp();
 
   // Active Admin View Tab
   const [adminTab, setAdminTab] = useState<'challenges' | 'solutions' | 'registrations' | 'activity'>('challenges');
@@ -89,6 +91,7 @@ export const AdminDashboard: React.FC = () => {
 
   // Registrations state
   const [registrations, setRegistrations] = useState<RegistrationItem[]>([]);
+  const [registrationsLoading, setRegistrationsLoading] = useState(true);
   const [regStatusFilter, setRegStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
   const [regRoleFilter, setRegRoleFilter] = useState<'ALL' | 'INDUSTRY_SPOC' | 'INSTITUTION_SPOC'>('ALL');
   const [isProcessingReg, setIsProcessingReg] = useState<string | null>(null);
@@ -102,6 +105,8 @@ export const AdminDashboard: React.FC = () => {
       setRegistrations(list);
     } catch (err: any) {
       showToast(`Could not load registrations: ${err.message || 'please refresh the page.'}`, 'error');
+    } finally {
+      setRegistrationsLoading(false);
     }
   };
 
@@ -171,6 +176,12 @@ export const AdminDashboard: React.FC = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+
+  // Switching tab or result page starts the new content at its top
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const ledgerRef = useRef<HTMLDivElement>(null);
+  useScrollIntoViewOnChange(tabsRef, adminTab);
+  useScrollIntoViewOnChange(ledgerRef, currentPage);
 
   // Extract all unique sectors for the filter dropdown
   const uniqueSectors = useMemo(() => {
@@ -403,7 +414,7 @@ export const AdminDashboard: React.FC = () => {
       <AdminOverview onOpen={setAdminTab} refreshKey={statsVersion} />
 
       {/* Navigation Tabs */}
-      <div className="flex border-b border-stone-200 gap-6 mb-8 overflow-x-auto">
+      <div ref={tabsRef} className="flex border-b border-stone-200 gap-6 mb-8 overflow-x-auto">
         <button
           onClick={() => setAdminTab('challenges')}
           className={`pb-3 text-sm sm:text-base font-bold transition-all relative flex items-center gap-2 cursor-pointer shrink-0 ${
@@ -563,9 +574,11 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Main Submissions Ledger Table/Grid */}
-      <div className="bg-white rounded-3xl border border-stone-200/90 shadow-sm overflow-hidden">
+      <div ref={ledgerRef} className="bg-white rounded-3xl border border-stone-200/90 shadow-sm overflow-hidden">
         
-        {processedSubmissions.length === 0 ? (
+        {submissionsLoading ? (
+          <InlineLoader label="Loading problem statements…" />
+        ) : processedSubmissions.length === 0 ? (
           <div className="p-16 text-center space-y-4">
             <SlidersHorizontal className="h-12 w-12 text-stone-300 mx-auto" />
             <div className="space-y-1">
@@ -646,7 +659,7 @@ export const AdminDashboard: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="inline-flex items-center gap-2">
                           <Link
-                            to={`/details/${sub.id}`}
+                            to={`/details/${sub.id}`} state={{ from: '/admin/dashboard' }}
                             className="p-2 bg-stone-100 border border-stone-200 rounded-xl text-stone-700 hover:bg-[#063028] hover:text-white transition-all shadow-xs"
                             title="View Full Details"
                           >
@@ -715,7 +728,7 @@ export const AdminDashboard: React.FC = () => {
                     <span className="text-xs text-stone-500 font-mono">{new Date(sub.submittedDate).toLocaleDateString()}</span>
                     <div className="flex gap-2">
                       <Link
-                        to={`/details/${sub.id}`}
+                        to={`/details/${sub.id}`} state={{ from: '/admin/dashboard' }}
                         className="px-3.5 py-2 bg-stone-100 border border-stone-200 rounded-xl text-sm font-bold text-[#063028] flex items-center gap-1.5"
                       >
                         <Eye className="h-4 w-4" /> View
@@ -854,7 +867,9 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Solutions List */}
-          {processedSolutions.length === 0 ? (
+          {solutionsLoading ? (
+            <div className="bg-white rounded-3xl border border-stone-200/90"><InlineLoader label="Loading solutions…" /></div>
+          ) : processedSolutions.length === 0 ? (
             <div className="bg-white rounded-3xl border border-stone-200 p-12 text-center space-y-3">
               <GraduationCap className="h-12 w-12 text-stone-300 mx-auto" />
               <h3 className="text-lg font-bold text-stone-800">No Institutional Solutions Found</h3>
@@ -1125,7 +1140,9 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Registration List */}
-          {filteredRegistrations.length === 0 ? (
+          {registrationsLoading ? (
+            <div className="bg-white rounded-2xl border border-stone-200"><InlineLoader label="Loading registrations…" /></div>
+          ) : filteredRegistrations.length === 0 ? (
             <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center space-y-3">
               <Building2 className="w-10 h-10 text-stone-300 mx-auto" />
               <h3 className="text-base font-bold text-stone-700">No registrations found</h3>

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { fetchChallenges } from '../lib/api';
+import { htmlToPlainText } from '../lib/html';
 import { ProblemStatement } from '../types';
 
 export const ProblemStatements: React.FC = () => {
@@ -395,12 +396,12 @@ export const ProblemStatements: React.FC = () => {
                     {/* Problem Statement Title */}
                     <div className="space-y-2">
                       <h3 className="text-lg sm:text-xl font-extrabold text-[#063028] font-serif leading-snug group-hover:text-[#a6711c] transition-colors">
-                        <Link to={`/details/${challenge.id}`}>
+                        <Link to={`/details/${challenge.id}`} state={{ from: '/problem-statements' }}>
                           {challenge.details.title}
                         </Link>
                       </h3>
                       <p className="text-xs sm:text-sm text-stone-600 line-clamp-3 leading-relaxed">
-                        {challenge.details.description || challenge.details.businessChallenge}
+                        {htmlToPlainText(challenge.details.description || challenge.details.businessChallenge)}
                       </p>
                     </div>
 
@@ -433,7 +434,7 @@ export const ProblemStatements: React.FC = () => {
                       <div>
                         <span className="text-stone-500 font-medium block">Duration:</span>
                         <span className="font-bold text-stone-800 flex items-center gap-1 mt-0.5">
-                          <Clock className="h-3.5 w-3.5 text-[#c48825]" /> {challenge.technical.expectedDuration}
+                          <Clock className="h-3.5 w-3.5 text-[#c48825]" /> {challenge.technical.expectedDuration || 'Not specified'}
                         </span>
                       </div>
                       <div>
@@ -449,10 +450,10 @@ export const ProblemStatements: React.FC = () => {
                   {/* Card Bottom CTA Footer */}
                   <div className="px-6 sm:px-8 py-4 bg-stone-50/80 border-t border-stone-200/80 flex items-center justify-between gap-4">
                     <div className="text-xs text-stone-500 font-medium">
-                      Target: <span className="font-semibold text-stone-700">{challenge.technical.preferredAcademicYear || 'Engineering / PG'}</span>
+                      Target: <span className="font-semibold text-stone-700">{challenge.technical.preferredAcademicYear || 'Any year'}</span>
                     </div>
                     <Link
-                      to={`/details/${challenge.id}`}
+                      to={`/details/${challenge.id}`} state={{ from: '/problem-statements' }}
                       className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-[#063028] group-hover:text-[#a6711c] group-hover:translate-x-0.5 transition-all"
                     >
                       View Details &amp; Spec <ArrowRight className="h-4 w-4" />

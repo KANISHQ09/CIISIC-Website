@@ -1,20 +1,29 @@
-import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useMemo, useRef } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useScrollIntoViewOnChange } from '../lib/useScrollIntoViewOnChange';
 import {
   GraduationCap, FileText, Search, ExternalLink, AlertCircle,
   Layers, Check, Send, Award, Lock
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
+import { htmlToPlainText } from '../lib/html';
 import { ChangePasswordModal } from '../components/common/ChangePasswordModal';
+import { InlineLoader } from '../components/common/Loader';
 
 export const InstitutionDashboard: React.FC = () => {
-  const { currentUser, submissions, solutions, showToast } = useApp();
+  const { currentUser, submissions, solutions, showToast, submissionsLoading, solutionsLoading } = useApp();
 
   // Change password modal state
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   // Active Tab: 'available' | 'solutions'
-  const [activeTab, setActiveTab] = useState<'available' | 'solutions'>('available');
+  // A link like /institution/dashboard?tab=solutions opens that tab
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<'available' | 'solutions'>(
+    searchParams.get('tab') === 'solutions' ? 'solutions' : 'available'
+  );
+  const tabsRef = useRef<HTMLDivElement>(null);
+  useScrollIntoViewOnChange(tabsRef, activeTab);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -127,7 +136,7 @@ export const InstitutionDashboard: React.FC = () => {
         </div>
 
         {/* Tabbed Navigation Bar */}
-        <div className="border-b border-stone-200 flex items-center gap-2 sm:gap-4 overflow-x-auto pb-1">
+        <div ref={tabsRef} className="border-b border-stone-200 flex items-center gap-2 sm:gap-4 overflow-x-auto pb-1">
           <button
             onClick={() => setActiveTab('available')}
             className={`px-4 py-3 text-xs sm:text-sm font-bold rounded-t-xl transition-all border-b-2 whitespace-nowrap cursor-pointer flex items-center gap-2 ${
@@ -182,7 +191,9 @@ export const InstitutionDashboard: React.FC = () => {
             </div>
 
             {/* Challenges List */}
-            {filteredAvailable.length === 0 ? (
+            {submissionsLoading ? (
+              <div className="bg-white rounded-3xl border border-stone-200/90"><InlineLoader label="Loading problem statements…" /></div>
+            ) : filteredAvailable.length === 0 ? (
               <div className="bg-white rounded-3xl border border-stone-200/90 p-12 text-center space-y-4">
                 <AlertCircle className="h-10 w-10 text-stone-400 mx-auto" />
                 <h3 className="text-lg font-bold text-stone-800">No Open Challenges Found</h3>
@@ -215,7 +226,7 @@ export const InstitutionDashboard: React.FC = () => {
                         </div>
 
                         <p className="text-xs sm:text-sm text-stone-600 line-clamp-3 leading-relaxed">
-                          {challenge.details.description}
+                          {htmlToPlainText(challenge.details.description)}
                         </p>
 
                         {/* Tech tags */}
@@ -238,7 +249,7 @@ export const InstitutionDashboard: React.FC = () => {
                       {/* Card Action footer */}
                       <div className="pt-4 border-t border-stone-100 flex items-center justify-between gap-3 flex-wrap">
                         <Link
-                          to={`/details/${challenge.id}`}
+                          to={`/details/${challenge.id}`} state={{ from: '/institution/dashboard' }}
                           className="text-xs font-bold text-stone-700 hover:text-[#063028] inline-flex items-center gap-1"
                         >
                           View Full Spec <ExternalLink className="h-3.5 w-3.5" />
@@ -277,7 +288,9 @@ export const InstitutionDashboard: React.FC = () => {
               </p>
             </div>
 
-            {institutionSolutions.length === 0 ? (
+            {solutionsLoading ? (
+              <div className="bg-white rounded-3xl border border-stone-200/90"><InlineLoader label="Loading your solutions…" /></div>
+            ) : institutionSolutions.length === 0 ? (
               <div className="bg-white rounded-3xl border border-stone-200/90 p-12 text-center space-y-4">
                 <FileText className="h-12 w-12 text-stone-400 mx-auto" />
                 <h3 className="text-xl font-bold text-stone-800 font-serif">No Solutions Submitted Yet</h3>

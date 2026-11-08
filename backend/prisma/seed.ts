@@ -153,7 +153,7 @@ async function main() {
   });
 
   // ─── CII Admin ────────────────────────────────────────────────────────────
-  await ensureUser({
+  const ciiAdmin = await ensureUser({
     label: "CII Admin",
     email: process.env.SEED_CII_ADMIN_EMAIL?.trim() || "admin@ciisic.in",
     name: "CII Admin",
@@ -206,9 +206,17 @@ async function main() {
   });
 
   // ─── Sample Challenges ────────────────────────────────────────────────────
+  // The samples are published, so they carry a CII approval (by the seeded CII admin)
+  // like any problem approved from the admin dashboard.
+  const sampleApproval = {
+    reviewerId: ciiAdmin.id,
+    reviewedAt: new Date(),
+    reviewRemarks: "Sample problem added with the demo data",
+  };
   const challenge1 = await prisma.challenge.upsert({
     where: { id: "seed-challenge-001" },
-    update: {},
+    // Older copies were published without a recorded approval
+    update: sampleApproval,
     create: {
       id: "seed-challenge-001",
       title: "AI-Powered Customer Churn Prediction System",
@@ -225,12 +233,14 @@ async function main() {
       tags: ["Machine Learning", "Python", "Data Science", "SaaS"],
       industryProfileId: industryProfile.id,
       publishedAt: new Date(),
+      ...sampleApproval,
     },
   });
 
   const challenge2 = await prisma.challenge.upsert({
     where: { id: "seed-challenge-002" },
-    update: {},
+    // Older copies were published without a recorded approval
+    update: sampleApproval,
     create: {
       id: "seed-challenge-002",
       title: "Smart Agriculture Monitoring Dashboard",
@@ -245,6 +255,7 @@ async function main() {
       tags: ["React", "IoT", "Dashboard", "Agriculture", "Data Visualization"],
       industryProfileId: industryProfile.id,
       publishedAt: new Date(),
+      ...sampleApproval,
     },
   });
 

@@ -19,6 +19,12 @@ interface AppContextType {
   currentUser: User | null;
   submissions: ProblemStatement[];
   solutions: SolutionSubmission[];
+  /** False while a saved sign-in is being checked with the server (after opening or reloading) */
+  sessionChecked: boolean;
+  /** True until problem statements have loaded for the first time */
+  submissionsLoading: boolean;
+  /** True while the signed-in user's solutions are loading */
+  solutionsLoading: boolean;
   toast: ToastType | null;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   hideToast: () => void;
@@ -64,6 +70,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Load submissions from backend or fallback to localStorage
   const [submissions, setSubmissions] = useState<ProblemStatement[]>([]);
   const [solutions, setSolutions] = useState<SolutionSubmission[]>([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState(true);
+  const [solutionsLoading, setSolutionsLoading] = useState(false);
+  // Nothing to check when no sign-in was saved on this device
+  const [sessionChecked, setSessionChecked] = useState(() => !localStorage.getItem('ciisic_jwt_token'));
 
   // Clear browser data left over from the retired student portal and team assignments
   useEffect(() => {
@@ -87,11 +97,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Fetch session on mount
   useEffect(() => {
     (async () => {
-      const user = await getSession();
-      if (user) {
-        setCurrentUser(mapUserRole(user));
-      } else {
-        setCurrentUser(null);
+      try {
+        const user = await getSession();
+        setCurrentUser(user ? mapUserRole(user) : null);
+      } finally {
+        setSessionChecked(true);
       }
     })();
   }, []);
@@ -116,19 +126,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch (err: any) {
         console.error("Failed to fetch challenges:", err);
         showToast(`Could not load problem statements: ${err?.message || 'please refresh the page.'}`, 'error');
+      } finally {
+        setSubmissionsLoading(false);
       }
     })();
 
     if (!currentUser) {
       setSolutions([]);
+      setSolutionsLoading(false);
       return;
     }
+    setSolutionsLoading(true);
     (async () => {
       try {
         setSolutions(await fetchSolutions());
       } catch (err: any) {
         console.error("Failed to fetch solutions:", err);
         showToast(`Could not load solutions: ${err?.message || 'please refresh the page.'}`, 'error');
+      } finally {
+        setSolutionsLoading(false);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -223,6 +239,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         currentUser,
         submissions,
         solutions,
+        sessionChecked,
+        submissionsLoading,
+        solutionsLoading,
         toast,
         showToast,
         hideToast,

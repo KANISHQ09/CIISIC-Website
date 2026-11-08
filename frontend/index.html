@@ -8,8 +8,18 @@
     <meta property="og:title" content="CIISIC Platform" />
     <meta property="og:description" content="CII Industry-Institute Collaboration Platform for corporate problem statements and academic research partnerships" />
   </head>
-  <body>
-    <div id="root"></div>
+  <body style="margin:0;background:#faf7f0">
+    <div id="root">
+      <!-- Shown while the site's code downloads (on first open and on reload); React replaces it -->
+      <style>
+        @keyframes boot-spin { to { transform: rotate(360deg); } }
+        .boot-loader { min-height: 100vh; display: flex; align-items: center; justify-content: center; gap: 12px;
+          font: 600 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; color: #78716c; }
+        .boot-loader span { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #d6d3d1;
+          border-top-color: #063028; animation: boot-spin 0.8s linear infinite; }
+      </style>
+      <div class="boot-loader" role="status" aria-live="polite"><span></span>Loading CIISIC…</div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
