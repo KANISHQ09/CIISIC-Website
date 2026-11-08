@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { 
-  Building2, ArrowLeft, Send, CheckCircle2, AlertCircle, 
-  ExternalLink, Layers, FileText, Code2, Users, User,
+  ArrowLeft, Send, CheckCircle2, AlertCircle, 
+  ExternalLink, FileText, Code2, Users, User,
   Plus, X, Award, ShieldCheck, Sparkles
 } from 'lucide-react';
 import { StudentTeamLead, StudentTeamMember, FacultyMentor } from '../types';
@@ -33,7 +33,7 @@ export const SubmitSolution: React.FC = () => {
   const [technologiesUsed, setTechnologiesUsed] = useState<string[]>([]);
   const [demoUrl, setDemoUrl] = useState('');
   const [attachmentUrl, setAttachmentUrl] = useState('');
-  const [documentName, setDocumentName] = useState('');
+  const documentName = '';
 
   // Team details entered directly by the institution
   const [teamName, setTeamName] = useState('');

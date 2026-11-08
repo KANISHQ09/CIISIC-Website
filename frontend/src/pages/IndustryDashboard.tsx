@@ -4,7 +4,7 @@ import {
   Building2, PlusCircle, CheckCircle, Clock, AlertTriangle, FileText, 
   Globe, ChevronRight, FileCheck, X,
   Calendar, IndianRupee, UploadCloud, ArrowLeft, RefreshCw, Eye, Download,
-  GraduationCap, ExternalLink, Award, Sparkles, MessageSquare, Send, CheckSquare, Layers, User, Lock
+  GraduationCap, ExternalLink, MessageSquare, User, Lock
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { sanitizeHTML, stripHTML } from '../lib/html';

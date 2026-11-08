@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { GraduationCap, Mail, ArrowLeft, ArrowRight, Building, User, Phone, CheckCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { GraduationCap, Mail, ArrowLeft, ArrowRight, User, Phone, CheckCircle } from 'lucide-react';
 import { ALL_INSTITUTIONS } from '../data/institutions';
 import { registerInstitution } from '../lib/api';
 import { PasswordInput } from '../components/common/PasswordInput';
-import { useApp } from '../contexts/AppContext';
 
 export const InstitutionRegister: React.FC = () => {
-  const { showToast } = useApp();
-  const navigate = useNavigate();
 
   const [selectedInstName, setSelectedInstName] = useState(ALL_INSTITUTIONS[0]?.name || '');
   const [customInstName, setCustomInstName] = useState('');

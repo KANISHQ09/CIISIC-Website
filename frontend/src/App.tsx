@@ -65,17 +65,6 @@ const InstitutionRoute: React.FC<{ children: React.ReactNode }> = ({ children })
   return <>{children}</>;
 };
 
-// Shared Protected Route requiring any logged in user
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser } = useApp();
-
-  if (!currentUser) {
-    return <Navigate to="/" replace />;
-  }
-
-  return <>{children}</>;
-};
-
 // Login / registration pages: anyone already signed in (whatever their role, whichever
 // portal's page they opened) is sent to their own dashboard instead.
 // `role` only documents which portal the page belongs to.

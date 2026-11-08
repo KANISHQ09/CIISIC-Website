@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   Building2, FileText, Settings, ShieldAlert, ArrowLeft, CheckCircle, 
   XCircle, Clock, MessageSquare, AlertTriangle,
-  Edit, Save, X, Wrench, Share2, Printer, Copy, GraduationCap, CheckCircle2
+  Edit, Save, X, Wrench, Share2, Printer, GraduationCap, CheckCircle2
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { sanitizeHTML } from '../lib/html';
@@ -559,10 +559,11 @@ export const SubmissionDetails: React.FC = () => {
                       </button>
                       <button
                         onClick={() => {
-                          if (submission.additional.fileAttachmentName.startsWith('http') || submission.additional.fileAttachmentName.startsWith('/')) {
-                            window.open(submission.additional.fileAttachmentName, '_blank');
+                          const fileUrl = submission.additional.fileAttachmentName ?? '';
+                          if (fileUrl.startsWith('http') || fileUrl.startsWith('/')) {
+                            window.open(fileUrl, '_blank');
                           } else {
-                            showToast(`Initiating download for ${submission.additional.fileAttachmentName}`, 'info');
+                            showToast(`Initiating download for ${fileUrl}`, 'info');
                           }
                         }}
                         className="bg-[#063028] text-white hover:bg-[#04201a] px-4 py-2 rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
