@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useScrollIntoViewOnChange } from '../lib/useScrollIntoViewOnChange';
 import { Link } from 'react-router-dom';
 import { 
   Building2, PlusCircle, CheckCircle, Clock, AlertTriangle, FileText, 
@@ -12,15 +13,18 @@ import { uploadFile } from '../lib/api';
 import { getOriginalFileName } from '../lib/file';
 import { SolutionSubmission, SolutionStatus } from '../types';
 import { ChangePasswordModal } from '../components/common/ChangePasswordModal';
+import { InlineLoader } from '../components/common/Loader';
 
 export const IndustryDashboard: React.FC = () => {
-  const { currentUser, submissions, addSubmission, showToast, solutions, reviewSolution } = useApp();
+  const { currentUser, submissions, addSubmission, showToast, solutions, reviewSolution, submissionsLoading, solutionsLoading } = useApp();
   
   // Change password modal state
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   // Dashboard tab state
   const [activeDashboardTab, setActiveDashboardTab] = useState<'statements' | 'solutions'>('statements');
+  const dashboardTabsRef = useRef<HTMLDivElement>(null);
+  useScrollIntoViewOnChange(dashboardTabsRef, activeDashboardTab);
   const [selectedSolutionForReview, setSelectedSolutionForReview] = useState<SolutionSubmission | null>(null);
   const [reviewDecision, setReviewDecision] = useState<SolutionStatus>('APPROVED');
   const [reviewNotes, setReviewNotes] = useState('');
@@ -537,7 +541,7 @@ export const IndustryDashboard: React.FC = () => {
       {currentView === 'dashboard' && (
         <div className="space-y-6 animate-fade-in" id="dashboard-ledger">
           {/* Main Tab Navigation */}
-          <div className="flex border-b border-stone-200 gap-6">
+          <div ref={dashboardTabsRef} className="flex border-b border-stone-200 gap-6">
             <button
               onClick={() => setActiveDashboardTab('statements')}
               className={`pb-3 text-sm sm:text-base font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
@@ -601,7 +605,9 @@ export const IndustryDashboard: React.FC = () => {
                   </span>
                 </div>
 
-                {mySubmissions.length === 0 ? (
+                {submissionsLoading ? (
+                  <div className="bg-white rounded-2xl border border-stone-200"><InlineLoader label="Loading your problem statements…" /></div>
+                ) : mySubmissions.length === 0 ? (
                   <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center space-y-4">
                     <FileText className="h-12 w-12 text-stone-300 mx-auto" />
                     <div className="space-y-1">
@@ -621,8 +627,7 @@ export const IndustryDashboard: React.FC = () => {
                       <div key={sub.id} className="bg-white rounded-2xl border border-stone-200 p-6 shadow-xs space-y-4 hover:border-stone-300 transition-all">
                         <div className="flex justify-between items-start gap-4">
                           <div className="space-y-1 min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xs font-mono font-bold text-[#063028] bg-[#edf4f0] border border-[#063028]/20 px-2 py-0.5 rounded">REF ID: {sub.id}</span>
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-xs text-stone-500 font-medium">Filed on {new Date(sub.submittedDate).toLocaleDateString()}</span>
                             </div>
                             <h3 className="text-lg font-bold text-[#063028] hover:text-[#c48825] transition-colors mt-1">
@@ -677,7 +682,7 @@ export const IndustryDashboard: React.FC = () => {
                           </div>
 
                           <Link 
-                            to={`/details/${sub.id}`} 
+                            to={`/details/${sub.id}`} state={{ from: '/industry/dashboard' }} 
                             className="inline-flex items-center gap-1 text-sm font-bold text-[#c48825] hover:text-[#a6711c] hover:underline"
                           >
                             View Full Details <ChevronRight className="h-4 w-4" />
@@ -751,7 +756,9 @@ export const IndustryDashboard: React.FC = () => {
               </div>
 
               {/* Solutions List */}
-              {mySolutions.length === 0 ? (
+              {solutionsLoading ? (
+                <div className="bg-white rounded-2xl border border-stone-200"><InlineLoader label="Loading solutions…" /></div>
+              ) : mySolutions.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center space-y-4">
                   <GraduationCap className="h-12 w-12 text-stone-300 mx-auto" />
                   <div className="space-y-1">

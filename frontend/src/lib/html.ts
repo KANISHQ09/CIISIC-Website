@@ -40,6 +40,16 @@ export function sanitizeHTML(html: string): string {
  * Strips all HTML tags from a string to return raw text.
  * Useful for card/table preview listings.
  */
+/**
+ * Plain-text preview of a formatted description: tags removed, with a space between
+ * blocks so "<h2>Overview</h2><p>We need…" reads "Overview We need…" (not "OverviewWe").
+ */
+export function htmlToPlainText(html: string): string {
+  if (!html) return '';
+  const spaced = html.replace(/<(\/(p|h[1-6]|li|div|ul|ol|blockquote)|br\s*\/?)>/gi, ' $&');
+  return stripHTML(spaced).replace(/\s+/g, ' ').trim();
+}
+
 export function stripHTML(html: string): string {
   if (!html) return '';
   if (typeof window === 'undefined') {

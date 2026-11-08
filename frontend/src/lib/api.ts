@@ -737,6 +737,8 @@ export async function logout() {
     await fetch(url, {
       method: 'POST',
       headers,
+      // Don't keep the user waiting on a slow server; this device is signed out either way
+      signal: AbortSignal.timeout(8000),
     });
   } catch (e) {
     console.error("Logout request error:", e);

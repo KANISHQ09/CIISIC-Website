@@ -7,18 +7,20 @@ import {
   Plus, X, Award, ShieldCheck, Sparkles
 } from 'lucide-react';
 import { StudentTeamLead, StudentTeamMember, FacultyMentor } from '../types';
+import { PageLoader } from '../components/common/Loader';
+import { htmlToPlainText } from '../lib/html';
 
 export const SubmitSolution: React.FC = () => {
   const { challengeId } = useParams<{ challengeId: string }>();
   const navigate = useNavigate();
-  const { submissions, currentUser, submitSolution } = useApp();
+  const { submissions, currentUser, submitSolution, submissionsLoading } = useApp();
 
   const problem = submissions.find((c) => c.id === challengeId);
   const challenge = problem
     ? {
         id: problem.id,
         title: problem.details.title,
-        description: problem.details.description,
+        description: htmlToPlainText(problem.details.description),
         industryCompanyName: problem.company.companyName,
         industrySector: problem.company.industrySector || problem.company.industryName,
       }
@@ -140,6 +142,10 @@ export const SubmitSolution: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (!challenge && submissionsLoading) {
+    return <PageLoader label="Loading the problem statement…" />;
+  }
 
   if (!challenge && !challengeId) {
     return (
