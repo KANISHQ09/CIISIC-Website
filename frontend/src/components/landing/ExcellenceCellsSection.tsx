@@ -209,6 +209,8 @@ export const ExcellenceCellsSection: React.FC = () => {
                   <img 
                     src={cell.image} 
                     alt={cell.name} 
+                    width={1200}
+                    height={1200}
                     className="w-full h-auto block group-hover:scale-[1.01] transition-transform duration-500"
                     loading="lazy"
                   />
@@ -291,6 +293,8 @@ export const ExcellenceCellsSection: React.FC = () => {
                   <img 
                     src={selectedCell.image} 
                     alt={selectedCell.name} 
+                    width={1200}
+                    height={1200}
                     className="w-full h-auto block"
                     loading="lazy"
                   />

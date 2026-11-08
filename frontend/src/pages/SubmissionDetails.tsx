@@ -10,6 +10,7 @@ import { sanitizeHTML } from '../lib/html';
 import { fetchChallengeById } from '../lib/api';
 import { getOriginalFileName } from '../lib/file';
 import { ProblemStatement } from '../types';
+import { usePageTitle } from '../lib/usePageTitle';
 
 export const SubmissionDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +21,7 @@ export const SubmissionDetails: React.FC = () => {
     return submissions.find((sub) => sub.id === id) || null;
   });
   const [isLoading, setIsLoading] = useState(!submission);
+  usePageTitle(submission?.details.title ?? 'Problem Statement');
   const [error, setError] = useState<string | null>(null);
 
   // "Back" returns to the page the problem was opened from. Without one (a shared or

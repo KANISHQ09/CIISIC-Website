@@ -69,6 +69,8 @@ export const ChallengeAreasSection: React.FC = () => {
                 <img 
                   src="/images/flyer_2.jpeg" 
                   alt="CII Students Innovation Challenge Flyer" 
+                  width={800}
+                  height={1200}
                   className="w-full h-auto block group-hover:scale-101 transition-all duration-300"
                   loading="lazy"
                 />
