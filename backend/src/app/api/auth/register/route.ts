@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
           const createdInst = await tx.institution.create({
             data: {
               name: instId,
-              city: "Madhya Pradesh",
+              city: data.institutionCity || "Madhya Pradesh",
             },
           });
           instId = createdInst.id;

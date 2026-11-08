@@ -21,6 +21,8 @@ export const RegisterSchema = z.object({
   isCIIMember: z.boolean().optional(),
   // Institution SPOC-specific
   spocInstitutionId: z.string().optional(),
+  // City of the institution, used when it isn't on the list yet
+  institutionCity: z.string().trim().min(2).max(100).optional(),
   designation: z.string().optional(),
 });
 

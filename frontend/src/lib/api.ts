@@ -585,10 +585,10 @@ export async function registerInstitution(data: {
   department: string;
   designation: string;
   phone: string;
-  password?: string;
+  password: string;
 }): Promise<{ success: boolean; message: string; requiresApproval: boolean }> {
   const url = API_BASE ? `${API_BASE}/api/auth/register` : '/api/auth/register';
-  const password = data.password || 'Spoc@1234';
+  const password = data.password;
 
   try {
     const response = await fetch(url, {
@@ -600,6 +600,7 @@ export async function registerInstitution(data: {
         name: data.coordinatorName,
         role: 'INSTITUTION_SPOC',
         spocInstitutionId: data.institutionName,
+        institutionCity: data.institutionCity,
         department: data.department,
         designation: data.designation,
       }),

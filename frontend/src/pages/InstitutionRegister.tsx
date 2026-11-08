@@ -13,7 +13,8 @@ export const InstitutionRegister: React.FC = () => {
   const [selectedInstName, setSelectedInstName] = useState(ALL_INSTITUTIONS[0]?.name || '');
   const [customInstName, setCustomInstName] = useState('');
   const [isCustomInst, setIsCustomInst] = useState(false);
-  const [city, setCity] = useState(ALL_INSTITUTIONS[0]?.city || 'Indore');
+  // Any city: an institution that isn't in the list can be typed in
+  const [city, setCity] = useState<string>(ALL_INSTITUTIONS[0]?.city || 'Indore');
   const [coordinatorName, setCoordinatorName] = useState('');
   const [department, setDepartment] = useState('Computer Science & Engineering');
   const [designation, setDesignation] = useState('CII Innovation Cell Coordinator');
