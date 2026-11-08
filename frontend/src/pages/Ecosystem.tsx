@@ -7,7 +7,7 @@ export const Ecosystem: React.FC = () => {
   usePageTitle('Our Ecosystem');
   return (
     <div className="bg-[#faf8f4] overflow-x-hidden">
-      <ExcellenceCellsSection asPage />
+      <ExcellenceCellsSection />
       <PageCTA />
     </div>
   );

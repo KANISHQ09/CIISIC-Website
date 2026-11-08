@@ -470,7 +470,7 @@ export const ProblemStatements: React.FC = () => {
         )}
 
         {/* Challenge areas CII welcomes (moved here from the home page) */}
-        <ChallengeAreasSection embedded />
+        <ChallengeAreasSection />
 
         {/* Bottom Industry Callout */}
         <div className="bg-[#063028] text-white rounded-3xl p-8 sm:p-12 relative overflow-hidden shadow-xl">

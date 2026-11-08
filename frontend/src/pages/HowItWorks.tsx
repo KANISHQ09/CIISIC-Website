@@ -8,7 +8,7 @@ export const HowItWorks: React.FC = () => {
   usePageTitle('How It Works');
   return (
     <div className="bg-[#faf8f4] overflow-x-hidden">
-      <WorkflowSection asPage />
+      <WorkflowSection />
       <FAQSection />
       <PageCTA />
     </div>
