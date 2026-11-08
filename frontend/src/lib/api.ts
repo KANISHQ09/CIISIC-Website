@@ -1270,3 +1270,72 @@ export async function resetPassword(token: string, newPassword: string): Promise
     body: JSON.stringify({ token, newPassword }),
   });
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin insights
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface AdminStats {
+  summary: {
+    totalUsers: number;
+    totalInstitutions: number;
+    totalChallenges: number;
+    totalProposals: number;
+    activeChallenges: number;
+    pendingProposals: number;
+    approvedProposals: number;
+    pendingProblems: number;
+    publicPendingProblems: number;
+    pendingRegistrations: number;
+    solutionsAwaitingReview: number;
+    registeredIndustries: number;
+  };
+}
+
+/** Platform-wide numbers for the admin overview (CII admins only). */
+export async function fetchAdminStats(): Promise<AdminStats> {
+  if (DEMO_MODE) {
+    return {
+      summary: {
+        totalUsers: 0, totalInstitutions: 0, totalChallenges: 0, totalProposals: 0,
+        activeChallenges: 0, pendingProposals: 0, approvedProposals: 0, pendingProblems: 0,
+        publicPendingProblems: 0, pendingRegistrations: 0, solutionsAwaitingReview: 0, registeredIndustries: 0,
+      },
+    };
+  }
+  return fetchJSON<AdminStats>(`${API_BASE}/api/admin/stats`);
+}
+
+export interface AuditEntry {
+  id: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  oldValue: any;
+  newValue: any;
+  ipAddress: string | null;
+  createdAt: string;
+  user: { id: string; name: string; email: string; role: string } | null;
+}
+
+export interface AuditQuery {
+  page?: number;
+  limit?: number;
+  q?: string;
+  action?: string;
+  entityType?: string;
+  from?: string;
+  to?: string;
+}
+
+/** One page of the activity log, newest first (CII admins only). */
+export async function fetchAuditLog(
+  query: AuditQuery
+): Promise<{ data: AuditEntry[]; pagination: { total: number; page: number; limit: number; totalPages: number } }> {
+  if (DEMO_MODE) return { data: [], pagination: { total: 0, page: 1, limit: 20, totalPages: 0 } };
+  const params = new URLSearchParams();
+  Object.entries(query).forEach(([key, value]) => {
+    if (value !== undefined && value !== '') params.set(key, String(value));
+  });
+  return fetchJSON(`${API_BASE}/api/admin/audit?${params.toString()}`);
+}

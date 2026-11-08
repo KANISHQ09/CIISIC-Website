@@ -4,7 +4,7 @@ import {
   FileText, CheckCircle, AlertTriangle, Search, 
   ChevronLeft, ChevronRight, Eye, Check, X, 
   SlidersHorizontal, LayoutDashboard, GraduationCap, Building2,
-  ExternalLink, Clock, MessageSquare, User, Lock, Send
+  ExternalLink, Clock, MessageSquare, User, Lock, Send, History
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { stripHTML } from '../lib/html';
@@ -75,12 +75,17 @@ const VerificationBadges: React.FC<{
   );
 };
 import { ChangePasswordModal } from '../components/common/ChangePasswordModal';
+import { AdminOverview } from '../components/admin/AdminOverview';
+import { ActivityLog } from '../components/admin/ActivityLog';
 
 export const AdminDashboard: React.FC = () => {
   const { submissions, updateSubmissionStatus, showToast, currentUser, solutions, reviewSolution } = useApp();
 
   // Active Admin View Tab
-  const [adminTab, setAdminTab] = useState<'challenges' | 'solutions' | 'registrations'>('challenges');
+  const [adminTab, setAdminTab] = useState<'challenges' | 'solutions' | 'registrations' | 'activity'>('challenges');
+  // Bumped after every decision so the overview numbers reload
+  const [statsVersion, setStatsVersion] = useState(0);
+  const refreshOverview = () => setStatsVersion((v) => v + 1);
 
   // Registrations state
   const [registrations, setRegistrations] = useState<RegistrationItem[]>([]);
@@ -108,6 +113,7 @@ export const AdminDashboard: React.FC = () => {
     setIsProcessingReg(id);
     try {
       await reviewRegistration(id, 'APPROVE');
+      refreshOverview();
       showToast(`Approved registration for ${name}. They can now log in directly without approval.`, 'success');
       await loadRegistrations();
     } catch (err: any) {
@@ -121,6 +127,7 @@ export const AdminDashboard: React.FC = () => {
     setIsProcessingReg(id);
     try {
       await reviewRegistration(id, 'REJECT', rejectRemarks);
+      refreshOverview();
       showToast(`Registration for ${name} rejected.`, 'info');
       setRejectModalId(null);
       setRejectRemarks('');
@@ -224,6 +231,7 @@ export const AdminDashboard: React.FC = () => {
     setIsAdminReviewing(true);
     try {
       await reviewSolution(selectedSolutionForReview.id, adminDecision, adminFeedback);
+      refreshOverview();
       showToast(`Solution marked as ${adminDecision.replace('_', ' ')}.`, 'success');
       setSelectedSolutionForReview(null);
     } catch (err: any) {
@@ -296,6 +304,7 @@ export const AdminDashboard: React.FC = () => {
     setQuickActionId(id);
     try {
       await updateSubmissionStatus(id, 'Approved', 'Approved via Admin Review.');
+      refreshOverview();
       showToast(`Submission ${id} approved and published.`, 'success');
     } catch (err: any) {
       showToast(err.message || 'Could not approve this submission.', 'error');
@@ -308,6 +317,7 @@ export const AdminDashboard: React.FC = () => {
     setQuickActionId(id);
     try {
       await updateSubmissionStatus(id, 'Rejected', 'Rejected via Admin Review.');
+      refreshOverview();
       showToast(`Submission ${id} marked as Rejected.`, 'info');
     } catch (err: any) {
       showToast(err.message || 'Could not reject this submission.', 'error');
@@ -389,6 +399,9 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Live platform overview */}
+      <AdminOverview onOpen={setAdminTab} refreshKey={statsVersion} />
+
       {/* Navigation Tabs */}
       <div className="flex border-b border-stone-200 gap-6 mb-8 overflow-x-auto">
         <button
@@ -441,7 +454,22 @@ export const AdminDashboard: React.FC = () => {
             </span>
           )}
         </button>
+
+        <button
+          onClick={() => setAdminTab('activity')}
+          className={`pb-3 text-sm sm:text-base font-bold transition-all relative flex items-center gap-2 cursor-pointer shrink-0 ${
+            adminTab === 'activity'
+              ? 'text-[#063028] border-b-2 border-[#063028]'
+              : 'text-stone-500 hover:text-stone-800'
+          }`}
+        >
+          <History className="h-4 w-4" />
+          Activity Log
+        </button>
       </div>
+
+      {/* TAB 4: ACTIVITY LOG */}
+      {adminTab === 'activity' && <ActivityLog />}
 
       {/* TAB 1: INDUSTRY CHALLENGES */}
       {adminTab === 'challenges' && (
