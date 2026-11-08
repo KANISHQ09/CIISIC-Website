@@ -26,6 +26,7 @@ export const SubmissionDetails: React.FC = () => {
   // typed-in link), signed-in users go to their own dashboard, visitors to the directory.
   const location = useLocation();
   const backLabels: Record<string, string> = {
+    '/': 'Back to Home',
     '/admin/dashboard': 'Back to Admin Command Ledger',
     '/industry/dashboard': 'Back to Industry Workspace',
     '/institution/dashboard': 'Back to Institution Portal',
@@ -133,7 +134,7 @@ export const SubmissionDetails: React.FC = () => {
         <h2 className="text-2xl font-bold text-[#063028] font-serif">Submission Not Found</h2>
         <p className="text-base text-stone-600">{error || "The requested problem statement reference ID does not exist or has been removed."}</p>
         <Link to={backLink} className="inline-flex items-center gap-2 text-sm font-bold text-white bg-[#063028] px-5 py-2.5 rounded-xl hover:bg-[#04201a]">
-          <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+          <ArrowLeft className="h-4 w-4" /> {backLinkText}
         </Link>
       </div>
     );

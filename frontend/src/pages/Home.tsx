@@ -2,10 +2,12 @@ import React from 'react';
 import { HeroBannerCarousel } from '../components/landing/HeroBannerCarousel';
 import { QuickImpactStatsSection } from '../components/landing/QuickImpactStatsSection';
 import { AboutSummarySection } from '../components/landing/AboutSummarySection';
+import { FeaturedProblemsSection } from '../components/landing/FeaturedProblemsSection';
 import { GetInvolvedSection } from '../components/landing/GetInvolvedSection';
 
 /**
- * The home page is kept short: banner and numbers, a short About, then how to get involved.
+ * The home page is kept short: banner and numbers, a short About, problems open right now,
+ * then how to get involved.
  * Everything else has its own page (see the nav).
  */
 export const Home: React.FC = () => {
@@ -23,6 +25,7 @@ export const Home: React.FC = () => {
       </section>
 
       <AboutSummarySection />
+      <FeaturedProblemsSection />
       <GetInvolvedSection />
     </div>
   );
