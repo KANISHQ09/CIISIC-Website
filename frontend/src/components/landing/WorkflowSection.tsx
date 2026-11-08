@@ -1,5 +1,6 @@
 import React from 'react';
 
+/** Shown as its own page, so its title is the page heading. */
 export const WorkflowSection: React.FC = () => {
   const steps = [
     {
@@ -33,7 +34,7 @@ export const WorkflowSection: React.FC = () => {
   ];
 
   return (
-    <section id="how-it-works" className="py-16 sm:py-24 bg-[#faf8f4] border-t border-[#e8e4dc] scroll-mt-20">
+    <section id="how-it-works" className="py-16 sm:py-24 bg-[#faf8f4] scroll-mt-20">
       <div className="max-w-[900px] mx-auto px-6 sm:px-8">
         
         {/* Header Block */}
@@ -41,9 +42,9 @@ export const WorkflowSection: React.FC = () => {
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#edf4f0] text-[#063028] text-xs font-semibold tracking-wide">
             Our Workflow
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#063028] tracking-tight leading-tight font-serif">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#063028] tracking-tight leading-tight font-serif">
             From Challenge to Solution
-          </h2>
+          </h1>
           <p className="text-stone-700 text-base sm:text-lg leading-relaxed">
             A structured, transparent pathway connecting industry requirements with guided academic research and student innovation.
           </p>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { X, CheckCircle2, Cpu, Brain, Layers, GraduationCap, Globe, Lightbulb, Users } from 'lucide-react';
 
 interface ExcellenceCellData {
@@ -29,7 +30,9 @@ interface ExcellenceCellData {
   };
 }
 
+/** Shown as its own page, so its title is the page heading. */
 export const ExcellenceCellsSection: React.FC = () => {
+  const navigate = useNavigate();
   const [selectedCell, setSelectedCell] = useState<ExcellenceCellData | null>(null);
 
   const cells: ExcellenceCellData[] = [
@@ -176,7 +179,7 @@ export const ExcellenceCellsSection: React.FC = () => {
   ];
 
   return (
-    <section id="our-ecosystem" className="py-16 sm:py-24 bg-[#faf7f0] border-t border-[#e8e4dc] scroll-mt-20">
+    <section id="our-ecosystem" className="py-16 sm:py-24 bg-[#faf7f0] scroll-mt-20">
       <div className="max-w-[1320px] mx-auto px-6 sm:px-8 lg:px-12">
         
         {/* Header Section */}
@@ -184,9 +187,9 @@ export const ExcellenceCellsSection: React.FC = () => {
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#edf4f0] text-[#063028] text-xs font-semibold tracking-wide">
             Excellence Cells
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#063028] tracking-tight leading-tight font-serif">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#063028] tracking-tight leading-tight font-serif">
             Driving Innovation Through Specialized Excellence
-          </h2>
+          </h1>
           <p className="text-stone-700 text-base sm:text-lg leading-relaxed">
             The CII Industry–Academia Excellence Initiative brings together specialized Excellence Cells hosted by leading partner institutions. Each Excellence Cell focuses on a specific domain, enabling industries to collaborate with the right academic expertise and student talent.
           </p>
@@ -206,6 +209,8 @@ export const ExcellenceCellsSection: React.FC = () => {
                   <img 
                     src={cell.image} 
                     alt={cell.name} 
+                    width={1200}
+                    height={1200}
                     className="w-full h-auto block group-hover:scale-[1.01] transition-transform duration-500"
                     loading="lazy"
                   />
@@ -236,15 +241,12 @@ export const ExcellenceCellsSection: React.FC = () => {
 
         {/* Explore All Excellence Cells Button */}
         <div className="mt-16 text-center">
-          <button
-            onClick={() => {
-              const el = document.getElementById('partner-institutions');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }}
+          <Link
+            to="/institutions"
             className="inline-flex items-center gap-2 px-6 py-3.5 bg-[#063028] hover:bg-[#04201a] text-white rounded-xl text-sm sm:text-base font-bold shadow-xs transition-all duration-200 cursor-pointer"
           >
             Explore All CII Excellence Cells
-          </button>
+          </Link>
         </div>
 
       </div>
@@ -291,6 +293,8 @@ export const ExcellenceCellsSection: React.FC = () => {
                   <img 
                     src={selectedCell.image} 
                     alt={selectedCell.name} 
+                    width={1200}
+                    height={1200}
                     className="w-full h-auto block"
                     loading="lazy"
                   />
@@ -455,8 +459,7 @@ export const ExcellenceCellsSection: React.FC = () => {
               <button
                 onClick={() => {
                   setSelectedCell(null);
-                  const el = document.getElementById('get-involved');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  navigate('/#get-involved');
                 }}
                 className="px-6 py-3 bg-[#063028] hover:bg-[#04201a] text-white rounded-xl text-sm font-bold shadow-xs transition-all cursor-pointer"
               >

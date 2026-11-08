@@ -64,6 +64,17 @@ Tick each item. Note the browser and screen size used.
 - [ ] Old link `/industry/submit` goes to `/submit-problem`; `/student/login` goes home.
 - [ ] Forgot password → message is the same for a registered and an unknown email.
 
+### Site pages and home page (logged out)
+- [ ] Nav shows Home, About, Problem Statements, Events, Opportunities and an Explore menu (Services, Institutions, Our Ecosystem, How It Works); each opens its own page at the top, with that tab underlined.
+- [ ] At 1280 px wide the whole nav fits on one line; below that a menu button opens the same links.
+- [ ] Every public page has the footer and its own browser-tab title (e.g. "Events · CIISIC").
+- [ ] Home: banner slides on its own, pauses while hovered, and works with arrows, dots, keyboard arrows and (on a phone) swipe.
+- [ ] Home: "Featured Problem Statements" shows only published problems that are still open, closing soonest first; with none open it says new ones are coming soon.
+- [ ] Home: a featured card opens the problem, and its back link says "Back to Home".
+- [ ] Events: shows "Coming soon" and a sample hackathon timeline marked "Sample timeline".
+- [ ] Opportunities: shows the four categories marked "Coming soon".
+- [ ] Institutions shows partner logos and counts; Problem Statements ends with the challenge areas.
+
 ### CII Admin
 - [ ] Sign in via footer link → admin dashboard.
 - [ ] Overview cards show waiting problems/registrations; clicking a card opens its tab.

@@ -3,13 +3,6 @@ import { Link } from 'react-router-dom';
 import { Building2, University, ArrowRight } from 'lucide-react';
 
 export const GetInvolvedSection: React.FC = () => {
-  const handleScrollTo = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
     <section id="get-involved" className="py-16 sm:py-24 bg-[#faf8f4] border-t border-[#e8e4dc] scroll-mt-20">
       <div className="max-w-[1320px] mx-auto px-6 sm:px-8 lg:px-12">
@@ -137,18 +130,18 @@ export const GetInvolvedSection: React.FC = () => {
 
         {/* Additional Buttons underneath */}
         <div className="flex flex-wrap justify-center items-center gap-4 pt-12">
-          <button
-            onClick={() => handleScrollTo('partner-institutions')}
+          <Link
+            to="/institutions"
             className="px-6 py-3.5 bg-white border border-stone-300 hover:bg-[#faf8f4] text-[#063028] text-sm sm:text-base font-bold rounded-xl transition-colors cursor-pointer"
           >
             Become a Partner Institution
-          </button>
-          <button
-            onClick={() => handleScrollTo('about-ciisic')}
+          </Link>
+          <Link
+            to="/about"
             className="px-6 py-3.5 bg-white border border-stone-300 hover:bg-[#faf8f4] text-[#063028] text-sm sm:text-base font-bold rounded-xl transition-colors cursor-pointer"
           >
             Explore CIISIC
-          </button>
+          </Link>
         </div>
 
       </div>

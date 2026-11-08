@@ -1,9 +1,8 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { usePageTitle } from '../lib/usePageTitle';
 
 export const Services: React.FC = () => {
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  usePageTitle('Services');
 
   const audiences = [
     'COLLEGES',

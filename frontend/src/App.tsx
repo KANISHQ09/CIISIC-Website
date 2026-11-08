@@ -18,6 +18,11 @@ const AdminDashboard = page(() => import('./pages/AdminDashboard'), 'AdminDashbo
 const SubmissionDetails = page(() => import('./pages/SubmissionDetails'), 'SubmissionDetails');
 const ProblemStatements = page(() => import('./pages/ProblemStatements'), 'ProblemStatements');
 const Services = page(() => import('./pages/Services'), 'Services');
+const About = page(() => import('./pages/About'), 'About');
+const Ecosystem = page(() => import('./pages/Ecosystem'), 'Ecosystem');
+const HowItWorks = page(() => import('./pages/HowItWorks'), 'HowItWorks');
+const Events = page(() => import('./pages/Events'), 'Events');
+const Opportunities = page(() => import('./pages/Opportunities'), 'Opportunities');
 const InstitutionLogin = page(() => import('./pages/InstitutionLogin'), 'InstitutionLogin');
 const InstitutionRegister = page(() => import('./pages/InstitutionRegister'), 'InstitutionRegister');
 const InstitutionDashboard = page(() => import('./pages/InstitutionDashboard'), 'InstitutionDashboard');
@@ -124,6 +129,11 @@ export default function App() {
 
             {/* Services Page */}
             <Route path="/services" element={<Services />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/ecosystem" element={<Ecosystem />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/opportunities" element={<Opportunities />} />
 
             {/* Public Problem Statements Repository */}
             <Route path="/problem-statements" element={<ProblemStatements />} />

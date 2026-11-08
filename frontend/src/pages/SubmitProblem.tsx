@@ -15,6 +15,7 @@ import {
   uploadFile, uploadPublicDocument, fetchPublicIndustries,
   submitPublicProblem, toBackendProblemFields
 } from '../lib/api';
+import { usePageTitle } from '../lib/usePageTitle';
 
 /** Dropdown value for an organisation that is not registered on the portal. */
 const OTHER_ORG = 'OTHER';
@@ -68,6 +69,7 @@ const formSchema = z.object({
 type FormFields = z.infer<typeof formSchema>;
 
 export const SubmitProblem: React.FC = () => {
+  usePageTitle('Submit a Problem');
   const { addSubmission, currentUser, showToast } = useApp();
   const navigate = useNavigate();
   const isIndustryUser = currentUser?.role === 'industry';

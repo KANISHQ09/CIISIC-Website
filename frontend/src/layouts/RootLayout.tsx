@@ -5,13 +5,28 @@ import { useApp } from '../contexts/AppContext';
 import { CiiLogo } from '../components/CiiLogo';
 import { Toast } from '../components/Toast';
 import { FullScreenLoader } from '../components/common/Loader';
+import { FooterSection } from '../components/landing/FooterSection';
+
+type NavItem = { to: string; label: string; alsoActiveOn?: string[] };
+
+const desktopLinkClass = (active: boolean) =>
+  `relative py-1.5 px-1.5 xl:px-2 2xl:px-2.5 text-[11px] xl:text-[11.5px] 2xl:text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+    active
+      ? 'text-[#063028] font-bold after:absolute after:bottom-0 after:left-1.5 after:right-1.5 xl:after:left-2 xl:after:right-2 after:h-[2px] after:bg-[#c48825] after:rounded-full'
+      : 'text-stone-700 hover:text-[#063028]'
+  }`;
+
+const mobileLinkClass = (active: boolean) =>
+  `w-full text-left block px-3.5 py-2.5 rounded-lg text-base font-semibold cursor-pointer transition-colors ${
+    active ? 'text-[#063028] bg-[#edf4f0] font-bold' : 'text-stone-700 hover:bg-stone-50 hover:text-[#063028]'
+  }`;
 
 export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser, logout, showToast } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<string>('hero');
+  const [exploreOpen, setExploreOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -27,13 +42,24 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
   // Close profile dropdown on click outside
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
-      if (dropdownOpen && !(e.target as HTMLElement).closest('.profile-dropdown-container')) {
+      const target = e.target as HTMLElement;
+      if (dropdownOpen && !target.closest('.profile-dropdown-container')) {
         setDropdownOpen(false);
       }
+      if (exploreOpen && !target.closest('.explore-menu-container')) {
+        setExploreOpen(false);
+      }
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setExploreOpen(false);
     };
     document.addEventListener('click', handleOutsideClick);
-    return () => document.removeEventListener('click', handleOutsideClick);
-  }, [dropdownOpen]);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [dropdownOpen, exploreOpen]);
 
   // Lock body scroll when mobile menu is open & close on route changes
   useEffect(() => {
@@ -49,108 +75,62 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
   useEffect(() => {
     setMobileMenuOpen(false);
+    setExploreOpen(false);
   }, [location.pathname]);
 
   // Every link or button that navigates starts the page at its top — also when it points
   // to the page you're already on (each navigation has a new location.key). The browser's
   // own back/forward ("POP") keeps its position restore.
   const navigationType = useNavigationType();
+  // A link with a section (like /#get-involved) scrolls to that section instead, once the
+  // page has loaded it (pages download on demand, so wait for it, up to ~3 s).
   useEffect(() => {
-    if (navigationType !== 'POP') {
+    if (navigationType === 'POP') return;
+    const sectionId = location.hash.slice(1);
+    if (!sectionId) {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      return;
     }
-  }, [location.key, navigationType]);
+    let cancelled = false;
+    const scrollWhenReady = (attempt: number) => {
+      if (cancelled) return;
+      const el = document.getElementById(sectionId);
+      if (el) {
+        const nav = document.getElementById('platform-navbar');
+        const navHeight = nav ? nav.offsetHeight : 72;
+        window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - navHeight - 16, behavior: 'smooth' });
+      } else if (attempt < 30) {
+        setTimeout(() => scrollWhenReady(attempt + 1), 100);
+      }
+    };
+    scrollWhenReady(0);
+    return () => {
+      cancelled = true;
+    };
+  }, [location.key, location.hash, navigationType]);
 
-  const navItems = [
-    { id: 'hero', label: 'Home' },
-    { id: 'about-ciisic', label: 'About CIISIC' },
-    { id: 'services', label: 'Services' },
-    { id: 'partner-institutions', label: 'Institutions' },
-    { id: 'problem-statements', label: 'Problem Statements' },
-    { id: 'our-ecosystem', label: 'Our Ecosystem' },
-    { id: 'how-it-works', label: 'How It Works' },
-    { id: 'get-involved', label: 'Get Involved' },
+  // Main tabs, then the "Explore" menu. Each opens its own page.
+  const navItems: NavItem[] = [
+    { to: '/', label: 'Home' },
+    { to: '/about', label: 'About' },
+    { to: '/problem-statements', label: 'Problem Statements', alsoActiveOn: ['/details'] },
+    { to: '/events', label: 'Events' },
+    { to: '/opportunities', label: 'Opportunities' },
+  ];
+  const exploreItems: NavItem[] = [
+    { to: '/services', label: 'Services' },
+    { to: '/institutions', label: 'Institutions' },
+    { to: '/ecosystem', label: 'Our Ecosystem' },
+    { to: '/how-it-works', label: 'How It Works' },
   ];
 
-  const isNavActive = (id: string) => {
-    if (id === 'services' && location.pathname === '/services') return true;
-    if (id === 'partner-institutions' && location.pathname === '/institutions') return true;
-    if (
-      id === 'problem-statements' &&
-      (location.pathname === '/problem-statements' || location.pathname.startsWith('/details'))
-    ) {
-      return true;
-    }
-    if (location.pathname === '/') {
-      return activeSection === id;
-    }
-    return false;
+  const isNavActive = (item: NavItem) => {
+    const path = location.pathname;
+    if (item.to === '/') return path === '/';
+    const prefixes = [item.to, ...(item.alsoActiveOn ?? [])];
+    return prefixes.some((p) => path === p || path.startsWith(p + '/'));
   };
-
-  // Active section scroll highlighter
-  useEffect(() => {
-    if (location.pathname === '/services') {
-      setActiveSection('services');
-      return;
-    }
-    if (location.pathname === '/institutions') {
-      setActiveSection('partner-institutions');
-      return;
-    }
-    if (location.pathname === '/problem-statements' || location.pathname.startsWith('/details')) {
-      setActiveSection('problem-statements');
-      return;
-    }
-
-    const handleScroll = () => {
-      const sections = [
-        'hero',
-        'about-ciisic',
-        'services',
-        'partner-institutions',
-        'problem-statements',
-        'our-ecosystem',
-        'how-it-works',
-        'get-involved',
-      ];
-
-      // Near the top (including right after the page opens): Home
-      if (window.scrollY < 80) {
-        setActiveSection('hero');
-        return;
-      }
-
-      // Scrolled to the very bottom (within 60px): last section. Only when the page is
-      // actually taller than the screen — while the home page is still loading it is short,
-      // and that must not count as "at the bottom".
-      const pageHeight = document.documentElement.scrollHeight;
-      const isScrollable = pageHeight > window.innerHeight + 200;
-      const isBottom = window.innerHeight + window.scrollY >= pageHeight - 60;
-      if (isScrollable && isBottom) {
-        setActiveSection('get-involved');
-        return;
-      }
-
-      const navOffset = 110;
-      let currentSection = 'hero';
-
-      for (const section of sections) {
-        const el = document.getElementById(section);
-        if (el) {
-          const top = el.getBoundingClientRect().top;
-          if (top <= navOffset) {
-            currentSection = section;
-          }
-        }
-      }
-
-      setActiveSection(currentSection);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Run immediately to sync on mount
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [location.pathname]);
+  const exploreActive = exploreItems.some(isNavActive);
 
   // Sign-out covers the screen with a loader until the server has ended the session, so the
   // page never shows a half-signed-out state (old header on the home page, or a flash of a
@@ -195,52 +175,6 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
     ? currentUser.institutionName || ''
     : currentUser.companyName || '';
 
-  const handleNavClick = (sectionId: string) => {
-    setMobileMenuOpen(false);
-    
-    if (sectionId === 'partner-institutions' && location.pathname === '/institutions') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-    if (sectionId === 'services' && location.pathname === '/services') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-    if (sectionId === 'problem-statements' && (location.pathname === '/problem-statements' || location.pathname.startsWith('/details'))) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    const scrollToSection = (id: string) => {
-      const el = document.getElementById(id);
-      if (el) {
-        const navElement = document.getElementById('platform-navbar');
-        const navHeight = navElement ? navElement.offsetHeight : 72;
-        const elementPosition = el.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - navHeight - 16;
-
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth',
-        });
-      }
-    };
-
-    if (location.pathname !== '/') {
-      navigate('/');
-      // The home page loads on demand: wait until the section exists (up to ~3s), then scroll
-      const scrollWhenReady = (attempt: number) => {
-        if (document.getElementById(sectionId)) {
-          scrollToSection(sectionId);
-        } else if (attempt < 30) {
-          setTimeout(() => scrollWhenReady(attempt + 1), 100);
-        }
-      };
-      setTimeout(() => scrollWhenReady(0), 50);
-    } else {
-      scrollToSection(sectionId);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#faf7f0] flex flex-col font-sans selection:bg-[#c48825]/20 selection:text-[#063028]">
@@ -266,23 +200,53 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
             {/* Desktop Navigation Links - hidden on signed-in portal pages */}
             {showPublicNav && (
-            <div className="hidden lg:flex items-center justify-center flex-1 mx-1 xl:mx-2 space-x-0.5 xl:space-x-1">
-              {navItems.map((item) => {
-                const active = isNavActive(item.id);
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleNavClick(item.id)}
-                    className={`relative py-1.5 px-1.5 xl:px-2 2xl:px-2.5 text-[11px] xl:text-[11.5px] 2xl:text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                      active
-                        ? 'text-[#063028] font-bold after:absolute after:bottom-0 after:left-1.5 after:right-1.5 xl:after:left-2 xl:after:right-2 after:h-[2px] after:bg-[#c48825] after:rounded-full'
-                        : 'text-stone-700 hover:text-[#063028]'
-                    }`}
+            <div className="hidden xl:flex items-center justify-center flex-1 mx-1 xl:mx-2 space-x-0.5 xl:space-x-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  aria-current={isNavActive(item) ? 'page' : undefined}
+                  className={desktopLinkClass(isNavActive(item))}
+                >
+                  {item.label}
+                </Link>
+              ))}
+
+              {/* Explore: the less-used pages, in a small menu */}
+              <div className="relative explore-menu-container">
+                <button
+                  type="button"
+                  onClick={() => setExploreOpen((open) => !open)}
+                  aria-haspopup="menu"
+                  aria-expanded={exploreOpen}
+                  className={`${desktopLinkClass(exploreActive)} inline-flex items-center gap-0.5`}
+                >
+                  Explore
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${exploreOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {exploreOpen && (
+                  <div
+                    role="menu"
+                    className="absolute left-1/2 -translate-x-1/2 mt-2 w-52 bg-white border border-stone-200 rounded-xl shadow-lg p-1.5 z-50"
                   >
-                    {item.label}
-                  </button>
-                );
-              })}
+                    {exploreItems.map((item) => (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        role="menuitem"
+                        onClick={() => setExploreOpen(false)}
+                        className={`block px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                          isNavActive(item)
+                            ? 'bg-[#edf4f0] text-[#063028] font-bold'
+                            : 'text-stone-700 hover:bg-stone-50 hover:text-[#063028]'
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             )}
 
@@ -290,7 +254,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
             {!currentUser ? (
               <>
                 {/* Desktop CTA buttons */}
-                <div className="hidden lg:flex items-center space-x-1 xl:space-x-1.5 shrink-0 pl-1 xl:pl-2">
+                <div className="hidden xl:flex items-center space-x-1 xl:space-x-1.5 shrink-0 pl-1 xl:pl-2">
                   <Link
                     to="/institution/login"
                     className="px-2 xl:px-2.5 py-1.5 border border-stone-800 text-[#063028] bg-transparent hover:bg-[#edf4f0] text-[11px] xl:text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer shadow-2xs flex items-center gap-1"
@@ -314,7 +278,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                 </div>
 
                 {/* Mobile menu button */}
-                <div className="flex items-center lg:hidden">
+                <div className="flex items-center xl:hidden">
                   <button
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                     className="inline-flex items-center justify-center p-2 rounded-lg text-stone-600 hover:text-[#063028] hover:bg-stone-100 transition-colors cursor-pointer"
@@ -329,7 +293,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
               /* Signed in: profile menu (no login buttons); site menu on public pages for mobile */
               <div className="flex items-center gap-1.5 shrink-0">
               {showPublicNav && (
-                <div className="flex items-center lg:hidden">
+                <div className="flex items-center xl:hidden">
                   <button
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                     className="inline-flex items-center justify-center p-2 rounded-lg text-stone-600 hover:text-[#063028] hover:bg-stone-100 transition-colors cursor-pointer"
@@ -421,7 +385,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
         {/* Mobile full-screen menu overlay */}
         {mobileMenuOpen && showPublicNav && (
-          <div className="lg:hidden fixed inset-0 z-50 bg-white flex flex-col h-[100dvh] w-screen animate-fade-in">
+          <div className="xl:hidden fixed inset-0 z-50 bg-white flex flex-col h-[100dvh] w-screen animate-fade-in">
             {/* Mobile Header with Logo & Close Button */}
             <div className="flex justify-between items-center h-15 sm:h-16 px-3 sm:px-5 border-b border-stone-200 bg-white shrink-0">
               <Link
@@ -452,22 +416,17 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
             <div className="flex-1 overflow-y-auto overscroll-contain px-4 pt-3 pb-12 space-y-1 sm:px-6 bg-white">
               {(
                 <>
-                  {navItems.map((item) => {
-                    const active = isNavActive(item.id);
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => handleNavClick(item.id)}
-                        className={`w-full text-left block px-3.5 py-2.5 rounded-lg text-base font-semibold cursor-pointer transition-colors ${
-                          active
-                            ? 'text-[#063028] bg-[#edf4f0] font-bold'
-                            : 'text-stone-700 hover:bg-stone-50 hover:text-[#063028]'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    );
-                  })}
+                  {navItems.map((item) => (
+                    <Link key={item.to} to={item.to} className={mobileLinkClass(isNavActive(item))}>
+                      {item.label}
+                    </Link>
+                  ))}
+                  <p className="px-3.5 pt-3 pb-1 text-xs font-bold uppercase tracking-wider text-stone-400">Explore</p>
+                  {exploreItems.map((item) => (
+                    <Link key={item.to} to={item.to} className={mobileLinkClass(isNavActive(item))}>
+                      {item.label}
+                    </Link>
+                  ))}
 
                   {!currentUser && (
                   <div className="border-t border-stone-200 my-3 pt-3 space-y-2.5 px-0.5">
@@ -507,6 +466,9 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
       <main className="flex-grow">
         {children}
       </main>
+
+      {/* Site footer on every public page (portal pages keep their own minimal layout) */}
+      {!isPortalPage && <FooterSection />}
 
       {/* Global Toast component */}
       <Toast />
