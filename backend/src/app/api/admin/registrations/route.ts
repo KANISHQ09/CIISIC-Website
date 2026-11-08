@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ok, unauthorized, forbidden, serverError } from "@/lib/api-response";
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get("status"); // PENDING | APPROVED | REJECTED | ALL
     const role = searchParams.get("role"); // INDUSTRY_SPOC | INSTITUTION_SPOC
 
-    const where: any = {
+    const where: Prisma.UserWhereInput = {
       role: {
         in: ["INDUSTRY_SPOC", "INSTITUTION_SPOC"],
       },

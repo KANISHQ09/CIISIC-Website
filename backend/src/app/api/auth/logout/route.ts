@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       { success: true },
       { status: 200, headers }
     );
-  } catch (err: any) {
+  } catch (err) {
     console.error("[POST /api/auth/logout] error:", err);
     return NextResponse.json(
       { success: false, message: "An unexpected error occurred" },

@@ -14,6 +14,16 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "tests/**",
   ]),
+  {
+    rules: {
+      // A leading underscore marks a value that is intentionally unused,
+      // e.g. `const { passwordHash: _, ...safeUser } = user`
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", destructuredArrayIgnorePattern: "^_" },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

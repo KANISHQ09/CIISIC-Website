@@ -1,7 +1,24 @@
 import { headers } from "next/headers";
 import type { Role } from "@prisma/client";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-fallback-jwt-secret-key-32-chars-long";
+// Only for local development without a .env. Never used in production (see getJwtSecret).
+const DEV_FALLBACK_SECRET = "your-fallback-jwt-secret-key-32-chars-long";
+
+/**
+ * The key that signs login tokens. In production a real JWT_SECRET (32+ characters)
+ * is required: the fallback above is public in the repository, so accepting it would
+ * let anyone create their own admin token. Without it, sign-in fails loudly and every
+ * token is rejected, rather than the site running insecurely.
+ */
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET?.trim();
+  if (secret && secret.length >= 32) return secret;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("JWT_SECRET is missing or shorter than 32 characters. Set it in the server environment.");
+  }
+  if (secret) return secret;
+  return DEV_FALLBACK_SECRET;
+}
 
 // Web Crypto base64url helpers
 function base64urlEncode(arr: Uint8Array): string {
@@ -40,7 +57,7 @@ export async function generateToken(payload: {
   const encodedPayload = base64urlEncode(encoder.encode(JSON.stringify(fullPayload)));
   
   const data = encoder.encode(`${encodedHeader}.${encodedPayload}`);
-  const keyData = encoder.encode(JWT_SECRET);
+  const keyData = encoder.encode(getJwtSecret());
   
   const key = await crypto.subtle.importKey(
     "raw",
@@ -72,7 +89,7 @@ export async function verifyToken(token: string): Promise<{
     const [encodedHeader, encodedPayload, encodedSignature] = parts;
     const encoder = new TextEncoder();
     const data = encoder.encode(`${encodedHeader}.${encodedPayload}`);
-    const keyData = encoder.encode(JWT_SECRET);
+    const keyData = encoder.encode(getJwtSecret());
     
     const key = await crypto.subtle.importKey(
       "raw",
@@ -83,7 +100,8 @@ export async function verifyToken(token: string): Promise<{
     );
     
     const signatureBytes = base64urlDecode(encodedSignature);
-    const isValid = await crypto.subtle.verify("HMAC", key, signatureBytes as any, data);
+    // Copy into a fresh ArrayBuffer-backed array, which is what WebCrypto expects
+    const isValid = await crypto.subtle.verify("HMAC", key, new Uint8Array(signatureBytes), data);
     if (!isValid) return null;
     
     const decoder = new TextDecoder();
@@ -96,7 +114,7 @@ export async function verifyToken(token: string): Promise<{
     }
     
     return payload;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -133,7 +151,7 @@ export async function auth(): Promise<Session | null> {
         avatarUrl: payload.avatarUrl || null,
       },
     };
-  } catch (e) {
+  } catch {
     return null;
   }
 }

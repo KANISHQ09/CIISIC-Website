@@ -30,7 +30,8 @@ const PUBLIC_API_PREFIXES = [
   "/api/public",
 ];
 
-export default async function middleware(req: NextRequest) {
+// Next.js 16 calls this "proxy" (formerly "middleware"): CORS + auth checks for every /api request
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const origin = req.headers.get("origin") || "";

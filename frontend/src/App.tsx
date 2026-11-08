@@ -1,24 +1,38 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './contexts/AppContext';
 import { RootLayout } from './layouts/RootLayout';
-import { Home } from './pages/Home';
-import { Institutions } from './pages/Institutions';
-import { IndustryLogin } from './pages/IndustryLogin';
-import { IndustryRegister } from './pages/IndustryRegister';
-import { IndustryDashboard } from './pages/IndustryDashboard';
-import { SubmitProblem } from './pages/SubmitProblem';
-import { AdminLogin } from './pages/AdminLogin';
-import { AdminDashboard } from './pages/AdminDashboard';
-import { SubmissionDetails } from './pages/SubmissionDetails';
-import { ProblemStatements } from './pages/ProblemStatements';
-import { Services } from './pages/Services';
-import { InstitutionLogin } from './pages/InstitutionLogin';
-import { InstitutionRegister } from './pages/InstitutionRegister';
-import { InstitutionDashboard } from './pages/InstitutionDashboard';
-import { SubmitSolution } from './pages/SubmitSolution';
-import { ForgotPassword } from './pages/ForgotPassword';
-import { ResetPassword } from './pages/ResetPassword';
+// Each page is downloaded only when it is first opened (keeps the first load small)
+const page = <T extends React.ComponentType<any>>(load: () => Promise<Record<string, T>>, name: string) =>
+  lazy(() => load().then((module) => ({ default: module[name] })));
+
+const Home = page(() => import('./pages/Home'), 'Home');
+const Institutions = page(() => import('./pages/Institutions'), 'Institutions');
+const IndustryLogin = page(() => import('./pages/IndustryLogin'), 'IndustryLogin');
+const IndustryRegister = page(() => import('./pages/IndustryRegister'), 'IndustryRegister');
+const IndustryDashboard = page(() => import('./pages/IndustryDashboard'), 'IndustryDashboard');
+const SubmitProblem = page(() => import('./pages/SubmitProblem'), 'SubmitProblem');
+const AdminLogin = page(() => import('./pages/AdminLogin'), 'AdminLogin');
+const AdminDashboard = page(() => import('./pages/AdminDashboard'), 'AdminDashboard');
+const SubmissionDetails = page(() => import('./pages/SubmissionDetails'), 'SubmissionDetails');
+const ProblemStatements = page(() => import('./pages/ProblemStatements'), 'ProblemStatements');
+const Services = page(() => import('./pages/Services'), 'Services');
+const InstitutionLogin = page(() => import('./pages/InstitutionLogin'), 'InstitutionLogin');
+const InstitutionRegister = page(() => import('./pages/InstitutionRegister'), 'InstitutionRegister');
+const InstitutionDashboard = page(() => import('./pages/InstitutionDashboard'), 'InstitutionDashboard');
+const SubmitSolution = page(() => import('./pages/SubmitSolution'), 'SubmitSolution');
+const ForgotPassword = page(() => import('./pages/ForgotPassword'), 'ForgotPassword');
+const ResetPassword = page(() => import('./pages/ResetPassword'), 'ResetPassword');
+
+/** Shown for the moment it takes to download a page. */
+const PageLoading: React.FC = () => (
+  <div className="min-h-[60vh] flex items-center justify-center" role="status" aria-live="polite">
+    <div className="flex items-center gap-3 text-sm font-semibold text-stone-500">
+      <span className="h-5 w-5 rounded-full border-2 border-stone-300 border-t-[#063028] animate-spin" />
+      Loading…
+    </div>
+  </div>
+);
 
 // Role-based Protected Route for Industry Partners
 const IndustryRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -89,6 +103,7 @@ export default function App() {
     <AppProvider>
       <BrowserRouter>
         <RootLayout>
+          <Suspense fallback={<PageLoading />}>
           <Routes>
             {/* Public Hub Website */}
             <Route path="/" element={<Home />} />
@@ -200,6 +215,7 @@ export default function App() {
             {/* Fallback Catch-All */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </Suspense>
         </RootLayout>
       </BrowserRouter>
     </AppProvider>
