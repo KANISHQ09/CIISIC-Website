@@ -3,13 +3,6 @@ import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 export const FooterSection: React.FC = () => {
-  const handleScrollTo = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
     <footer className="bg-[#04201a] text-stone-300 border-t border-[#063028] pt-16 sm:pt-20 pb-12 text-left">
       <div className="max-w-[1320px] mx-auto px-6 sm:px-8 lg:px-12">
@@ -34,60 +27,49 @@ export const FooterSection: React.FC = () => {
             </h4>
             <ul className="space-y-3 text-sm font-medium text-stone-200">
               <li>
-                <button 
-                  onClick={() => handleScrollTo('hero')}
-                  className="hover:text-[#c48825] transition-colors cursor-pointer text-left"
-                >
+                <Link to="/" className="hover:text-[#c48825] transition-colors">
                   Home
-                </button>
+                </Link>
               </li>
               <li>
-                <button 
-                  onClick={() => handleScrollTo('about-ciisic')}
-                  className="hover:text-[#c48825] transition-colors cursor-pointer text-left"
-                >
+                <Link to="/about" className="hover:text-[#c48825] transition-colors">
                   About CIISIC
-                </button>
+                </Link>
               </li>
               <li>
-                <button 
-                  onClick={() => handleScrollTo('how-it-works')}
-                  className="hover:text-[#c48825] transition-colors cursor-pointer text-left"
-                >
-                  How It Works
-                </button>
+                <Link to="/problem-statements" className="hover:text-[#c48825] transition-colors">
+                  Problem Statements
+                </Link>
               </li>
               <li>
-                <button 
-                  onClick={() => handleScrollTo('our-ecosystem')}
-                  className="hover:text-[#c48825] transition-colors cursor-pointer text-left"
-                >
-                  Excellence Cells
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => handleScrollTo('challenge-areas')}
-                  className="hover:text-[#c48825] transition-colors cursor-pointer text-left"
-                >
-                  Industry Challenges
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => handleScrollTo('partner-institutions')}
-                  className="hover:text-[#c48825] transition-colors cursor-pointer text-left"
-                >
-                  Partner Institutions
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => handleScrollTo('challenge-areas')}
-                  className="hover:text-[#c48825] transition-colors cursor-pointer text-left"
-                >
+                <Link to="/events" className="hover:text-[#c48825] transition-colors">
                   Events
-                </button>
+                </Link>
+              </li>
+              <li>
+                <Link to="/opportunities" className="hover:text-[#c48825] transition-colors">
+                  Opportunities
+                </Link>
+              </li>
+              <li>
+                <Link to="/how-it-works" className="hover:text-[#c48825] transition-colors">
+                  How It Works
+                </Link>
+              </li>
+              <li>
+                <Link to="/ecosystem" className="hover:text-[#c48825] transition-colors">
+                  Excellence Cells
+                </Link>
+              </li>
+              <li>
+                <Link to="/institutions" className="hover:text-[#c48825] transition-colors">
+                  Partner Institutions
+                </Link>
+              </li>
+              <li>
+                <Link to="/services" className="hover:text-[#c48825] transition-colors">
+                  Services
+                </Link>
               </li>
             </ul>
           </div>

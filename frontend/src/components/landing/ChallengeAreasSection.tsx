@@ -117,15 +117,12 @@ export const ChallengeAreasSection: React.FC = () => {
             </div>
 
             <div className="shrink-0 flex items-start">
-              <button 
-                onClick={() => {
-                  const el = document.getElementById('get-involved');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
+              <Link
+                to="/events"
                 className="px-6 py-4 bg-[#063028] hover:bg-[#04201a] text-white rounded-xl text-sm font-bold uppercase tracking-wider shadow-xs transition-all duration-150 whitespace-nowrap active:scale-98 cursor-pointer"
               >
                 View All Events
-              </button>
+              </Link>
             </div>
           </div>
         </div>

@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
+import { usePageTitle } from '../lib/usePageTitle';
 
 export const Services: React.FC = () => {
+  usePageTitle('Services');
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);

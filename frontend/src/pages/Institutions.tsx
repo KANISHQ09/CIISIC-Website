@@ -2,8 +2,10 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { INDORE_INSTITUTIONS, BHOPAL_INSTITUTIONS } from '../data/institutions';
 import { Building2, GraduationCap, ArrowRight } from 'lucide-react';
+import { usePageTitle } from '../lib/usePageTitle';
 
 export const Institutions: React.FC = () => {
+  usePageTitle('Partner Institutions');
   // Ensure we start at the top of the page when navigating here
   useEffect(() => {
     window.scrollTo(0, 0);

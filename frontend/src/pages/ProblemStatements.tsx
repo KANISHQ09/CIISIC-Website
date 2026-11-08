@@ -9,8 +9,10 @@ import { useApp } from '../contexts/AppContext';
 import { fetchChallenges } from '../lib/api';
 import { htmlToPlainText } from '../lib/html';
 import { ProblemStatement } from '../types';
+import { usePageTitle } from '../lib/usePageTitle';
 
 export const ProblemStatements: React.FC = () => {
+  usePageTitle('Problem Statements');
   const { submissions } = useApp();
   const [challenges, setChallenges] = useState<ProblemStatement[]>([]);
   const [isLoading, setIsLoading] = useState(true);

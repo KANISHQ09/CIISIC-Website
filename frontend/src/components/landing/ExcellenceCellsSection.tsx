@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { X, CheckCircle2, Cpu, Brain, Layers, GraduationCap, Globe, Lightbulb, Users } from 'lucide-react';
 
 interface ExcellenceCellData {
@@ -30,6 +31,7 @@ interface ExcellenceCellData {
 }
 
 export const ExcellenceCellsSection: React.FC = () => {
+  const navigate = useNavigate();
   const [selectedCell, setSelectedCell] = useState<ExcellenceCellData | null>(null);
 
   const cells: ExcellenceCellData[] = [
@@ -236,15 +238,12 @@ export const ExcellenceCellsSection: React.FC = () => {
 
         {/* Explore All Excellence Cells Button */}
         <div className="mt-16 text-center">
-          <button
-            onClick={() => {
-              const el = document.getElementById('partner-institutions');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }}
+          <Link
+            to="/institutions"
             className="inline-flex items-center gap-2 px-6 py-3.5 bg-[#063028] hover:bg-[#04201a] text-white rounded-xl text-sm sm:text-base font-bold shadow-xs transition-all duration-200 cursor-pointer"
           >
             Explore All CII Excellence Cells
-          </button>
+          </Link>
         </div>
 
       </div>
@@ -455,8 +454,7 @@ export const ExcellenceCellsSection: React.FC = () => {
               <button
                 onClick={() => {
                   setSelectedCell(null);
-                  const el = document.getElementById('get-involved');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  navigate('/#get-involved');
                 }}
                 className="px-6 py-3 bg-[#063028] hover:bg-[#04201a] text-white rounded-xl text-sm font-bold shadow-xs transition-all cursor-pointer"
               >

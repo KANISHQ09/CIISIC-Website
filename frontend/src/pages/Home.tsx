@@ -12,7 +12,6 @@ import { WhyCiiSection } from '../components/landing/WhyCiiSection';
 import { TestimonialsSection } from '../components/landing/TestimonialsSection';
 import { FAQSection } from '../components/landing/FAQSection';
 import { GetInvolvedSection } from '../components/landing/GetInvolvedSection';
-import { FooterSection } from '../components/landing/FooterSection';
 
 export const Home: React.FC = () => {
   return (
@@ -39,7 +38,6 @@ export const Home: React.FC = () => {
       <TestimonialsSection />
       <FAQSection />
       <GetInvolvedSection />
-      <FooterSection />
     </div>
   );
 };
