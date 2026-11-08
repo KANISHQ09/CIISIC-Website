@@ -3,11 +3,12 @@ import { HeroBannerCarousel } from '../components/landing/HeroBannerCarousel';
 import { QuickImpactStatsSection } from '../components/landing/QuickImpactStatsSection';
 import { AboutSummarySection } from '../components/landing/AboutSummarySection';
 import { FeaturedProblemsSection } from '../components/landing/FeaturedProblemsSection';
+import { ComingUpSection } from '../components/landing/ComingUpSection';
 import { GetInvolvedSection } from '../components/landing/GetInvolvedSection';
 
 /**
  * The home page is kept short: banner and numbers, a short About, problems open right now,
- * then how to get involved.
+ * a preview of events and opportunities, then how to get involved.
  * Everything else has its own page (see the nav).
  */
 export const Home: React.FC = () => {
@@ -26,6 +27,7 @@ export const Home: React.FC = () => {
 
       <AboutSummarySection />
       <FeaturedProblemsSection />
+      <ComingUpSection />
       <GetInvolvedSection />
     </div>
   );
