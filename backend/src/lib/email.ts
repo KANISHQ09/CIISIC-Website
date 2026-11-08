@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { appendFileSync } from "node:fs";
 
 // Retrieve SMTP settings from env
 const SMTP_HOST = process.env.SMTP_HOST;
@@ -57,6 +58,14 @@ Subject: ${subject}
 Text:    ${text}
 ============================================================
     `);
+    // Optional local "outbox": when EMAIL_OUTBOX_FILE is set, each unsent email is also
+    // appended to that file right away (used by the end-to-end tests; handy in development).
+    if (process.env.EMAIL_OUTBOX_FILE) {
+      appendFileSync(
+        process.env.EMAIL_OUTBOX_FILE,
+        JSON.stringify({ to, subject, text, sentAt: new Date().toISOString() }) + "\n"
+      );
+    }
     return { mock: true, messageId: "mock-id-" + Date.now() };
   }
 }

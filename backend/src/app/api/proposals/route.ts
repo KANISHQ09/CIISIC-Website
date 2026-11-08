@@ -24,9 +24,9 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const queryParsed = ProposalQuerySchema.safeParse({
-      page: searchParams.get("page"),
-      limit: searchParams.get("limit"),
-      status: searchParams.get("status"),
+      page: searchParams.get("page") ?? undefined,
+      limit: searchParams.get("limit") ?? undefined,
+      status: searchParams.get("status") ?? undefined,
     });
     if (!queryParsed.success) return validationError(queryParsed.error.flatten());
     const { page, limit, status } = queryParsed.data;

@@ -24,7 +24,7 @@ export class LocalStorageProvider implements StorageProvider {
     buffer: Buffer,
     originalName: string,
     mimeType: string,
-    uploadType: "LOGO" | "DOCUMENT"
+    _uploadType: "LOGO" | "DOCUMENT"
   ): Promise<UploadResult> {
     const fileExt = mimeType === "application/pdf"
       ? "pdf"
@@ -88,7 +88,7 @@ export class SupabaseStorageProvider implements StorageProvider {
     const filePath = `${subFolder}/${folderId}/${fileId}-${cleanName}`;
 
     // Upload using Supabase JS Storage SDK
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from(bucketName)
       .upload(filePath, buffer, {
         contentType: mimeType,

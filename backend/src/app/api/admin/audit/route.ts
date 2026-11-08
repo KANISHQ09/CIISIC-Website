@@ -11,7 +11,7 @@ import {
 /**
  * GET /api/admin/audit
  * Admin only — immutable audit log viewer.
- * Query: page, limit, userId, entityType, entityId, action, from, to
+ * Query: page, limit, userId, entityType, entityId, action, q (name/email), from, to (YYYY-MM-DD)
  */
 export async function GET(req: NextRequest) {
   try {
@@ -24,8 +24,9 @@ export async function GET(req: NextRequest) {
     if (!isAdmin) return forbidden("Admin access required");
 
     const { searchParams } = new URL(req.url);
-    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
-    const limit = Math.min(100, parseInt(searchParams.get("limit") ?? "20"));
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1") || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20") || 20));
+    const q = searchParams.get("q")?.trim();
     const userId = searchParams.get("userId");
     const entityType = searchParams.get("entityType");
     const entityId = searchParams.get("entityId");
@@ -40,10 +41,21 @@ export async function GET(req: NextRequest) {
     if (entityType) where.entityType = entityType;
     if (entityId) where.entityId = entityId;
     if (action) where.action = { contains: action, mode: "insensitive" };
-    if (from || to) {
+    if (q) {
+      where.user = {
+        OR: [
+          { name: { contains: q, mode: "insensitive" } },
+          { email: { contains: q, mode: "insensitive" } },
+        ],
+      };
+    }
+    // Dates: ignore anything that isn't a real date; a plain YYYY-MM-DD "to" includes that whole day
+    const fromDate = from ? new Date(from) : null;
+    const toDate = to ? new Date(/^\d{4}-\d{2}-\d{2}$/.test(to) ? `${to}T23:59:59.999` : to) : null;
+    if ((fromDate && !isNaN(fromDate.getTime())) || (toDate && !isNaN(toDate.getTime()))) {
       where.createdAt = {};
-      if (from) where.createdAt.gte = new Date(from);
-      if (to) where.createdAt.lte = new Date(to);
+      if (fromDate && !isNaN(fromDate.getTime())) where.createdAt.gte = fromDate;
+      if (toDate && !isNaN(toDate.getTime())) where.createdAt.lte = toDate;
     }
 
     const [total, logs] = await Promise.all([

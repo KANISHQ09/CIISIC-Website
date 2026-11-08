@@ -10,6 +10,7 @@
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
     "test:backend": "npm --prefix backend run test",
+    "test:e2e": "npm --prefix e2e install && npm --prefix e2e test",
     "lint:backend": "npm --prefix backend run lint",
     "lint:frontend": "npm --prefix frontend run lint",
     "lint": "npm run lint:backend && npm run lint:frontend"

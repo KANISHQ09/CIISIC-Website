@@ -33,6 +33,11 @@ export async function GET() {
       challengesByDomain,
       proposalsByStatus,
       recentActivity,
+      pendingProblems,
+      publicPendingProblems,
+      pendingRegistrations,
+      registeredIndustries,
+      solutionsAwaitingReview,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.institution.count(),
@@ -60,6 +65,13 @@ export async function GET() {
           user: { select: { name: true, role: true } },
         },
       }),
+      prisma.challenge.count({ where: { status: "PENDING_APPROVAL" } }),
+      prisma.challenge.count({ where: { status: "PENDING_APPROVAL", submissionSource: "PUBLIC" } }),
+      prisma.user.count({
+        where: { approvalStatus: "PENDING", role: { in: ["INDUSTRY_SPOC", "INSTITUTION_SPOC"] } },
+      }),
+      prisma.user.count({ where: { role: "INDUSTRY_SPOC", approvalStatus: "APPROVED", isActive: true } }),
+      prisma.proposal.count({ where: { status: { in: ["SUBMITTED", "RESUBMITTED", "UNDER_REVIEW"] } } }),
     ]);
 
     return ok({
@@ -71,6 +83,12 @@ export async function GET() {
         activeChallenges: activeChallengees,
         pendingProposals: openProposals,
         approvedProposals,
+        // What needs CII's attention
+        pendingProblems,
+        publicPendingProblems,
+        pendingRegistrations,
+        solutionsAwaitingReview,
+        registeredIndustries,
       },
       breakdowns: {
         usersByRole: usersByRole.map((r) => ({
