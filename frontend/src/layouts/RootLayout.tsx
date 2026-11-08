@@ -9,10 +9,17 @@ import { FooterSection } from '../components/landing/FooterSection';
 
 type NavItem = { to: string; label: string; alsoActiveOn?: string[] };
 
+// Desktop nav (shown from 1280px): tabs and buttons share one text size and one gap
+const NAV_TEXT = 'text-[13px] 2xl:text-[15px]';
+const NAV_GAP = 'gap-1.5 2xl:gap-2';
+const navButtonClass = (look: string) =>
+  `inline-flex items-center gap-1.5 px-2.5 py-1.5 2xl:px-3.5 2xl:py-2 ${NAV_TEXT} font-bold rounded-lg border transition-all whitespace-nowrap cursor-pointer shadow-2xs ${look}`;
+const NAV_ICON = 'w-4 h-4 2xl:w-[18px] 2xl:h-[18px] text-[#c48825] shrink-0';
+
 const desktopLinkClass = (active: boolean) =>
-  `relative py-1.5 px-1.5 xl:px-2 2xl:px-2.5 text-[11px] xl:text-[11.5px] 2xl:text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+  `relative py-1.5 px-2 2xl:px-2.5 ${NAV_TEXT} font-semibold whitespace-nowrap transition-all cursor-pointer ${
     active
-      ? 'text-[#063028] font-bold after:absolute after:bottom-0 after:left-1.5 after:right-1.5 xl:after:left-2 xl:after:right-2 after:h-[2px] after:bg-[#c48825] after:rounded-full'
+      ? 'text-[#063028] font-bold after:absolute after:bottom-0 after:left-2 after:right-2 2xl:after:left-2.5 2xl:after:right-2.5 after:h-[2px] after:bg-[#c48825] after:rounded-full'
       : 'text-stone-700 hover:text-[#063028]'
   }`;
 
@@ -200,7 +207,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
             {/* Desktop Navigation Links - hidden on signed-in portal pages */}
             {showPublicNav && (
-            <div className="hidden xl:flex items-center justify-center flex-1 mx-1 xl:mx-2 space-x-0.5 xl:space-x-1">
+            <div className={`hidden xl:flex items-center justify-center flex-1 mx-3 ${NAV_GAP}`}>
               {navItems.map((item) => (
                 <Link
                   key={item.to}
@@ -219,10 +226,10 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                   onClick={() => setExploreOpen((open) => !open)}
                   aria-haspopup="menu"
                   aria-expanded={exploreOpen}
-                  className={`${desktopLinkClass(exploreActive)} inline-flex items-center gap-0.5`}
+                  className={`${desktopLinkClass(exploreActive)} inline-flex items-center gap-1`}
                 >
                   Explore
-                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${exploreOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-4 w-4 transition-transform ${exploreOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {exploreOpen && (
                   <div
@@ -254,24 +261,24 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
             {!currentUser ? (
               <>
                 {/* Desktop CTA buttons */}
-                <div className="hidden xl:flex items-center space-x-1 xl:space-x-1.5 shrink-0 pl-1 xl:pl-2">
+                <div className={`hidden xl:flex items-center shrink-0 ${NAV_GAP}`}>
                   <Link
                     to="/institution/login"
-                    className="px-2 xl:px-2.5 py-1.5 border border-stone-800 text-[#063028] bg-transparent hover:bg-[#edf4f0] text-[11px] xl:text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer shadow-2xs flex items-center gap-1"
+                    className={navButtonClass('border-stone-800 text-[#063028] bg-transparent hover:bg-[#edf4f0]')}
                   >
-                    <Building className="w-3.5 h-3.5 text-[#c48825]" />
+                    <Building className={NAV_ICON} />
                     Institution Portal
                   </Link>
                   <Link
                     to="/industry/login"
-                    className="px-2 xl:px-2.5 py-1.5 border border-stone-800 text-stone-900 bg-transparent hover:bg-stone-50 text-[11px] xl:text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer shadow-2xs flex items-center gap-1"
+                    className={navButtonClass('border-stone-800 text-stone-900 bg-transparent hover:bg-stone-50')}
                   >
-                    <Factory className="w-3.5 h-3.5 text-[#c48825]" />
+                    <Factory className={NAV_ICON} />
                     Industry Login
                   </Link>
                   <Link
                     to="/submit-problem"
-                    className="px-2 xl:px-2.5 py-1.5 border border-[#063028] text-white bg-[#063028] hover:bg-[#04201a] text-[11px] xl:text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer shadow-2xs"
+                    className={navButtonClass('border-[#063028] text-white bg-[#063028] hover:bg-[#04201a]')}
                   >
                     Submit a Problem
                   </Link>
