@@ -25,7 +25,7 @@ const MAX_PER_EMAIL_PER_DAY = 5;
 export async function POST(req: NextRequest) {
   try {
     const { ipAddress } = getRequestMeta(req);
-    if (isRateLimited(`public-challenge:${ipAddress}`, MAX_PER_IP_PER_HOUR, HOUR)) {
+    if (await isRateLimited(`public-challenge:${ipAddress}`, MAX_PER_IP_PER_HOUR, HOUR)) {
       return tooManyRequests("Too many submissions from this network. Please try again in an hour.");
     }
 

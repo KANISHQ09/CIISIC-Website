@@ -262,6 +262,18 @@ model Notification {
   @@index([userId, isRead])
 }
 
+/// One row per counted request (public submissions, uploads, password-reset emails,
+/// failed sign-ins). Kept in the database so limits survive restarts and work across
+/// several server instances. Rows older than a day are cleaned up automatically.
+model RateLimitHit {
+  id        String   @id @default(cuid())
+  key       String
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+  @@index([createdAt])
+}
+
 model PasswordResetToken {
   id        String    @id @default(cuid())
   userId    String

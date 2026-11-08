@@ -3,6 +3,13 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
 import { generateToken } from "@/lib/auth";
+import { getRequestMeta } from "@/lib/audit";
+import { clearHits, countRecentHits, recordHit } from "@/lib/rate-limit";
+
+// Failed sign-ins allowed before a short pause (stops password guessing)
+const FAIL_WINDOW_MS = 15 * 60 * 1000;
+const MAX_FAILS_PER_ACCOUNT = 10;
+const MAX_FAILS_PER_NETWORK = 30;
 
 const LoginSchema = z.object({
   email: z.string().email("Invalid email format"),
@@ -51,6 +58,24 @@ export async function POST(req: NextRequest) {
 
     const { email, password } = parsed.data;
 
+    const { ipAddress } = getRequestMeta(req);
+    const accountKey = `login-fail:email:${email.toLowerCase()}`;
+    const networkKey = `login-fail:ip:${ipAddress}`;
+    const [accountFails, networkFails] = await Promise.all([
+      countRecentHits(accountKey, FAIL_WINDOW_MS),
+      countRecentHits(networkKey, FAIL_WINDOW_MS),
+    ]);
+    if (accountFails >= MAX_FAILS_PER_ACCOUNT || networkFails >= MAX_FAILS_PER_NETWORK) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Too many unsuccessful sign-in attempts. Please wait 15 minutes and try again, or reset your password.",
+        },
+        { status: 429, headers }
+      );
+    }
+    const recordFailure = () => Promise.all([recordHit(accountKey), recordHit(networkKey)]);
+
     const user = await prisma.user.findUnique({
       where: { email },
       include: {
@@ -62,6 +87,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user) {
+      await recordFailure();
       return NextResponse.json(
         { success: false, message: "Invalid email or password" },
         { status: 401, headers }
@@ -77,11 +103,15 @@ export async function POST(req: NextRequest) {
 
     const isValid = await verifyPassword(password, user.passwordHash);
     if (!isValid) {
+      await recordFailure();
       return NextResponse.json(
         { success: false, message: "Invalid email or password" },
         { status: 401, headers }
       );
     }
+
+    // Correct password: forget this account's earlier failed attempts
+    await clearHits(accountKey);
 
     // Account status is only revealed to someone who knows the password,
     // so the login form cannot be used to discover which emails are registered.
