@@ -1,0 +1,15 @@
+{
+  "name": "ciisic-e2e",
+  "private": true,
+  "description": "End-to-end tests: real backend + a throwaway PostgreSQL. Never touches the live database.",
+  "type": "module",
+  "scripts": {
+    "test": "node run.mjs"
+  },
+  "devDependencies": {
+    "embedded-postgres": "17.11.0-beta.19"
+  },
+  "dependencies": {
+    "ciisic-monorepo": "file:.."
+  }
+}

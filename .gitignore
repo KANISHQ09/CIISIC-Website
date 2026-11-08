@@ -24,3 +24,9 @@ frontend/.env*
 # Logs
 *.log
 frontend/*.log
+
+# End-to-end test runner (throwaway database and build output)
+e2e/node_modules/
+e2e/.pgdata/
+e2e/.output/
+backend/.next-e2e/
