@@ -5,12 +5,16 @@ import { prisma } from "../src/lib/prisma";
 import { sendPasswordResetEmail } from "../src/lib/email";
 
 vi.mock("../src/lib/email", () => ({ sendPasswordResetEmail: vi.fn().mockResolvedValue({}) }));
-vi.mock("../src/lib/prisma", () => ({
-  prisma: {
-    user: { findUnique: vi.fn() },
-    passwordResetToken: { deleteMany: vi.fn(), create: vi.fn() },
-  },
-}));
+vi.mock("../src/lib/prisma", async () => {
+  const { fakeRateLimitHit } = await import("./helpers/fake-rate-limit");
+  return {
+    prisma: {
+      user: { findUnique: vi.fn() },
+      passwordResetToken: { deleteMany: vi.fn(), create: vi.fn() },
+      rateLimitHit: fakeRateLimitHit(),
+    },
+  };
+});
 
 let ipCounter = 0;
 function forgotRequest(email: string, ip?: string) {
@@ -25,6 +29,7 @@ function forgotRequest(email: string, ip?: string) {
 describe("Forgot password", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (prisma as any).rateLimitHit.reset();
     vi.stubEnv("FRONTEND_URL", "https://ciisic.example/");
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "u1",

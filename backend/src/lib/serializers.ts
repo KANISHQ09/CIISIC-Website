@@ -43,6 +43,16 @@ export type SafeChallenge = {
   };
   _count?: { proposals: number };
   attachmentUrls?: string[];
+  // Details from the submission form (null/empty for older problems)
+  existingProcess: string | null;
+  expectedOutcome: string | null;
+  projectObjectives: string | null;
+  requiredSkills: string[];
+  preferredBranches: string[];
+  preferredAcademicYear: string | null;
+  difficultyLevel: string | null;
+  expectedDeliverables: string | null;
+  additionalNotes: string | null;
   submissionSource: string; // PORTAL | PUBLIC
   isNewOrganisation: boolean; // submitted as "Other" (no registered account)
   ownedByRequester: boolean;
@@ -81,6 +91,7 @@ export type SafeProposal = {
   updatedAt: Date;
   title: string | null;
   detailedApproach: string | null;
+  deliverables: string | null;
   technologiesUsed: string[];
   demoUrl: string | null;
   institution?: {
@@ -169,6 +180,15 @@ export function serializeChallenge(
     },
     _count: challenge._count,
     attachmentUrls: challenge.attachmentUrls ?? [],
+    existingProcess: challenge.existingProcess ?? null,
+    expectedOutcome: challenge.expectedOutcome ?? null,
+    projectObjectives: challenge.projectObjectives ?? null,
+    requiredSkills: challenge.requiredSkills ?? [],
+    preferredBranches: challenge.preferredBranches ?? [],
+    preferredAcademicYear: challenge.preferredAcademicYear ?? null,
+    difficultyLevel: challenge.difficultyLevel ?? null,
+    expectedDeliverables: challenge.expectedDeliverables ?? null,
+    additionalNotes: challenge.additionalNotes ?? null,
     submissionSource: challenge.submissionSource ?? "PORTAL",
     isNewOrganisation: challenge.isNewOrganisation ?? false,
     ownedByRequester: isOwner,
@@ -269,6 +289,7 @@ export function serializeProposal(
     title: proposal.title ?? null,
     summary: proposal.summary,
     detailedApproach: proposal.detailedApproach ?? null,
+    deliverables: proposal.deliverables ?? null,
     technologiesUsed: proposal.technologiesUsed ?? [],
     demoUrl: proposal.demoUrl ?? null,
     approachDoc: proposal.approachDoc,

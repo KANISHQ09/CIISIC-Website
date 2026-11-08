@@ -70,13 +70,17 @@ model User {
 }
 
 model IndustryProfile {
-  id          String      @id @default(cuid())
-  userId      String      @unique
+  id          String  @id @default(cuid())
+  userId      String  @unique
   companyName String
   industry    String
   logoUrl     String?
   websiteUrl  String?
-  isCIIMember Boolean     @default(false)
+  isCIIMember Boolean @default(false)
+
+  // Contact details collected at registration
+  phone       String?
+  designation String?
   memberSince DateTime?
   createdAt   DateTime    @default(now())
   challenges  Challenge[]
@@ -98,34 +102,36 @@ model Institution {
 }
 
 model InstitutionProfile {
-  id            String      @id @default(cuid())
-  userId        String      @unique
-  institutionId String      @unique
+  id            String @id @default(cuid())
+  userId        String @unique
+  institutionId String @unique
   designation   String
   department    String
-  createdAt     DateTime    @default(now())
-  institution   Institution @relation(fields: [institutionId], references: [id])
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  phone       String?
+  createdAt   DateTime    @default(now())
+  institution Institution @relation(fields: [institutionId], references: [id])
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Challenge {
-  id                 String           @id @default(cuid())
+  id                 String          @id @default(cuid())
   title              String
   description        String
   problemStatement   String
   domain             CellTheme
-  status             ChallengeStatus  @default(DRAFT)
+  status             ChallengeStatus @default(DRAFT)
   deadline           DateTime
   budgetRange        String?
   // Registered industry account this problem belongs to. Null when submitted publicly
   // by an organisation that is not registered on the portal ("Other").
   industryProfileId  String?
   // PORTAL = submitted by a logged-in industry user, PUBLIC = submitted without login
-  submissionSource   String           @default("PORTAL")
+  submissionSource   String          @default("PORTAL")
   // Human-friendly ID given to the submitter, e.g. CII-2026-4F7K2Q
-  referenceCode      String?          @unique
+  referenceCode      String?         @unique
   // Organisation details typed by the submitter (always filled for "Other" submissions)
-  isNewOrganisation  Boolean          @default(false)
+  isNewOrganisation  Boolean         @default(false)
   orgSector          String?
   orgWebsite         String?
   orgCity            String?
@@ -139,19 +145,31 @@ model Challenge {
   // When CII invited an unregistered organisation to create an industry account
   inviteSentAt       DateTime?
   attachmentUrls     String[]
-  tags               String[]
-  viewCount          Int              @default(0)
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-  publishedAt        DateTime?
-  organizationName   String?
-  duration           String?
-  reviewRemarks      String?
-  reviewedAt         DateTime?
-  reviewerId         String?
-  industryProfile    IndustryProfile? @relation(fields: [industryProfileId], references: [id])
-  reviewer           User?            @relation("ChallengeReviewer", fields: [reviewerId], references: [id])
-  proposals          Proposal[]
+
+  // Details from the submission form (all optional: older problems don't have them)
+  existingProcess       String?
+  expectedOutcome       String?
+  projectObjectives     String?
+  requiredSkills        String[]         @default([])
+  preferredBranches     String[]         @default([])
+  preferredAcademicYear String?
+  // Easy | Medium | Hard
+  difficultyLevel       String?
+  expectedDeliverables  String?
+  additionalNotes       String?
+  tags                  String[]
+  viewCount             Int              @default(0)
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  publishedAt           DateTime?
+  organizationName      String?
+  duration              String?
+  reviewRemarks         String?
+  reviewedAt            DateTime?
+  reviewerId            String?
+  industryProfile       IndustryProfile? @relation(fields: [industryProfileId], references: [id])
+  reviewer              User?            @relation("ChallengeReviewer", fields: [reviewerId], references: [id])
+  proposals             Proposal[]
 
   @@index([status])
   @@index([domain])
@@ -160,20 +178,22 @@ model Challenge {
 }
 
 model Proposal {
-  id                 String         @id @default(cuid())
-  challengeId        String
+  id               String         @id @default(cuid())
+  challengeId      String
   // Institution that submitted the solution (one active solution per institution per challenge,
   // enforced in the API). Nullable only until legacy rows are backfilled.
-  institutionId      String?
+  institutionId    String?
   // Institution SPOC account that submitted it
-  submittedById      String?
-  status             ProposalStatus @default(SUBMITTED)
-  title              String?
-  approachDoc        String?
-  summary            String
-  detailedApproach   String?
-  technologiesUsed   String[]
-  demoUrl            String?
+  submittedById    String?
+  status           ProposalStatus @default(SUBMITTED)
+  title            String?
+  approachDoc      String?
+  summary          String
+  detailedApproach String?
+  technologiesUsed String[]
+  demoUrl          String?
+
+  deliverables       String?
   // Team details entered by the institution: { name, email, department, yearOfStudy, phone? }
   teamName           String?
   teamLead           Json?
@@ -183,12 +203,12 @@ model Proposal {
   facultyMentor      Json?
   revisionNotes      String?
   feedbackByIndustry String?
-  submittedAt        DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
+  submittedAt        DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
   messages           Message[]
-  challenge          Challenge      @relation(fields: [challengeId], references: [id])
-  institution        Institution?   @relation(fields: [institutionId], references: [id])
-  submittedBy        User?          @relation("ProposalSubmitter", fields: [submittedById], references: [id])
+  challenge          Challenge    @relation(fields: [challengeId], references: [id])
+  institution        Institution? @relation(fields: [institutionId], references: [id])
+  submittedBy        User?        @relation("ProposalSubmitter", fields: [submittedById], references: [id])
 
   @@index([status])
   @@index([institutionId])
@@ -240,6 +260,18 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId, isRead])
+}
+
+/// One row per counted request (public submissions, uploads, password-reset emails,
+/// failed sign-ins). Kept in the database so limits survive restarts and work across
+/// several server instances. Rows older than a day are cleaned up automatically.
+model RateLimitHit {
+  id        String   @id @default(cuid())
+  key       String
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+  @@index([createdAt])
 }
 
 model PasswordResetToken {

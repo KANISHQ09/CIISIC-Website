@@ -4,7 +4,7 @@ import {
   FileText, CheckCircle, AlertTriangle, Search, 
   ChevronLeft, ChevronRight, Eye, Check, X, 
   SlidersHorizontal, LayoutDashboard, GraduationCap, Building2,
-  ExternalLink, Clock, Sparkles, MessageSquare, User, Lock, ShieldCheck, Filter, AlertCircle, Send
+  ExternalLink, Clock, MessageSquare, User, Lock, Send
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { stripHTML } from '../lib/html';

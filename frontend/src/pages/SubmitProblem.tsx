@@ -222,15 +222,6 @@ export const SubmitProblem: React.FC = () => {
     }
   };
 
-  // Format YYYY-MM-DD date to DD/MM/YYYY
-  const formatToDDMMYYYY = (dateStr: string) => {
-    if (!dateStr) return '';
-    const parts = dateStr.split('-');
-    if (parts.length === 3) {
-      return `${parts[2]}/${parts[1]}/${parts[0]}`;
-    }
-    return dateStr;
-  };
 
   // Final submission processing
   const onFormSubmit = async (data: FormFields) => {
@@ -246,7 +237,6 @@ export const SubmitProblem: React.FC = () => {
         attachmentUrl = uploadRes.url;
       }
 
-      const formattedNotes = `Budget allocated: ${data.budget}. Target date: ${formatToDDMMYYYY(data.deadline)}${data.additionalNotes ? `. ${data.additionalNotes}` : ''}`;
 
       const submission = {
         company: {
@@ -277,7 +267,9 @@ export const SubmitProblem: React.FC = () => {
         },
         additional: {
           expectedDeliverables: data.expectedDeliverables,
-          additionalNotes: formattedNotes,
+          additionalNotes: data.additionalNotes?.trim() || '',
+          budget: data.budget.trim(),
+          deadline: data.deadline,
           fileAttachmentName: attachmentUrl,
           declarationAccepted: data.declarationAccepted
         }

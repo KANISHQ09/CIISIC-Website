@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { INDORE_INSTITUTIONS, BHOPAL_INSTITUTIONS } from '../data/institutions';
-import { Building2, GraduationCap, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Building2, GraduationCap, ArrowRight } from 'lucide-react';
 
 export const Institutions: React.FC = () => {
   // Ensure we start at the top of the page when navigating here

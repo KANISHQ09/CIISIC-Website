@@ -70,6 +70,8 @@ export async function POST(req: NextRequest) {
             industry: data.industry ?? "General",
             websiteUrl: data.websiteUrl || null,
             isCIIMember: data.isCIIMember ?? false,
+            phone: data.phone || null,
+            designation: data.designation || null,
           },
         });
       } else if (data.role === "INSTITUTION_SPOC") {
@@ -89,7 +91,7 @@ export async function POST(req: NextRequest) {
           const createdInst = await tx.institution.create({
             data: {
               name: instId,
-              city: "Madhya Pradesh",
+              city: data.institutionCity || "Madhya Pradesh",
             },
           });
           instId = createdInst.id;
@@ -101,6 +103,7 @@ export async function POST(req: NextRequest) {
             institutionId: instId,
             designation: data.designation ?? "CII SPOC",
             department: data.department ?? "Engineering",
+            phone: data.phone || null,
           },
         });
       }

@@ -4,7 +4,7 @@ import {
   Building2, PlusCircle, CheckCircle, Clock, AlertTriangle, FileText, 
   Globe, ChevronRight, FileCheck, X,
   Calendar, IndianRupee, UploadCloud, ArrowLeft, RefreshCw, Eye, Download,
-  GraduationCap, ExternalLink, Award, Sparkles, MessageSquare, Send, CheckSquare, Layers, User, Lock
+  GraduationCap, ExternalLink, MessageSquare, User, Lock
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { sanitizeHTML, stripHTML } from '../lib/html';
@@ -389,21 +389,24 @@ export const IndustryDashboard: React.FC = () => {
           title: title,
           description: description,
           businessChallenge: description,
-          existingProcess: 'Handled via manual inspections and fixed calendar schedules.',
+          // The quick form only asks for these; nothing else is made up on the company's behalf
+          existingProcess: '',
           expectedOutcome: expectedOutcomes,
-          projectObjectives: `1. Analyze parameters for ${title}.\n2. Build a reliable engineering prototype.\n3. Verify operational safety against standard metrics.`
+          projectObjectives: ''
         },
         technical: {
-          requiredTechnologies: ['AI Frameworks', 'Data Pipelines', 'Enterprise Edge Integrations'],
-          requiredSkills: ['Problem Formulation', 'Industrial Engineering', 'Full Stack Development'],
-          preferredBranches: ['Computer Science', 'Electrical Engineering', 'Mechanical Systems'],
-          preferredAcademicYear: 'Final Year UG / Postgraduate (PG)',
-          difficultyLevel: 'Medium',
-          expectedDuration: '6 Months'
+          requiredTechnologies: [],
+          requiredSkills: [],
+          preferredBranches: [],
+          preferredAcademicYear: '',
+          difficultyLevel: '',
+          expectedDuration: ''
         },
         additional: {
-          expectedDeliverables: 'Production code repository, mechanical schematics, and an integration deployment checklist.',
-          additionalNotes: budget ? `Budget allocated: ${budget}. Target date: ${formatToDDMMYYYY(deadline)}` : '',
+          expectedDeliverables: '',
+          additionalNotes: '',
+          budget: budget.trim() || undefined,
+          deadline: deadline || undefined,
           fileAttachmentName: attachmentUrl,
           declarationAccepted: true
         }
@@ -635,9 +638,11 @@ export const IndustryDashboard: React.FC = () => {
 
                         <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-stone-100">
                           <div className="flex flex-wrap items-center gap-3">
-                            <span className="text-xs bg-stone-100 border border-stone-200 text-stone-700 font-semibold px-2.5 py-1 rounded">
-                              {sub.technical.difficultyLevel} Tier
-                            </span>
+                            {sub.technical.difficultyLevel && (
+                              <span className="text-xs bg-stone-100 border border-stone-200 text-stone-700 font-semibold px-2.5 py-1 rounded">
+                                {sub.technical.difficultyLevel} Tier
+                              </span>
+                            )}
                             <span className="text-xs bg-[#edf4f0] text-[#063028] font-bold px-2.5 py-1 rounded">
                               {sub.company.industrySector}
                             </span>

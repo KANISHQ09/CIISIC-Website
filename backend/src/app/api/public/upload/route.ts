@@ -15,7 +15,7 @@ const PDF_MAGIC = "%PDF-";
 export async function POST(req: NextRequest) {
   try {
     const { ipAddress } = getRequestMeta(req);
-    if (isRateLimited(`public-upload:${ipAddress}`, 10, 60 * 60 * 1000)) {
+    if (await isRateLimited(`public-upload:${ipAddress}`, 10, 60 * 60 * 1000)) {
       return tooManyRequests("Too many uploads from this network. Please try again in an hour.");
     }
 

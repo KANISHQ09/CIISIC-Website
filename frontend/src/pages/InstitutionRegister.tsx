@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { GraduationCap, Mail, ArrowLeft, ArrowRight, Building, User, Phone, CheckCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { GraduationCap, Mail, ArrowLeft, ArrowRight, User, Phone, CheckCircle } from 'lucide-react';
 import { ALL_INSTITUTIONS } from '../data/institutions';
 import { registerInstitution } from '../lib/api';
 import { PasswordInput } from '../components/common/PasswordInput';
-import { useApp } from '../contexts/AppContext';
 
 export const InstitutionRegister: React.FC = () => {
-  const { showToast } = useApp();
-  const navigate = useNavigate();
 
   const [selectedInstName, setSelectedInstName] = useState(ALL_INSTITUTIONS[0]?.name || '');
   const [customInstName, setCustomInstName] = useState('');
   const [isCustomInst, setIsCustomInst] = useState(false);
-  const [city, setCity] = useState(ALL_INSTITUTIONS[0]?.city || 'Indore');
+  // Any city: an institution that isn't in the list can be typed in
+  const [city, setCity] = useState<string>(ALL_INSTITUTIONS[0]?.city || 'Indore');
   const [coordinatorName, setCoordinatorName] = useState('');
   const [department, setDepartment] = useState('Computer Science & Engineering');
   const [designation, setDesignation] = useState('CII Innovation Cell Coordinator');

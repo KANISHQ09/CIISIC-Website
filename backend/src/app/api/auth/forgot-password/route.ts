@@ -40,10 +40,10 @@ export async function POST(req: NextRequest) {
     // Stop inbox flooding: per network (visible) and per address (silent, so it
     // doesn't reveal whether the address is registered)
     const { ipAddress } = getRequestMeta(req);
-    if (isRateLimited(`forgot-password:ip:${ipAddress}`, 10, 60 * 60 * 1000)) {
+    if (await isRateLimited(`forgot-password:ip:${ipAddress}`, 10, 60 * 60 * 1000)) {
       return tooManyRequests("Too many password reset requests. Please try again in an hour.");
     }
-    if (isRateLimited(`forgot-password:email:${email.toLowerCase()}`, 3, 60 * 60 * 1000)) {
+    if (await isRateLimited(`forgot-password:email:${email.toLowerCase()}`, 3, 60 * 60 * 1000)) {
       return genericResponse;
     }
 

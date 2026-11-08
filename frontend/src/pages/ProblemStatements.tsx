@@ -345,7 +345,7 @@ export const ProblemStatements: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
             {filteredChallenges.map((challenge) => {
-              const funding = getFundingString(challenge.additional.additionalNotes);
+              const funding = challenge.additional.budget || getFundingString(challenge.additional.additionalNotes);
               return (
                 <div
                   key={challenge.id}
@@ -359,15 +359,17 @@ export const ProblemStatements: React.FC = () => {
                         <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#edf4f0] text-[#063028] border border-[#063028]/15">
                           {challenge.company.industrySector || challenge.company.industryName || 'Industry Challenge'}
                         </span>
-                        <span className={`px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${
-                          challenge.technical.difficultyLevel === 'Hard'
-                            ? 'bg-red-50 text-red-700 border border-red-200'
-                            : challenge.technical.difficultyLevel === 'Medium'
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        }`}>
-                          {challenge.technical.difficultyLevel} Tier
-                        </span>
+                        {challenge.technical.difficultyLevel && (
+                          <span className={`px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${
+                            challenge.technical.difficultyLevel === 'Hard'
+                              ? 'bg-red-50 text-red-700 border border-red-200'
+                              : challenge.technical.difficultyLevel === 'Medium'
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          }`}>
+                            {challenge.technical.difficultyLevel} Tier
+                          </span>
+                        )}
                       </div>
                       <span className="text-xs font-mono font-bold text-stone-500 bg-stone-100 px-2.5 py-1 rounded-lg">
                         {challenge.id}

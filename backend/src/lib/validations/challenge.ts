@@ -23,6 +23,37 @@ const ContactSchema = z.object({
     .regex(/^[+0-9 ()-]+$/, "Phone number can only contain digits, spaces, +, - and brackets"),
 });
 
+/** Extra problem details from the submission form (all optional; older problems lack them). */
+const longText = z.string().trim().max(20000).optional();
+const shortList = z.array(z.string().trim().min(1).max(80)).max(30).optional();
+export const ProblemDetailSchema = z.object({
+  existingProcess: longText,
+  expectedOutcome: longText,
+  projectObjectives: longText,
+  requiredSkills: shortList,
+  preferredBranches: shortList,
+  preferredAcademicYear: z.string().trim().max(100).optional(),
+  difficultyLevel: z.enum(["Easy", "Medium", "Hard"]).optional().or(z.literal("")),
+  expectedDeliverables: longText,
+  additionalNotes: longText,
+});
+
+/** Turn validated detail fields into database columns ("" → null). */
+export function problemDetailData(d: z.infer<typeof ProblemDetailSchema>) {
+  const text = (v?: string) => (v && v.trim() ? v.trim() : null);
+  return {
+    existingProcess: text(d.existingProcess),
+    expectedOutcome: text(d.expectedOutcome),
+    projectObjectives: text(d.projectObjectives),
+    requiredSkills: d.requiredSkills ?? [],
+    preferredBranches: d.preferredBranches ?? [],
+    preferredAcademicYear: text(d.preferredAcademicYear),
+    difficultyLevel: d.difficultyLevel ? d.difficultyLevel : null,
+    expectedDeliverables: text(d.expectedDeliverables),
+    additionalNotes: text(d.additionalNotes),
+  };
+}
+
 export const ChallengeCreateSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters").max(200),
   description: z.string().min(20, "Description must be at least 20 characters"),
@@ -55,7 +86,7 @@ export const ChallengeCreateSchema = z.object({
   contactDesignation: z.string().trim().max(100).optional(),
   contactEmail: z.string().trim().toLowerCase().email().optional().or(z.literal("")),
   contactPhone: z.string().trim().max(20).optional(),
-});
+}).merge(ProblemDetailSchema);
 
 export const ChallengeUpdateSchema = ChallengeCreateSchema.partial().extend({
   // Non-admins are limited to DRAFT / PENDING_APPROVAL in the route handler
@@ -120,6 +151,7 @@ export const PublicChallengeSchema = z
     // Spam trap: real users never see this field, so it must stay empty
     companyFax: z.string().max(0, "Invalid submission").optional(),
   })
+  .merge(ProblemDetailSchema)
   .merge(ContactSchema)
   .superRefine((data, ctx) => {
     if (data.industryProfileId) return;

@@ -160,6 +160,7 @@ export async function POST(
       title: fields.title || null,
       summary: fields.summary,
       detailedApproach: fields.detailedApproach || null,
+      deliverables: fields.deliverables?.trim() || null,
       technologiesUsed: fields.technologiesUsed ?? [],
       demoUrl: fields.demoUrl || null,
       teamName: fields.teamName,

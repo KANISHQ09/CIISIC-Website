@@ -13,7 +13,7 @@ export const RegisterSchema = z.object({
   role: z.enum(["INSTITUTION_SPOC", "INDUSTRY_SPOC"]),
   // Shared
   department: z.string().optional(),
-  phone: z.string().optional(),
+  phone: z.string().trim().max(20).optional(),
   // Industry-specific
   companyName: z.string().optional(),
   industry: z.string().optional(),
@@ -21,6 +21,8 @@ export const RegisterSchema = z.object({
   isCIIMember: z.boolean().optional(),
   // Institution SPOC-specific
   spocInstitutionId: z.string().optional(),
+  // City of the institution, used when it isn't on the list yet
+  institutionCity: z.string().trim().min(2).max(100).optional(),
   designation: z.string().optional(),
 });
 

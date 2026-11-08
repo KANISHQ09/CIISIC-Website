@@ -1,5 +1,4 @@
 import React from 'react';
-import { CheckCircle2, ChevronRight } from 'lucide-react';
 
 export const AboutSection: React.FC = () => {
   const steps = [

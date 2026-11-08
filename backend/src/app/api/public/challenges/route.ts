@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { PublicChallengeSchema } from "@/lib/validations/challenge";
+import { PublicChallengeSchema, problemDetailData } from "@/lib/validations/challenge";
 import { getRequestMeta } from "@/lib/audit";
 import { isRateLimited } from "@/lib/rate-limit";
 import { generateReferenceCode } from "@/lib/problem-submission";
@@ -25,7 +25,7 @@ const MAX_PER_EMAIL_PER_DAY = 5;
 export async function POST(req: NextRequest) {
   try {
     const { ipAddress } = getRequestMeta(req);
-    if (isRateLimited(`public-challenge:${ipAddress}`, MAX_PER_IP_PER_HOUR, HOUR)) {
+    if (await isRateLimited(`public-challenge:${ipAddress}`, MAX_PER_IP_PER_HOUR, HOUR)) {
       return tooManyRequests("Too many submissions from this network. Please try again in an hour.");
     }
 
@@ -103,6 +103,7 @@ export async function POST(req: NextRequest) {
         contactDesignation: data.contactDesignation,
         contactEmail: data.contactEmail,
         contactPhone: data.contactPhone,
+        ...problemDetailData(data),
       },
       select: { id: true, referenceCode: true, title: true, status: true },
     });
