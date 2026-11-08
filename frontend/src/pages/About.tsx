@@ -4,6 +4,7 @@ import { AboutSection } from '../components/landing/AboutSection';
 import { WhyCiiSection } from '../components/landing/WhyCiiSection';
 import { TestimonialsSection } from '../components/landing/TestimonialsSection';
 import { usePageTitle } from '../lib/usePageTitle';
+import { PageCTA } from '../components/common/PageCTA';
 
 export const About: React.FC = () => {
   usePageTitle('About');
@@ -13,6 +14,7 @@ export const About: React.FC = () => {
       <AboutSection />
       <WhyCiiSection />
       <TestimonialsSection />
+      <PageCTA />
     </div>
   );
 };

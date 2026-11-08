@@ -2,7 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, ArrowUpRight, ArrowRight } from 'lucide-react';
 
-export const ChallengeAreasSection: React.FC = () => {
+/**
+ * embedded: shown inside the Problem Statements page, so it drops its own section frame,
+ * the "Browse Problem Statements" button (already on that page) and the events banner.
+ */
+export const ChallengeAreasSection: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const domains = [
     "Marketing & Brand Strategy",
     "People & Finance Solutions",
@@ -18,11 +22,9 @@ export const ChallengeAreasSection: React.FC = () => {
     "Smart Cities & Urban Innovation"
   ];
 
-  return (
-    <section id="problem-statements" className="py-24 bg-[#faf8f4] border-t border-[#e8e4dc] scroll-mt-20 relative">
-      <div id="challenge-areas" className="absolute -top-20" aria-hidden="true" />
-      <div className="max-w-[1320px] mx-auto px-6 sm:px-8 lg:px-12 space-y-20">
-        
+  const content = (
+      <>
+                
         {/* Main Section: Domains Grid + Flyer Poster split layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
           {/* Left Column: Descriptions and Grid of Domains */}
@@ -54,12 +56,14 @@ export const ChallengeAreasSection: React.FC = () => {
 
             {/* CTA Buttons */}
             <div className="pt-2 flex flex-wrap gap-4 items-center">
+              {!embedded && (
               <Link
                 to="/problem-statements"
                 className="inline-flex items-center gap-2 px-6 py-4 rounded-xl text-base font-bold text-white bg-[#063028] hover:bg-[#04201a] shadow-xs transition-all duration-200"
               >
                 Browse Problem Statements <ArrowRight className="h-4.5 w-4.5" />
               </Link>
+              )}
               <Link
                 to="/submit-problem"
                 className="inline-flex items-center gap-2 px-6 py-4 rounded-xl text-base font-bold text-[#063028] bg-white border border-[#063028]/20 hover:bg-stone-50 shadow-2xs transition-all duration-200"
@@ -101,6 +105,7 @@ export const ChallengeAreasSection: React.FC = () => {
         </div>
 
         {/* Section 10: Events & Announcements Sub-Banner */}
+        {!embedded && (
         <div className="bg-[#faf7f0] border border-stone-200/90 rounded-2xl sm:rounded-[28px] p-6 sm:p-10 relative overflow-hidden shadow-xs text-stone-800">
           
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 relative z-10">
@@ -126,7 +131,18 @@ export const ChallengeAreasSection: React.FC = () => {
             </div>
           </div>
         </div>
+        )}
+      </>
+  );
 
+  if (embedded) {
+    return <div id="challenge-areas" className="mb-16 scroll-mt-24">{content}</div>;
+  }
+  return (
+    <section id="problem-statements" className="py-24 bg-[#faf8f4] border-t border-[#e8e4dc] scroll-mt-20 relative">
+      <div id="challenge-areas" className="absolute -top-20" aria-hidden="true" />
+      <div className="max-w-[1320px] mx-auto px-6 sm:px-8 lg:px-12 space-y-20">
+        {content}
       </div>
     </section>
   );

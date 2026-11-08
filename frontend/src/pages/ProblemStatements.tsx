@@ -10,6 +10,7 @@ import { fetchChallenges } from '../lib/api';
 import { htmlToPlainText } from '../lib/html';
 import { ProblemStatement } from '../types';
 import { usePageTitle } from '../lib/usePageTitle';
+import { ChallengeAreasSection } from '../components/landing/ChallengeAreasSection';
 
 export const ProblemStatements: React.FC = () => {
   usePageTitle('Problem Statements');
@@ -467,6 +468,9 @@ export const ProblemStatements: React.FC = () => {
             })}
           </div>
         )}
+
+        {/* Challenge areas CII welcomes (moved here from the home page) */}
+        <ChallengeAreasSection embedded />
 
         {/* Bottom Industry Callout */}
         <div className="bg-[#063028] text-white rounded-3xl p-8 sm:p-12 relative overflow-hidden shadow-xl">

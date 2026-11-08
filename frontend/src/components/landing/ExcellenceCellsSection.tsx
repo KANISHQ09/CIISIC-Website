@@ -30,7 +30,9 @@ interface ExcellenceCellData {
   };
 }
 
-export const ExcellenceCellsSection: React.FC = () => {
+/** asPage: shown as its own page, so its title is the page heading. */
+export const ExcellenceCellsSection: React.FC<{ asPage?: boolean }> = ({ asPage = false }) => {
+  const Heading = asPage ? 'h1' : 'h2';
   const navigate = useNavigate();
   const [selectedCell, setSelectedCell] = useState<ExcellenceCellData | null>(null);
 
@@ -178,7 +180,7 @@ export const ExcellenceCellsSection: React.FC = () => {
   ];
 
   return (
-    <section id="our-ecosystem" className="py-16 sm:py-24 bg-[#faf7f0] border-t border-[#e8e4dc] scroll-mt-20">
+    <section id="our-ecosystem" className={`py-16 sm:py-24 bg-[#faf7f0] scroll-mt-20 ${asPage ? '' : 'border-t border-[#e8e4dc]'}`}>
       <div className="max-w-[1320px] mx-auto px-6 sm:px-8 lg:px-12">
         
         {/* Header Section */}
@@ -186,9 +188,9 @@ export const ExcellenceCellsSection: React.FC = () => {
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#edf4f0] text-[#063028] text-xs font-semibold tracking-wide">
             Excellence Cells
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#063028] tracking-tight leading-tight font-serif">
+          <Heading className="text-3xl sm:text-4xl font-extrabold text-[#063028] tracking-tight leading-tight font-serif">
             Driving Innovation Through Specialized Excellence
-          </h2>
+          </Heading>
           <p className="text-stone-700 text-base sm:text-lg leading-relaxed">
             The CII Industry–Academia Excellence Initiative brings together specialized Excellence Cells hosted by leading partner institutions. Each Excellence Cell focuses on a specific domain, enabling industries to collaborate with the right academic expertise and student talent.
           </p>
