@@ -120,15 +120,15 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
   const navItems: NavItem[] = [
     { to: '/', label: 'Home' },
     { to: '/about', label: 'About' },
+    { to: '/ecosystem', label: 'Our Ecosystem' },
+    { to: '/how-it-works', label: 'How It Works' },
     { to: '/problem-statements', label: 'Problem Statements', alsoActiveOn: ['/details'] },
     { to: '/events', label: 'Events' },
-    { to: '/opportunities', label: 'Opportunities' },
   ];
   const exploreItems: NavItem[] = [
     { to: '/services', label: 'Services' },
     { to: '/institutions', label: 'Institutions' },
-    { to: '/ecosystem', label: 'Our Ecosystem' },
-    { to: '/how-it-works', label: 'How It Works' },
+    { to: '/opportunities', label: 'Opportunities' },
   ];
 
   const isNavActive = (item: NavItem) => {
@@ -198,7 +198,8 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                   <span className="text-base sm:text-lg font-extrabold tracking-tight text-[#063028] font-serif">
                     CIISIC
                   </span>
-                  <span className="text-[9px] sm:text-[9.5px] text-stone-600 font-semibold tracking-wide mt-0.5 whitespace-nowrap">
+                  {/* Hidden on laptop widths when the full nav shows, so the tabs fit on one line */}
+                  <span className={`text-[9px] sm:text-[9.5px] text-stone-600 font-semibold tracking-wide mt-0.5 whitespace-nowrap ${showPublicNav ? 'xl:max-[1800px]:hidden' : ''}`}>
                     CII Student Innovation Challenge
                   </span>
                 </div>
