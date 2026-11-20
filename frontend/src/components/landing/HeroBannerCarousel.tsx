@@ -86,8 +86,9 @@ const SLIDE_MS = 800;
 
 /**
  * Banner slideshow (a small built-in slider; it replaced the Swiper library to keep the home
- * page light). Loops, autoplays and pauses while hovered or focused, when the tab is hidden, or
- * when the visitor prefers reduced motion. Arrows, dots, keyboard arrows and swipe all work.
+ * page light). Loops and moves on by itself; pauses while hovered, while a keyboard user is on
+ * it, or when the tab is hidden. With reduced motion it swaps photos without sliding.
+ * Arrows, dots, keyboard arrows and swipe all work.
  * Only the photo on screen and its neighbours are downloaded; the rest load as they come up.
  */
 export const HeroBannerCarousel: React.FC = () => {
@@ -100,6 +101,8 @@ export const HeroBannerCarousel: React.FC = () => {
   // Paused while the pointer is over it or it has keyboard focus (tracked separately)
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
+  // Visitors who turn animations off still get the photos changing, only without the slide movement
+  const reducedMotion = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const paused = hovered || focused;
   // Slides whose photo has been requested (the current one and its neighbours)
   const [loaded, setLoaded] = useState<Set<number>>(() => new Set([0, 1 % count, (count - 1) % count]));
@@ -130,7 +133,6 @@ export const HeroBannerCarousel: React.FC = () => {
   // Autoplay
   useEffect(() => {
     if (paused || count < 2) return;
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     const timer = window.setTimeout(() => {
       if (!document.hidden) goTo(index + 1);
     }, AUTOPLAY_MS + SLIDE_MS);
@@ -157,7 +159,10 @@ export const HeroBannerCarousel: React.FC = () => {
       className="w-full h-full relative overflow-hidden bg-stone-950 select-none flex-1 min-h-0 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#c48825]"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onFocus={() => setFocused(true)}
+      onFocus={(e) => {
+        // Keyboard users get a pause while they're on the banner; a mouse click doesn't pause it
+        if ((e.target as HTMLElement).matches(':focus-visible')) setFocused(true);
+      }}
       onBlur={(e) => {
         // Moving focus between its own buttons keeps it paused
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false);
@@ -179,7 +184,7 @@ export const HeroBannerCarousel: React.FC = () => {
     >
       {slides.map((banner, i) => {
         const offset = offsetOf(i);
-        const animate = !jumped && (i === index || i === previous);
+        const animate = !reducedMotion && !jumped && (i === index || i === previous);
         return (
           <div
             key={banner.id}

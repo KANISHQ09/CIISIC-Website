@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   Building2, FileText, Settings, ShieldAlert, ArrowLeft, CheckCircle, 
   XCircle, Clock, MessageSquare, AlertTriangle,
-  Edit, Save, X, Wrench, Share2, Printer, GraduationCap, CheckCircle2
+  Edit, Save, X, Wrench, Share2, Printer, GraduationCap
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { sanitizeHTML } from '../lib/html';
@@ -267,7 +267,7 @@ export const SubmissionDetails: React.FC = () => {
           <Link to={backLink} className="inline-flex items-center gap-1.5 text-sm font-bold text-stone-600 hover:text-[#063028] transition-colors mb-1">
             <ArrowLeft className="h-4 w-4" /> {backLinkText}
           </Link>
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
             <span className="text-xs text-stone-500 font-medium">Submitted on {new Date(submission.submittedDate).toLocaleString()}</span>
             {submission.editedByAdmin && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-amber-100 text-amber-800 border border-amber-300">
@@ -772,9 +772,6 @@ export const SubmissionDetails: React.FC = () => {
                 <div className="flex items-center justify-between border-b border-stone-100 pb-3">
                   <span className="text-xs font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1.5">
                     <GraduationCap className="h-4 w-4 text-[#c48825]" /> Innovation Challenge
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Approved Challenge
                   </span>
                 </div>
 

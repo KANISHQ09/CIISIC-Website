@@ -1,30 +1,16 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Building2, CalendarClock, Sparkles } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { timeLeft } from '../../lib/problemDisplay';
 import { useApp } from '../../contexts/AppContext';
-import { htmlToPlainText } from '../../lib/html';
 import { ProblemStatement } from '../../types';
 
-const MAX_FEATURED = 6;
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-/** Time left to submit a solution, in words ("12 days left", "Less than a day left"). */
-function deadlineLabel(deadline: string | undefined, now: number): { text: string; urgent: boolean } {
-  if (!deadline) return { text: 'Open for solutions', urgent: false };
-  const msLeft = new Date(deadline).getTime() - now;
-  if (msLeft < DAY_MS) return { text: 'Less than a day left', urgent: true };
-  // Round up: 2 days and 5 hours left reads "3 days left"
-  const days = Math.ceil(msLeft / DAY_MS);
-  if (days <= 60) return { text: `${days} days left`, urgent: days <= 7 };
-  return {
-    text: `Open till ${new Date(deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`,
-    urgent: false,
-  };
-}
+// CII portal review (16 Nov 2026): up to 10 recent problem statements, in a slider
+const MAX_FEATURED = 10;
 
 /**
- * Problem statements CII has approved and that are still open, closing soonest first,
- * so visitors see what they can work on right now.
+ * The most recent problem statements CII has approved that are still open, in a sideways
+ * slider (in the style of MakeMyTrip's offer cards): arrows, swipe, or trackpad to move.
  */
 export const FeaturedProblemsSection: React.FC = () => {
   const { submissions, submissionsLoading } = useApp();
@@ -34,41 +20,86 @@ export const FeaturedProblemsSection: React.FC = () => {
   const featured = useMemo(() => {
     const isOpen = (p: ProblemStatement) =>
       p.status === 'Approved' && (!p.additional.deadline || new Date(p.additional.deadline).getTime() > now);
-    const closesAt = (p: ProblemStatement) =>
-      p.additional.deadline ? new Date(p.additional.deadline).getTime() : Number.MAX_SAFE_INTEGER;
-    return submissions.filter(isOpen).sort((a, b) => closesAt(a) - closesAt(b)).slice(0, MAX_FEATURED);
+    const added = (p: ProblemStatement) => new Date(p.submittedDate).getTime() || 0;
+    return submissions.filter(isOpen).sort((a, b) => added(b) - added(a)).slice(0, MAX_FEATURED);
   }, [submissions, now]);
+
+  // ── Slider: which arrows can be used
+  const trackRef = useRef<HTMLUListElement>(null);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(true);
+  const updateEnds = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    setAtStart(el.scrollLeft <= 4);
+    setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
+  }, []);
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    updateEnds();
+    el.addEventListener('scroll', updateEnds, { passive: true });
+    const observer = new ResizeObserver(updateEnds);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener('scroll', updateEnds);
+      observer.disconnect();
+    };
+  }, [featured.length, submissionsLoading, updateEnds]);
+
+  /** Moves the slider by about one screenful of cards. */
+  const slide = (direction: 1 | -1) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const card = el.querySelector('li');
+    const step = card ? card.getBoundingClientRect().width + 20 : el.clientWidth * 0.8;
+    const perView = Math.max(1, Math.floor(el.clientWidth / step));
+    el.scrollBy({ left: direction * step * perView, behavior: 'smooth' });
+  };
+
+  const arrowClass =
+    'h-11 w-11 rounded-full border border-stone-300 bg-white text-[#063028] flex items-center justify-center shadow-xs transition-all hover:border-[#063028] hover:bg-[#edf4f0] disabled:opacity-35 disabled:hover:bg-white disabled:hover:border-stone-300 cursor-pointer disabled:cursor-default';
 
   return (
     <section id="featured-problems" className="py-16 sm:py-24 bg-white border-y border-[#e8e4dc] scroll-mt-20">
       <div className="max-w-[1320px] mx-auto px-6 sm:px-8 lg:px-12">
-        {/* Heading */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+        {/* Heading, with the slider arrows on the right */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div className="space-y-3 max-w-2xl">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#c48825]/10 text-[#9a6a1b] text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="h-3.5 w-3.5" /> Open now · Approved by CII
-            </span>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#c48825]">Open now · Approved by CII</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-[#063028] tracking-tight leading-tight font-serif">
               Featured Problem Statements
             </h2>
             <p className="text-stone-700 text-base sm:text-lg leading-relaxed">
-              Real challenges from industry, approved by CII and waiting for solutions. Partner institutions can pick one
-              and submit their team&apos;s solution.
+              The latest real challenges from industry, approved by CII and waiting for solutions. Partner institutions
+              can pick one and submit their team&apos;s solution.
             </p>
           </div>
-          <Link
-            to="/problem-statements"
-            className="inline-flex items-center gap-2 self-start md:self-auto px-5 py-3 rounded-xl text-sm font-bold text-[#063028] bg-white border border-stone-300 hover:bg-stone-50 transition-colors whitespace-nowrap"
-          >
-            View all problem statements <ArrowRight className="h-4 w-4" />
-          </Link>
+          <div className="flex items-center gap-3 self-start md:self-auto">
+            <Link
+              to="/problem-statements"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-[#063028] bg-white border border-stone-300 hover:bg-stone-50 transition-colors whitespace-nowrap"
+            >
+              View all <ArrowRight className="h-4 w-4" />
+            </Link>
+            {featured.length > 1 && (
+              <div className="hidden sm:flex items-center gap-2">
+                <button type="button" aria-label="Previous problem statements" disabled={atStart} onClick={() => slide(-1)} className={arrowClass}>
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button type="button" aria-label="More problem statements" disabled={atEnd} onClick={() => slide(1)} className={arrowClass}>
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {submissionsLoading ? (
           // Placeholder cards while the problems load
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" role="status" aria-label="Loading problem statements">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-64 rounded-2xl border border-stone-200 bg-[#faf8f4] animate-pulse" />
+          <div className="flex gap-5 overflow-hidden" role="status" aria-label="Loading problem statements">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="h-60 w-[78%] sm:w-[300px] shrink-0 rounded-2xl border border-stone-200 bg-[#faf8f4] animate-pulse" />
             ))}
           </div>
         ) : featured.length === 0 ? (
@@ -86,67 +117,73 @@ export const FeaturedProblemsSection: React.FC = () => {
             </Link>
           </div>
         ) : (
-          <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featured.map((problem) => {
-              const deadline = deadlineLabel(problem.additional.deadline, now);
-              const sector = problem.company.industrySector || problem.company.industryName;
-              const skills = problem.technical.requiredTechnologies?.length
-                ? problem.technical.requiredTechnologies
-                : problem.technical.requiredSkills ?? [];
-              return (
-                <li key={problem.id}>
-                  <Link
-                    to={`/details/${problem.id}`}
-                    state={{ from: '/' }}
-                    className="group h-full flex flex-col bg-[#faf8f4] border border-stone-200 rounded-2xl p-6 hover:border-[#063028]/40 hover:shadow-md transition-all"
+          <div className="relative">
+            <ul
+              ref={trackRef}
+              aria-label="Featured problem statements"
+              className="flex gap-5 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-3 -mb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {featured.map((problem, index) => {
+                const left = timeLeft(problem.additional.deadline, now);
+                const sector = problem.company.industrySector || problem.company.industryName || 'Industry challenge';
+                const place = [problem.company.companyName || 'Industry partner', problem.company.city]
+                  .filter(Boolean)
+                  .join(' · ');
+                return (
+                  <li
+                    key={problem.id}
+                    className="snap-start shrink-0 w-[78%] sm:w-[300px]"
+                    aria-label={`${index + 1} of ${featured.length}`}
                   >
-                    <div className="flex items-center justify-between gap-3 mb-4">
-                      {sector ? (
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#063028] bg-[#edf4f0] px-2.5 py-1 rounded-md truncate">
+                    <Link
+                      to={`/details/${problem.id}`}
+                      state={{ from: '/' }}
+                      className="group h-full flex flex-col bg-white border border-stone-200 rounded-2xl overflow-hidden hover:border-[#063028]/40 hover:shadow-md transition-all"
+                    >
+                      {/* Image area (where a hotel card shows its photo): the problem's cover image when it
+                          has one, otherwise a plain placeholder. Badge in the corner, like a hotel's rating. */}
+                      <div className="relative h-36 bg-stone-100 overflow-hidden">
+                        {problem.additional.coverImageUrl && (
+                          <img
+                            src={problem.additional.coverImageUrl}
+                            alt=""
+                            loading="lazy"
+                            className="absolute inset-0 h-full w-full object-cover"
+                          />
+                        )}
+                        <span className="absolute left-3 top-3 text-[11px] font-bold uppercase tracking-wider text-stone-700 bg-white/90 px-2 py-0.5 rounded-md truncate max-w-[75%]">
                           {sector}
                         </span>
-                      ) : (
-                        <span />
-                      )}
-                      <span
-                        className={`inline-flex items-center gap-1 text-xs font-bold whitespace-nowrap ${
-                          deadline.urgent ? 'text-red-700' : 'text-[#9a6a1b]'
-                        }`}
-                      >
-                        <CalendarClock className="h-3.5 w-3.5" /> {deadline.text}
-                      </span>
-                    </div>
-
-                    <h3 className="text-lg font-bold text-[#063028] leading-snug group-hover:text-[#c48825] transition-colors line-clamp-2">
-                      {problem.details.title}
-                    </h3>
-                    <p className="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-stone-600">
-                      <Building2 className="h-4 w-4 text-stone-400 shrink-0" />
-                      <span className="truncate">{problem.company.companyName || 'Industry partner'}</span>
-                    </p>
-                    <p className="mt-3 text-sm text-stone-600 leading-relaxed line-clamp-3">
-                      {/* The one-line problem statement reads best on a card; fall back to the description */}
-                      {htmlToPlainText(problem.details.businessChallenge || problem.details.description)}
-                    </p>
-
-                    {skills.length > 0 && (
-                      <div className="mt-4 flex flex-wrap gap-1.5">
-                        {skills.slice(0, 3).map((skill) => (
-                          <span key={skill} className="text-xs font-medium text-stone-700 bg-white border border-stone-200 px-2 py-0.5 rounded-md">
-                            {skill}
-                          </span>
-                        ))}
+                        <span className="absolute right-3 bottom-3 text-xs font-bold bg-white text-[#063028] px-2 py-0.5 rounded-md shadow-sm">
+                          Open
+                        </span>
                       </div>
-                    )}
 
-                    <span className="mt-auto pt-5 inline-flex items-center gap-1.5 text-sm font-bold text-[#c48825]">
-                      View &amp; solve <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+                      {/* Name on the left, time left on the right (where a hotel card shows its price) */}
+                      <div className="flex-1 flex items-start justify-between gap-3 p-4">
+                        <div className="min-w-0">
+                          <h3 className="text-base font-bold text-stone-900 leading-snug line-clamp-2 min-h-[2.75rem] group-hover:text-[#063028]">
+                            {problem.details.title}
+                          </h3>
+                          <p className="mt-1 text-sm text-stone-500 truncate">{place}</p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className={`text-lg font-extrabold leading-tight ${left.urgent ? 'text-red-700' : 'text-stone-900'}`}>
+                            {left.figure}
+                          </p>
+                          <p className="text-xs text-stone-500 whitespace-nowrap">{left.unit}</p>
+                        </div>
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+            {/* Soft fade on the right while more cards follow */}
+            {!atEnd && (
+              <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white to-transparent" />
+            )}
+          </div>
         )}
       </div>
     </section>

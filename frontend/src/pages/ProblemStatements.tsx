@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Search, Building2, Cpu, ArrowRight, Sparkles, 
-  Clock, IndianRupee, GraduationCap,
+  Search, Building2, Cpu, ArrowRight, ChevronDown, 
+  GraduationCap,
   Layers, BookOpen, ChevronRight, X
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { fetchChallenges } from '../lib/api';
-import { htmlToPlainText } from '../lib/html';
 import { ProblemStatement } from '../types';
 import { usePageTitle } from '../lib/usePageTitle';
 import { ChallengeAreasSection } from '../components/landing/ChallengeAreasSection';
+import { ProblemRowCard } from '../components/problems/ProblemRowCard';
 
 export const ProblemStatements: React.FC = () => {
   usePageTitle('Problem Statements');
@@ -107,12 +107,8 @@ export const ProblemStatements: React.FC = () => {
   }, [challenges, selectedDomain, selectedDifficulty, searchQuery]);
 
   // Extract funding string helper
-  const getFundingString = (notes?: string) => {
-    if (!notes) return 'Industry Funded';
-    const match = notes.match(/Budget allocated:\s*([^.]+)/);
-    if (match) return match[1].trim();
-    return notes.split('.')[0] || 'Industry Funded';
-  };
+  // Reference time for "days left" on the rows
+  const now = useMemo(() => Date.now(), [challenges]);
 
   const clearFilters = () => {
     setSearchQuery('');
@@ -133,9 +129,7 @@ export const ProblemStatements: React.FC = () => {
           </div>
 
           <div className="relative z-10 max-w-3xl space-y-5 text-left">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#edf4f0] border border-[#063028]/15 text-[#063028] text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="h-4 w-4 text-[#c48825]" /> Open Innovation Repository
-            </div>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#c48825]">Open Innovation Repository</p>
             
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#063028] font-serif tracking-tight leading-tight">
               Industry Problem Statements
@@ -239,17 +233,22 @@ export const ProblemStatements: React.FC = () => {
             </div>
 
             {/* Difficulty Filter */}
-            <div className="flex gap-2">
-              <select
-                value={selectedDifficulty}
-                onChange={(e) => setSelectedDifficulty(e.target.value)}
-                className="px-4 py-3.5 bg-white border border-stone-300 rounded-xl text-sm font-bold text-stone-800 focus:outline-none focus:border-[#063028] cursor-pointer shadow-2xs"
-              >
-                <option value="All">All Tiers</option>
-                <option value="Easy">Easy Tier</option>
-                <option value="Medium">Medium Tier</option>
-                <option value="Hard">Hard Tier</option>
-              </select>
+            <div className="flex gap-2 min-w-0">
+              {/* Own arrow inside the box (the browser's default one sits against the edge) */}
+              <div className="relative flex-1 sm:flex-none">
+                <select
+                  value={selectedDifficulty}
+                  onChange={(e) => setSelectedDifficulty(e.target.value)}
+                  aria-label="Filter by difficulty"
+                  className="appearance-none w-full sm:w-44 pl-4 pr-10 py-3.5 bg-white border border-stone-300 rounded-xl text-sm font-bold text-stone-800 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 cursor-pointer shadow-2xs"
+                >
+                  <option value="All">All Tiers</option>
+                  <option value="Easy">Easy Tier</option>
+                  <option value="Medium">Medium Tier</option>
+                  <option value="Hard">Hard Tier</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-500" aria-hidden="true" />
+              </div>
 
               {(searchQuery || selectedDomain !== 'All' || selectedDifficulty !== 'All') && (
                 <button
@@ -299,13 +298,9 @@ export const ProblemStatements: React.FC = () => {
 
         {/* Problem Statements Cards List */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="bg-white rounded-2xl border border-stone-200 p-6 space-y-4 h-72">
-                <div className="h-6 bg-stone-200 rounded w-1/3"></div>
-                <div className="h-8 bg-stone-200 rounded w-4/5"></div>
-                <div className="h-20 bg-stone-200 rounded"></div>
-              </div>
+          <div className="space-y-5 animate-pulse" role="status" aria-label="Loading problem statements">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="bg-white rounded-2xl border border-stone-200 h-52" />
             ))}
           </div>
         ) : challenges.length === 0 ? (
@@ -347,124 +342,11 @@ export const ProblemStatements: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+          // One wide row per problem, in the style of a MakeMyTrip flight result
+          <div className="space-y-5">
             {filteredChallenges.map((challenge) => {
-              const funding = challenge.additional.budget || getFundingString(challenge.additional.additionalNotes);
-              return (
-                <div
-                  key={challenge.id}
-                  className="bg-white rounded-2xl sm:rounded-3xl border border-stone-200/90 shadow-xs hover:border-[#063028] hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden group"
-                >
-                  <div className="p-6 sm:p-8 space-y-5">
-                    
-                    {/* Top Row: Domain badge & ID */}
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#edf4f0] text-[#063028] border border-[#063028]/15">
-                          {challenge.company.industrySector || challenge.company.industryName || 'Industry Challenge'}
-                        </span>
-                        {challenge.technical.difficultyLevel && (
-                          <span className={`px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${
-                            challenge.technical.difficultyLevel === 'Hard'
-                              ? 'bg-red-50 text-red-700 border border-red-200'
-                              : challenge.technical.difficultyLevel === 'Medium'
-                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          }`}>
-                            {challenge.technical.difficultyLevel} Tier
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-xs font-mono font-bold text-stone-500 bg-stone-100 px-2.5 py-1 rounded-lg">
-                        {challenge.id}
-                      </span>
-                    </div>
-
-                    {/* Company / Industry Info */}
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#edf4f0] border border-[#063028]/15 flex items-center justify-center text-[#063028] shrink-0 font-bold font-serif text-sm">
-                        <Building2 className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="text-sm sm:text-base font-extrabold text-stone-900 truncate">
-                          {challenge.company.companyName}
-                        </h4>
-                        <p className="text-xs text-stone-500 font-medium truncate">
-                          {challenge.company.representativeName ? `${challenge.company.representativeName} • ` : ''}
-                          {challenge.company.designation || 'Corporate R&D'}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Problem Statement Title */}
-                    <div className="space-y-2">
-                      <h3 className="text-lg sm:text-xl font-extrabold text-[#063028] font-serif leading-snug group-hover:text-[#a6711c] transition-colors">
-                        <Link to={`/details/${challenge.id}`} state={{ from: '/problem-statements' }}>
-                          {challenge.details.title}
-                        </Link>
-                      </h3>
-                      <p className="text-xs sm:text-sm text-stone-600 line-clamp-3 leading-relaxed">
-                        {htmlToPlainText(challenge.details.description || challenge.details.businessChallenge)}
-                      </p>
-                    </div>
-
-                    {/* Technical Tags */}
-                    {challenge.technical.requiredTechnologies && challenge.technical.requiredTechnologies.length > 0 && (
-                      <div className="space-y-1.5 pt-1">
-                        <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider block">
-                          Required Technologies:
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {challenge.technical.requiredTechnologies.slice(0, 4).map((tech, idx) => (
-                            <span 
-                              key={idx}
-                              className="bg-stone-100 text-stone-800 border border-stone-200/80 px-2 py-0.5 rounded-md text-xs font-semibold"
-                            >
-                              {tech}
-                            </span>
-                          ))}
-                          {challenge.technical.requiredTechnologies.length > 4 && (
-                            <span className="text-xs text-stone-500 font-bold self-center">
-                              +{challenge.technical.requiredTechnologies.length - 4} more
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Meta Specs: Target Branch & Timeline */}
-                    <div className="grid grid-cols-2 gap-3 pt-2 text-xs border-t border-stone-100">
-                      <div>
-                        <span className="text-stone-500 font-medium block">Duration:</span>
-                        <span className="font-bold text-stone-800 flex items-center gap-1 mt-0.5">
-                          <Clock className="h-3.5 w-3.5 text-[#c48825]" /> {challenge.technical.expectedDuration || 'Not specified'}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-stone-500 font-medium block">Grant / Funding:</span>
-                        <span className="font-bold text-[#063028] flex items-center gap-1 mt-0.5 truncate" title={funding}>
-                          <IndianRupee className="h-3.5 w-3.5 text-[#c48825] shrink-0" /> {funding}
-                        </span>
-                      </div>
-                    </div>
-
-                  </div>
-
-                  {/* Card Bottom CTA Footer */}
-                  <div className="px-6 sm:px-8 py-4 bg-stone-50/80 border-t border-stone-200/80 flex items-center justify-between gap-4">
-                    <div className="text-xs text-stone-500 font-medium">
-                      Target: <span className="font-semibold text-stone-700">{challenge.technical.preferredAcademicYear || 'Any year'}</span>
-                    </div>
-                    <Link
-                      to={`/details/${challenge.id}`} state={{ from: '/problem-statements' }}
-                      className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-[#063028] group-hover:text-[#a6711c] group-hover:translate-x-0.5 transition-all"
-                    >
-                      View Details &amp; Spec <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </div>
-
-                </div>
-              );
+              const stated = challenge.additional.budget || challenge.additional.additionalNotes?.match(/Budget allocated:\s*([^.]+)/)?.[1]?.trim();
+              return <ProblemRowCard key={challenge.id} problem={challenge} funding={stated || undefined} now={now} />;
             })}
           </div>
         )}

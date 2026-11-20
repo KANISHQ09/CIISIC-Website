@@ -42,6 +42,8 @@ export interface AdditionalDetails {
   budget?: string;
   // Solution deadline, ISO date string
   deadline?: string;
+  // Optional cover photo shown on problem cards (placeholder when missing)
+  coverImageUrl?: string;
   fileAttachmentName?: string;
   declarationAccepted: boolean;
 }

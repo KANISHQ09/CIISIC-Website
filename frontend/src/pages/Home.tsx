@@ -3,6 +3,7 @@ import { HeroBannerCarousel } from '../components/landing/HeroBannerCarousel';
 import { QuickImpactStatsSection } from '../components/landing/QuickImpactStatsSection';
 import { AboutSummarySection } from '../components/landing/AboutSummarySection';
 import { FeaturedProblemsSection } from '../components/landing/FeaturedProblemsSection';
+import { CellCardsSection } from '../components/landing/CellCardsSection';
 import { ComingUpSection } from '../components/landing/ComingUpSection';
 import { GetInvolvedSection } from '../components/landing/GetInvolvedSection';
 
@@ -27,6 +28,7 @@ export const Home: React.FC = () => {
 
       <AboutSummarySection />
       <FeaturedProblemsSection />
+      <CellCardsSection />
       <ComingUpSection />
       <GetInvolvedSection />
     </div>
