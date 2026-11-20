@@ -47,6 +47,14 @@ export const SubmissionDisclaimer: React.FC<{ className?: string }> = ({ classNa
   </Notice>
 );
 
+/** Shown on the industry choice page (what "Industry Login" opens). */
+export const IndustryChoiceDisclaimer: React.FC<{ className?: string }> = ({ className }) => (
+  <Notice title="Good to know" className={className}>
+    Problem statements are published only after CII approves them, and your contact details are never shown
+    publicly. Signing in is for registered industry partners whose account CII has approved.
+  </Notice>
+);
+
 /** Shown on the industry sign-in page. */
 export const IndustryLoginDisclaimer: React.FC<{ className?: string }> = ({ className }) => (
   <Notice title="For registered industry partners" className={className}>

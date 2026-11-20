@@ -10,6 +10,7 @@ const page = <T extends React.ComponentType<any>>(load: () => Promise<Record<str
 const Home = page(() => import('./pages/Home'), 'Home');
 const Institutions = page(() => import('./pages/Institutions'), 'Institutions');
 const IndustryLogin = page(() => import('./pages/IndustryLogin'), 'IndustryLogin');
+const IndustryPortal = page(() => import('./pages/IndustryPortal'), 'IndustryPortal');
 const IndustryRegister = page(() => import('./pages/IndustryRegister'), 'IndustryRegister');
 const IndustryDashboard = page(() => import('./pages/IndustryDashboard'), 'IndustryDashboard');
 const SubmitProblem = page(() => import('./pages/SubmitProblem'), 'SubmitProblem');
@@ -140,6 +141,15 @@ export default function App() {
             <Route path="/problems" element={<Navigate to="/problem-statements" replace />} />
 
             {/* Industry Portal Routes */}
+            {/* "Industry Login" opens a choice: submit a problem without an account, or sign in */}
+            <Route
+              path="/industry"
+              element={
+                <GuestRoute role="industry">
+                  <IndustryPortal />
+                </GuestRoute>
+              }
+            />
             <Route 
               path="/industry/login" 
               element={

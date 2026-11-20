@@ -76,7 +76,7 @@ export const ChallengeAreasSection: React.FC = () => {
                 />
                 <div className="absolute inset-0 bg-[#04201a]/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-xs">
                   <Link 
-                    to="/industry/login"
+                    to="/industry"
                     className="px-5 py-3 bg-white text-[#063028] text-sm font-bold uppercase rounded-xl shadow-sm flex items-center gap-1.5 hover:bg-stone-50 transition-colors"
                   >
                     Enter Portal <ArrowUpRight className="h-4 w-4" />
