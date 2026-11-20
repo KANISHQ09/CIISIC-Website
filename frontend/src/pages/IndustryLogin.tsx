@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Building2, Lock, Mail, ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
+import { IndustryLoginDisclaimer } from '../components/common/Notice';
 
 export const IndustryLogin: React.FC = () => {
   const { login, showToast } = useApp();
@@ -164,6 +165,8 @@ export const IndustryLogin: React.FC = () => {
                 </label>
               </div>
 
+              <IndustryLoginDisclaimer />
+
               {/* Sign In Button */}
               <button
                 type="submit"
@@ -171,7 +174,7 @@ export const IndustryLogin: React.FC = () => {
                 className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl text-base font-bold text-white bg-[#063028] hover:bg-[#04201a] focus:outline-none transition-all duration-150 disabled:opacity-50 cursor-pointer shadow-md active:scale-[0.99]"
                 id="sign-in-btn"
               >
-                {isLoading ? 'Verifying Corporate Session...' : 'Sign In to Partner Portal'}
+                {isLoading ? 'Signing in...' : 'Sign In to Partner Portal'}
                 {!isLoading && <ArrowRight className="h-5 w-5" />}
               </button>
 

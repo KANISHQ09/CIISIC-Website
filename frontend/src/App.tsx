@@ -164,7 +164,7 @@ export default function App() {
                 </IndustryRoute>
               } 
             />
-            {/* Problem submission: open to everyone, no login needed (CII verifies before publishing) */}
+            {/* Problem submission: open to everyone, no login needed (CII approves before publishing) */}
             <Route path="/submit-problem" element={<SubmitProblem />} />
             <Route path="/industry/submit" element={<Navigate to="/submit-problem" replace />} />
 

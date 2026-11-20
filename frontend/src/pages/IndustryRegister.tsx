@@ -119,7 +119,7 @@ export const IndustryRegister: React.FC = () => {
               Thank you for registering <strong className="text-[#063028]">{companyName}</strong> on the CII Innovation Portal.
             </p>
             <p>
-              Your enterprise profile is currently in <strong>pending approval status</strong>. The CII Administrator will verify your corporate registration shortly.
+              Your enterprise profile is currently in <strong>pending approval status</strong>. The CII Administrator will review and approve your registration shortly.
             </p>
             <p className="text-stone-500 text-xs">
               Once approved, you will be able to log in with your email (<strong>{email}</strong>) and start posting live industrial problem statements.
@@ -380,7 +380,7 @@ export const IndustryRegister: React.FC = () => {
             <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs flex items-start gap-2.5">
               <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <span>
-                <strong>CII Administrative Approval Required:</strong> All registered industry accounts are verified by the CII Innovation Directorate before problem statement posting privileges are activated.
+                <strong>CII Administrative Approval Required:</strong> All registered industry accounts are approved by the CII Innovation Directorate before problem statement posting privileges are activated.
               </span>
             </div>
 

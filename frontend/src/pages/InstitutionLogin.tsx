@@ -170,7 +170,7 @@ export const InstitutionLogin: React.FC = () => {
                 className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl text-base font-bold text-white bg-[#063028] hover:bg-[#04201a] focus:outline-none transition-all duration-150 disabled:opacity-50 cursor-pointer shadow-md active:scale-[0.99]"
                 id="sign-in-btn"
               >
-                {isLoading ? 'Verifying Academic Session...' : 'Sign In to Institution Portal'}
+                {isLoading ? 'Signing in...' : 'Sign In to Institution Portal'}
                 {!isLoading && <ArrowRight className="h-5 w-5" />}
               </button>
 

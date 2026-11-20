@@ -9,7 +9,7 @@ export const WorkflowSection: React.FC = () => {
     },
     {
       title: "Administrative Review & Validation",
-      desc: "The challenge is reviewed by the CII Industry–Academia Excellence Initiative to verify scope and requirements."
+      desc: "The challenge is reviewed by the CII Industry–Academia Excellence Initiative to check its scope and requirements before approval."
     },
     {
       title: "Specialized Cell Mapping",

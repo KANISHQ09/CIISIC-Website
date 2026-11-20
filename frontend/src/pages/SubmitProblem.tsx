@@ -16,6 +16,7 @@ import {
   submitPublicProblem, toBackendProblemFields
 } from '../lib/api';
 import { usePageTitle } from '../lib/usePageTitle';
+import { DocumentAccessNotice, SubmissionDisclaimer } from '../components/common/Notice';
 
 /** Dropdown value for an organisation that is not registered on the portal. */
 const OTHER_ORG = 'OTHER';
@@ -291,7 +292,7 @@ export const SubmitProblem: React.FC = () => {
         return;
       }
 
-      // Public visitor: no login, CII verifies before anything is published
+      // Public visitor: no login, CII approves before anything is published
       const result = await submitPublicProblem({
         ...toBackendProblemFields(submission),
         industryProfileId: isRegisteredOrg ? data.orgChoice : undefined,
@@ -374,7 +375,7 @@ export const SubmitProblem: React.FC = () => {
             <div className="space-y-2">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-[#063028] font-serif">Problem statement received</h1>
               <p className="text-base text-stone-600 leading-relaxed">
-                Thank you. <strong className="text-stone-800">"{submitted.title}"</strong> is now pending verification by CII officials.
+                Thank you. <strong className="text-stone-800">"{submitted.title}"</strong> is now pending approval by CII officials.
                 It will be published to partner institutions only after it is approved.
               </p>
             </div>
@@ -437,7 +438,7 @@ export const SubmitProblem: React.FC = () => {
             Submit a Problem Statement
           </h1>
           <p className="text-base text-stone-600 max-w-xl mx-auto leading-relaxed">
-            Share your organisation's challenge, technical requirements and target outcomes. CII officials verify every
+            Share your organisation's challenge, technical requirements and target outcomes. CII officials approve every
             submission before it is published to partner institutions.
             {!isIndustryUser && ' No login needed.'}
           </p>
@@ -493,7 +494,7 @@ export const SubmitProblem: React.FC = () => {
                   <h2 className="text-xl font-bold text-[#063028] font-serif flex items-center gap-2.5">
                     <Building2 className="h-6 w-6 text-[#c48825]" /> Organisation &amp; Contact Details
                   </h2>
-                  <p className="text-sm text-stone-600 mt-1">CII uses these details to verify the submission and to contact you.</p>
+                  <p className="text-sm text-stone-600 mt-1">CII uses these details to review the submission and to contact you.</p>
                 </div>
 
                 {/* Spam trap: hidden from people, filled in only by bots */}
@@ -916,6 +917,7 @@ export const SubmitProblem: React.FC = () => {
                   {/* File Upload Component */}
                   <div className="space-y-2">
                     <label className="block text-sm font-bold text-stone-700">Supporting Data Sheet / Attachment</label>
+                    <DocumentAccessNotice viewers="CII officials and partner institutions" />
                     
                     <div 
                       onDragOver={handleDragOver}
@@ -964,6 +966,8 @@ export const SubmitProblem: React.FC = () => {
                       )}
                     </div>
                   </div>
+
+                  <SubmissionDisclaimer />
 
                   {/* Declaration Checkbox */}
                   <div className="p-5 bg-amber-50/60 rounded-2xl border border-amber-200/80 space-y-3">

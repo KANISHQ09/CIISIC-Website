@@ -46,7 +46,7 @@ export const FeaturedProblemsSection: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div className="space-y-3 max-w-2xl">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#c48825]/10 text-[#9a6a1b] text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="h-3.5 w-3.5" /> Open now · Verified by CII
+              <Sparkles className="h-3.5 w-3.5" /> Open now · Approved by CII
             </span>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-[#063028] tracking-tight leading-tight font-serif">
               Featured Problem Statements

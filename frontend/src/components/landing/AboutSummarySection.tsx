@@ -12,7 +12,7 @@ export const AboutSummarySection: React.FC = () => {
     },
     {
       icon: ShieldCheck,
-      title: 'CII verifies and publishes it',
+      title: 'CII approves and publishes it',
       text: 'CII officials review every problem before it goes live for institutions to see.',
     },
     {

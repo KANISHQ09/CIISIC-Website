@@ -13,7 +13,7 @@ export const PageCTA: React.FC = () => (
             Ready to solve the next industry challenge?
           </h2>
           <p className="text-sm sm:text-base text-stone-300 leading-relaxed">
-            Industries can submit a problem without logging in; CII verifies it before it goes live. Partner
+            Industries can submit a problem without logging in; CII approves it before it goes live. Partner
             institutions pick problems and submit their teams&apos; solutions through the Institution Portal.
           </p>
         </div>

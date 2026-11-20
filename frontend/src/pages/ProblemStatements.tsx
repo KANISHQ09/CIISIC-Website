@@ -316,7 +316,7 @@ export const ProblemStatements: React.FC = () => {
             <div className="space-y-2">
               <h3 className="text-2xl font-bold text-stone-900 font-serif">No Problem Statements Published Yet</h3>
               <p className="text-sm text-stone-600 max-w-md mx-auto leading-relaxed font-normal">
-                Any organisation can submit an industry problem statement — no login needed. CII verifies each one before it is published to partner institutions.
+                Any organisation can submit an industry problem statement — no login needed. CII approves each one before it is published to partner institutions.
               </p>
             </div>
             <div className="pt-2 flex flex-wrap justify-center gap-3">
@@ -485,7 +485,7 @@ export const ProblemStatements: React.FC = () => {
               Have an Engineering or R&amp;D Challenge in Your Enterprise?
             </h3>
             <p className="text-sm sm:text-base text-stone-300 leading-relaxed">
-              Any organisation can submit an industrial problem statement — no login needed, and CII verifies it before publishing. Our technical review committee pairs your challenge with top student and faculty innovation clusters across Indore and Bhopal.
+              Any organisation can submit an industrial problem statement — no login needed, and CII approves it before publishing. Our technical review committee pairs your challenge with top student and faculty innovation clusters across Indore and Bhopal.
             </p>
             <div className="pt-2 flex flex-wrap gap-4">
               <Link

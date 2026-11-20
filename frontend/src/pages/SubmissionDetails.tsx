@@ -614,7 +614,7 @@ export const SubmissionDetails: React.FC = () => {
 
               <div className="p-4 bg-[#edf4f0]/60 rounded-2xl border border-[#063028]/10 text-xs text-stone-700 leading-normal flex items-start gap-2.5">
                 <CheckCircle className="h-5 w-5 text-emerald-700 shrink-0 mt-0.5" />
-                <span>Representative official declaration signed and verified. Intellectual property conditions acknowledged by organization under CII guidelines.</span>
+                <span>Representative official declaration signed and approved. Intellectual property conditions acknowledged by organization under CII guidelines.</span>
               </div>
             </div>
           </div>
@@ -725,7 +725,7 @@ export const SubmissionDetails: React.FC = () => {
                       }`}>
                         {submission.status === 'Pending' ? <Clock className="h-3 w-3" /> : <CheckCircle className="h-3 w-3 text-white" />}
                       </span>
-                      <p className="text-sm font-bold text-stone-800">Filing Verification</p>
+                      <p className="text-sm font-bold text-stone-800">Filing Approval</p>
                       <p className="text-xs text-stone-500">Processed automatically</p>
                     </div>
 
@@ -774,7 +774,7 @@ export const SubmissionDetails: React.FC = () => {
                     <GraduationCap className="h-4 w-4 text-[#c48825]" /> Innovation Challenge
                   </span>
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Verified Challenge
+                    <CheckCircle2 className="h-3.5 w-3.5" /> Approved Challenge
                   </span>
                 </div>
 

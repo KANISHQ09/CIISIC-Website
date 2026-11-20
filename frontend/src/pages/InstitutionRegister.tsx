@@ -115,7 +115,7 @@ export const InstitutionRegister: React.FC = () => {
               Thank you for registering <strong className="text-[#063028]">{finalInstName}</strong>.
             </p>
             <p>
-              Your academic SPOC registration has been submitted to the CII Administrator for verification and approval.
+              Your academic SPOC registration has been submitted to the CII Administrator for approval.
             </p>
             <p className="text-stone-500 text-xs">
               Once approved by the CII Admin, you can log in with your email (<strong>{email}</strong>) to adopt industry problem statements and assign student innovation teams.

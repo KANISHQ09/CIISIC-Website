@@ -218,7 +218,7 @@ export async function POST(req: NextRequest) {
         tags: data.tags ?? [],
         attachmentUrls: data.attachmentUrls ?? [],
         industryProfileId: industryProfile.id,
-        // Never published directly: CII must verify first
+        // Never published directly: CII must approve first
         status: data.status ?? "PENDING_APPROVAL",
         submissionSource: "PORTAL",
         referenceCode,

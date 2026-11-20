@@ -14,6 +14,7 @@ import { getOriginalFileName } from '../lib/file';
 import { SolutionSubmission, SolutionStatus } from '../types';
 import { ChangePasswordModal } from '../components/common/ChangePasswordModal';
 import { InlineLoader } from '../components/common/Loader';
+import { DocumentAccessNotice } from '../components/common/Notice';
 
 export const IndustryDashboard: React.FC = () => {
   const { currentUser, submissions, addSubmission, showToast, solutions, reviewSolution, submissionsLoading, solutionsLoading } = useApp();
@@ -1271,6 +1272,7 @@ export const IndustryDashboard: React.FC = () => {
                       <label className="block text-sm font-bold text-stone-700">
                         Supporting Documents / Attachments
                       </label>
+                      <DocumentAccessNotice viewers="CII officials and partner institutions" />
                       
                       <div
                         onDragOver={handleDragOver}

@@ -110,7 +110,7 @@ export async function PATCH(
       return forbidden("Only CII administrators can change a problem statement to this status");
     }
 
-    // Any content change by the owner after review sends it back to CII for re-verification
+    // Any content change by the owner after review sends it back to CII for re-approval
     const changesContent =
       data.title !== undefined ||
       data.description !== undefined ||

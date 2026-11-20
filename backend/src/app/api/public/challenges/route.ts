@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
       id: challenge.id,
       referenceCode: challenge.referenceCode,
       status: challenge.status,
-      message: "Your problem statement has been received and will be published after CII verification.",
+      message: "Your problem statement has been received and will be published after CII approval.",
     });
   } catch (err) {
     console.error("[POST /api/public/challenges]", err);
