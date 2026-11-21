@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getIndustryProfileId } from "@/lib/industry-team";
 import { INDUSTRY_PROFILE_SELECT } from "@/lib/problem-submission";
 import { ChallengeUpdateSchema, ProblemDetailSchema, problemDetailData } from "@/lib/validations/challenge";
 
@@ -46,9 +47,8 @@ export async function GET(
 
     // Non-admins only see OPEN challenges
     const isAdmin = role === "SUPER_ADMIN" || role === "CII_ADMIN";
-    const isOwner =
-      role === "INDUSTRY_SPOC" &&
-      challenge.industryProfile?.userId === userId;
+    const requesterProfileId = await getIndustryProfileId(role, userId);
+    const isOwner = !!requesterProfileId && challenge.industryProfileId === requesterProfileId;
 
     if (!isAdmin && !isOwner && challenge.status !== "OPEN") {
       return notFound("Challenge not found");
@@ -61,7 +61,7 @@ export async function GET(
         .catch(console.error);
     }
 
-    return ok(serializeChallenge(challenge, role, userId));
+    return ok(serializeChallenge(challenge, role, requesterProfileId));
   } catch (err) {
     console.error("[GET /api/challenges/[id]]", err);
     return serverError();
@@ -90,9 +90,8 @@ export async function PATCH(
     const isAdmin =
       session.user.role === "SUPER_ADMIN" ||
       session.user.role === "CII_ADMIN";
-    const isOwner =
-      session.user.role === "INDUSTRY_SPOC" &&
-      challenge.industryProfile?.userId === session.user.id;
+    const requesterProfileId = await getIndustryProfileId(session.user.role, session.user.id);
+    const isOwner = !!requesterProfileId && challenge.industryProfileId === requesterProfileId;
 
     if (!isAdmin && !isOwner) {
       return forbidden("You cannot edit this challenge");
@@ -184,7 +183,7 @@ export async function PATCH(
       userAgent,
     });
 
-    return ok(serializeChallenge(updated, session.user.role, session.user.id));
+    return ok(serializeChallenge(updated, session.user.role, requesterProfileId));
   } catch (err) {
     console.error("[PATCH /api/challenges/[id]]", err);
     return serverError();

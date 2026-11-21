@@ -80,6 +80,7 @@ export async function POST(req: NextRequest) {
       where: { email },
       include: {
         industryProfile: true,
+        teamIndustryProfile: { include: { user: { select: { isActive: true, approvalStatus: true } } } },
         institutionProfile: {
           include: { institution: true },
         },
@@ -96,7 +97,14 @@ export async function POST(req: NextRequest) {
 
     if (!user.passwordHash) {
       return NextResponse.json(
-        { success: false, message: "This account uses a different sign-in method" },
+        {
+          success: false,
+          message: user.teamIndustryProfileId
+            ? "Please set your password first, using the link your company shared with you."
+            : user.isActive
+            ? "This account uses a different sign-in method"
+            : "Invalid email or password",
+        },
         { status: 401, headers }
       );
     }
@@ -124,6 +132,15 @@ export async function POST(req: NextRequest) {
             ? "Your registration is currently pending approval by the CII Administrator. You will be able to log in once your account is approved."
             : "Your account has been deactivated or rejected by the CII Administrator.",
         },
+        { status: 403, headers }
+      );
+    }
+
+    // A team member can only sign in while their company's main account is active
+    const teamCompany = user.teamIndustryProfile;
+    if (teamCompany && (!teamCompany.user.isActive || teamCompany.user.approvalStatus !== "APPROVED")) {
+      return NextResponse.json(
+        { success: false, message: "Your company's portal account is not active. Please contact CII." },
         { status: 403, headers }
       );
     }
@@ -171,7 +188,7 @@ export async function POST(req: NextRequest) {
           email: user.email,
           role: user.role,
           avatarUrl: user.avatarUrl || null,
-          industryProfile: user.industryProfile,
+          industryProfile: user.industryProfile ?? (teamCompany ? { ...teamCompany, user: undefined } : null),
           institutionProfile: user.institutionProfile,
         },
       },

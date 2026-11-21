@@ -7,6 +7,7 @@ const problem = (phoneVisibility: string | undefined, status = "OPEN") => ({
   id: "c1",
   title: "Reduce foam overflow",
   status,
+  industryProfileId: "company-1",
   contactName: "Asha Rao",
   contactEmail: "asha@acme-bio.in",
   contactPhone: PHONE,
@@ -16,8 +17,8 @@ const problem = (phoneVisibility: string | undefined, status = "OPEN") => ({
 
 const asVisitor = (p: unknown) => serializeChallenge(p);
 const asSpoc = (p: unknown) => serializeChallenge(p, "INSTITUTION_SPOC", "spoc-1");
-const asOtherCompany = (p: unknown) => serializeChallenge(p, "INDUSTRY_SPOC", "other-1");
-const asOwner = (p: unknown) => serializeChallenge(p, "INDUSTRY_SPOC", "owner-1");
+const asOtherCompany = (p: unknown) => serializeChallenge(p, "INDUSTRY_SPOC", "company-2");
+const asOwner = (p: unknown) => serializeChallenge(p, "INDUSTRY_SPOC", "company-1");
 const asAdmin = (p: unknown) => serializeChallenge(p, "CII_ADMIN", "admin-1");
 
 describe("Who can see a problem's mobile number", () => {

@@ -372,6 +372,83 @@ describe("5b. Mobile number privacy", () => {
   });
 });
 
+describe("5c. Several logins for one company", () => {
+  const memberEmail = `teammate.${unique}@techcorp.example`;
+  const memberPassword = "Teammate@1234";
+  let draftId, memberId, memberToken;
+
+  it("the main account adds a colleague, who sets a password from a one-time link", async () => {
+    const draft = await api("/api/challenges", {
+      method: "POST", token: state.industryToken, body: { ...problem(`E2E Team problem ${unique}`), contactPhone: "+91 90000 11111" },
+    });
+    assert.equal(draft.status, 201);
+    draftId = draft.data.id;
+
+    const added = await api("/api/industry/team", {
+      method: "POST", token: state.industryToken, body: { name: "Team Mate", email: memberEmail },
+    });
+    assert.equal(added.status, 201, added.json?.message);
+    assert.equal(added.data.member.status, "INVITED");
+    memberId = added.data.member.id;
+
+    const token = new URL(added.data.setupUrl).searchParams.get("token");
+    const set = await api("/api/auth/reset-password", { method: "POST", body: { token, newPassword: memberPassword } });
+    assert.equal(set.status, 200);
+    const reused = await api("/api/auth/reset-password", { method: "POST", body: { token, newPassword: memberPassword } });
+    assert.equal(reused.status, 400, "the link works only once");
+    memberToken = await login({ email: memberEmail, password: memberPassword });
+  });
+
+  it("the colleague sees the same company dashboard, including unpublished problems", async () => {
+    const me = await api("/api/auth/me", { token: memberToken });
+    assert.match(me.data.industryProfile.companyName, /^TechCorp/);
+    const problemView = await api(`/api/challenges/${draftId}`, { token: memberToken });
+    assert.equal(problemView.status, 200);
+    assert.equal(problemView.data.ownedByRequester, true);
+    assert.equal(problemView.data.contact.phone, "+91 90000 11111");
+
+    const created = await api("/api/challenges", {
+      method: "POST", token: memberToken, body: problem(`E2E Problem by a teammate ${unique}`),
+    });
+    assert.equal(created.status, 201);
+    const seenByMain = await api(`/api/challenges/${created.data.id}`, { token: state.industryToken });
+    assert.equal(seenByMain.data.ownedByRequester, true);
+
+    const proposals = await api("/api/proposals", { token: memberToken });
+    const mainProposals = await api("/api/proposals", { token: state.industryToken });
+    assert.equal(proposals.data.pagination.total, mainProposals.data.pagination.total);
+  });
+
+  it("only the main account can manage the team", async () => {
+    const list = await api("/api/industry/team", { token: memberToken });
+    assert.equal(list.data.canManage, false);
+    assert.equal(list.data.members.length, 2);
+    const add = await api("/api/industry/team", {
+      method: "POST", token: memberToken, body: { name: "Someone Else", email: `else.${unique}@techcorp.example` },
+    });
+    assert.equal(add.status, 403);
+    assert.equal((await api(`/api/industry/team/${memberId}`, { method: "DELETE", token: memberToken })).status, 403);
+    assert.equal((await api("/api/industry/team", { token: state.institutionToken })).status, 403);
+  });
+
+  it("an email that already has an account cannot be added", async () => {
+    const res = await api("/api/industry/team", {
+      method: "POST", token: state.industryToken, body: { name: "Institution User", email: INSTITUTION.email },
+    });
+    assert.equal(res.status, 409);
+  });
+
+  it("a removed colleague loses access at once, even with a token they still hold", async () => {
+    const removed = await api(`/api/industry/team/${memberId}`, { method: "DELETE", token: state.industryToken });
+    assert.equal(removed.status, 200);
+    assert.equal((await api(`/api/challenges/${draftId}`, { token: memberToken })).status, 404);
+    assert.equal((await api("/api/auth/me", { token: memberToken })).status, 401);
+    assert.equal((await api("/api/challenges", { method: "POST", token: memberToken, body: problem("Blocked") })).status, 400);
+    const signIn = await api("/api/auth/login", { method: "POST", body: { email: memberEmail, password: memberPassword } });
+    assert.equal(signIn.status, 401);
+  });
+});
+
 describe("6. Password reset", () => {
   it("emails a link that sets a new password", async () => {
     const before = outbox().length;

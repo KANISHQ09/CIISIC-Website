@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getIndustryProfileId } from "@/lib/industry-team";
 import { ProposalQuerySchema } from "@/lib/validations/proposal";
 import { serializeProposal } from "@/lib/serializers";
 import {
@@ -40,12 +41,9 @@ export async function GET(req: NextRequest) {
     const where: any = status ? { status } : {};
 
     if (role === "INDUSTRY_SPOC") {
-      const profile = await prisma.industryProfile.findUnique({
-        where: { userId },
-        select: { id: true },
-      });
-      if (!profile) return ok({ data: [], pagination: { total: 0, page, limit, totalPages: 0 } });
-      where.challenge = { industryProfileId: profile.id };
+      const companyId = await getIndustryProfileId(role, userId);
+      if (!companyId) return ok({ data: [], pagination: { total: 0, page, limit, totalPages: 0 } });
+      where.challenge = { industryProfileId: companyId };
     } else if (role === "INSTITUTION_SPOC") {
       const profile = await prisma.institutionProfile.findUnique({
         where: { userId },

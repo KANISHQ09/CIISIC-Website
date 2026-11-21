@@ -5,7 +5,7 @@ import {
   Building2, PlusCircle, CheckCircle, Clock, AlertTriangle, FileText, 
   Globe, ChevronRight, FileCheck, X,
   Calendar, IndianRupee, UploadCloud, ArrowLeft, RefreshCw, Eye, Download,
-  GraduationCap, ExternalLink, MessageSquare, User, Lock
+  GraduationCap, ExternalLink, MessageSquare, User, Users, Lock
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { sanitizeHTML, stripHTML } from '../lib/html';
@@ -15,6 +15,7 @@ import { PhoneVisibility, SolutionSubmission, SolutionStatus } from '../types';
 import { ChangePasswordModal } from '../components/common/ChangePasswordModal';
 import { InlineLoader } from '../components/common/Loader';
 import { DocumentAccessNotice } from '../components/common/Notice';
+import { TeamPanel } from '../components/industry/TeamPanel';
 import { PHONE_VISIBILITY_OPTIONS, PhoneVisibilityField } from '../components/common/PhoneVisibilityField';
 
 export const IndustryDashboard: React.FC = () => {
@@ -24,7 +25,7 @@ export const IndustryDashboard: React.FC = () => {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   // Dashboard tab state
-  const [activeDashboardTab, setActiveDashboardTab] = useState<'statements' | 'solutions'>('statements');
+  const [activeDashboardTab, setActiveDashboardTab] = useState<'statements' | 'solutions' | 'team'>('statements');
   const dashboardTabsRef = useRef<HTMLDivElement>(null);
   useScrollIntoViewOnChange(dashboardTabsRef, activeDashboardTab);
   const [selectedSolutionForReview, setSelectedSolutionForReview] = useState<SolutionSubmission | null>(null);
@@ -545,7 +546,7 @@ export const IndustryDashboard: React.FC = () => {
       {currentView === 'dashboard' && (
         <div className="space-y-6 animate-fade-in" id="dashboard-ledger">
           {/* Main Tab Navigation */}
-          <div ref={dashboardTabsRef} className="flex border-b border-stone-200 gap-6">
+          <div ref={dashboardTabsRef} className="flex border-b border-stone-200 gap-x-6 gap-y-3 flex-wrap">
             <button
               onClick={() => setActiveDashboardTab('statements')}
               className={`pb-3 text-sm sm:text-base font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
@@ -575,7 +576,21 @@ export const IndustryDashboard: React.FC = () => {
                 {mySolutions.length}
               </span>
             </button>
+
+            <button
+              onClick={() => setActiveDashboardTab('team')}
+              className={`pb-3 text-sm sm:text-base font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
+                activeDashboardTab === 'team'
+                  ? 'text-[#063028] border-b-2 border-[#063028]'
+                  : 'text-stone-500 hover:text-stone-800'
+              }`}
+            >
+              <Users className="h-4 w-4" />
+              Team
+            </button>
           </div>
+
+          {activeDashboardTab === 'team' && <TeamPanel />}
 
           {/* TAB 1: PROBLEM STATEMENTS */}
           {activeDashboardTab === 'statements' && (

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { belongsToCompany, notifyIndustryTeam } from "@/lib/industry-team";
 import type { ProposalStatus } from "@prisma/client";
 import { ProposalCreateSchema, ProposalQuerySchema } from "@/lib/validations/proposal";
 import { createAuditLog, getRequestMeta } from "@/lib/audit";
@@ -57,7 +58,7 @@ export async function GET(
     if (!challenge) return notFound("Challenge not found");
 
     // Industry SPOC can only see their own challenge's proposals
-    if (isIndustry && challenge.industryProfile?.userId !== session.user.id) {
+    if (isIndustry && !(await belongsToCompany(role, session.user.id, challenge.industryProfileId))) {
       return forbidden("Access denied to this challenge's proposals");
     }
 
@@ -228,23 +229,13 @@ export async function POST(
       challenge.industryProfileId &&
       (proposal.status === "SUBMITTED" || proposal.status === "RESUBMITTED")
     ) {
-      const industryProfile = await prisma.industryProfile.findUnique({
-        where: { id: challenge.industryProfileId },
-        select: { userId: true },
+      await notifyIndustryTeam(challenge.industryProfileId, {
+        title: proposal.status === "RESUBMITTED" ? "Proposal Resubmitted" : "New Proposal Received",
+        body: proposal.status === "RESUBMITTED"
+          ? `A proposal has been resubmitted for your challenge: "${challenge.title}"`
+          : `A new proposal has been submitted for your challenge: "${challenge.title}"`,
+        link: `/api/challenges/${id}/proposals/${proposal.id}`,
       });
-
-      if (industryProfile) {
-        await prisma.notification.create({
-          data: {
-            userId: industryProfile.userId,
-            title: proposal.status === "RESUBMITTED" ? "Proposal Resubmitted" : "New Proposal Received",
-            body: proposal.status === "RESUBMITTED"
-              ? `A proposal has been resubmitted for your challenge: "${challenge.title}"`
-              : `A new proposal has been submitted for your challenge: "${challenge.title}"`,
-            link: `/api/challenges/${id}/proposals/${proposal.id}`,
-          },
-        });
-      }
     }
 
     const { ipAddress, userAgent } = getRequestMeta(req);

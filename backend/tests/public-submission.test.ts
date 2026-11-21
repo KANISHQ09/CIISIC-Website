@@ -15,6 +15,16 @@ vi.mock("../src/lib/email", () => ({
 }));
 vi.mock("../src/lib/prisma", () => ({
   prisma: {
+    user: {
+      findUnique: vi.fn(async ({ where }: { where: { id: string } }) => ({
+        role: "INDUSTRY_SPOC",
+        isActive: true,
+        approvalStatus: "APPROVED",
+        industryProfile: { id: where.id === "industry-user-1" ? "ind-1" : "ind-2" },
+        teamIndustryProfile: null,
+      })),
+      findMany: vi.fn().mockResolvedValue([{ id: "industry-user-1" }]),
+    },
     challenge: {
       count: vi.fn(),
       create: vi.fn(),
@@ -168,7 +178,7 @@ describe("Industry owners cannot bypass CII review", () => {
     vi.mocked(prisma.challenge.findUnique).mockResolvedValue({
       id: "ch-1",
       status: "PENDING_APPROVAL",
-      industryProfile: { userId: "industry-user-1" },
+      industryProfileId: "ind-1", industryProfile: { userId: "industry-user-1" },
     } as any);
 
     const res = await patchChallenge(patchRequest({ status: "OPEN" }), { params: Promise.resolve({ id: "ch-1" }) });
@@ -181,7 +191,7 @@ describe("Industry owners cannot bypass CII review", () => {
       id: "ch-1",
       status: "OPEN",
       publishedAt: new Date(),
-      industryProfile: { userId: "industry-user-1" },
+      industryProfileId: "ind-1", industryProfile: { userId: "industry-user-1" },
     } as any);
     vi.mocked(prisma.challenge.update).mockResolvedValue({ id: "ch-1", status: "PENDING_APPROVAL" } as any);
 
@@ -228,11 +238,11 @@ describe("Challenge privacy", () => {
 
   it("hides contact details from institutions and other companies", () => {
     expect(serializeChallenge(raw, "INSTITUTION_SPOC", "spoc-1").contact).toBeUndefined();
-    expect(serializeChallenge(raw, "INDUSTRY_SPOC", "industry-user-2").contact).toBeUndefined();
+    expect(serializeChallenge(raw, "INDUSTRY_SPOC", "ind-2").contact).toBeUndefined();
   });
 
   it("shows contact details to the owning company", () => {
-    const owner = serializeChallenge(raw, "INDUSTRY_SPOC", "industry-user-1");
+    const owner = serializeChallenge(raw, "INDUSTRY_SPOC", "ind-1");
     expect(owner.ownedByRequester).toBe(true);
     expect(owner.contact?.email).toBe("asha@techcorp.com");
     expect(owner.review).toBeUndefined();

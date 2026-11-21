@@ -147,13 +147,14 @@ export function serializeChallenge(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   challenge: any,
   requestingRole?: Role,
-  requestingUserId?: string
+  // The requester's company (see getIndustryProfileId), so every team member counts as the owner
+  requestingIndustryProfileId?: string | null
 ): SafeChallenge {
   const isAdmin = requestingRole === "SUPER_ADMIN" || requestingRole === "CII_ADMIN";
   const isOwner =
-    !!requestingUserId &&
+    !!requestingIndustryProfileId &&
     requestingRole === "INDUSTRY_SPOC" &&
-    challenge.industryProfile?.userId === requestingUserId;
+    challenge.industryProfileId === requestingIndustryProfileId;
   const showContact = isAdmin || isOwner;
   const phoneVisibility = challenge.phoneVisibility ?? "NO_ONE";
   const sharePhone =

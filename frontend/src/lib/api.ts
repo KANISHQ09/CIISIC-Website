@@ -1278,6 +1278,44 @@ export async function requestPasswordReset(email: string): Promise<{ message: st
 }
 
 /** Set a new password using the token from the emailed link. */
+/** Company team: several people signing in to the same industry dashboard. */
+export interface IndustryTeamMember {
+  id: string;
+  name: string;
+  email: string;
+  isMain: boolean;
+  status: 'ACTIVE' | 'INVITED';
+  createdAt: string;
+}
+
+export interface IndustryTeam {
+  companyName: string;
+  canManage: boolean;
+  maxMembers: number;
+  members: IndustryTeamMember[];
+}
+
+export function fetchIndustryTeam(): Promise<IndustryTeam> {
+  return fetchJSON<IndustryTeam>(`${API_BASE}/api/industry/team`);
+}
+
+export function addTeamMember(name: string, email: string): Promise<{ member: IndustryTeamMember; setupUrl: string }> {
+  return fetchJSON(`${API_BASE}/api/industry/team`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email }),
+  });
+}
+
+export async function createTeamMemberLink(id: string): Promise<string> {
+  const { setupUrl } = await fetchJSON<{ setupUrl: string }>(`${API_BASE}/api/industry/team/${id}/link`, { method: 'POST' });
+  return setupUrl;
+}
+
+export async function removeTeamMember(id: string): Promise<void> {
+  await fetchJSON(`${API_BASE}/api/industry/team/${id}`, { method: 'DELETE' });
+}
+
 export async function resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
   const url = API_BASE ? `${API_BASE}/api/auth/reset-password` : '/api/auth/reset-password';
   return fetchJSON<{ message: string }>(url, {

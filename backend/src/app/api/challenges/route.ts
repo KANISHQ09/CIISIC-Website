@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getIndustryProfileId } from "@/lib/industry-team";
 import { INDUSTRY_PROFILE_SELECT, generateReferenceCode } from "@/lib/problem-submission";
 import { sendProblemReceivedEmail } from "@/lib/email";
 import {
@@ -57,18 +58,14 @@ export async function GET(req: NextRequest) {
 
     const skip = (page - 1) * limit;
 
+    const requesterProfileId = await getIndustryProfileId(role, userId);
     const where: Prisma.ChallengeWhereInput = {};
 
     if (!role) {
       // Public visitors can only view OPEN challenges
       where.status = "OPEN";
     } else if (role === "INDUSTRY_SPOC" && userId) {
-      const profile = await prisma.industryProfile.findUnique({
-        where: { userId },
-        select: { id: true },
-      });
-
-      const industryId = profile?.id ?? "none";
+      const industryId = requesterProfileId ?? "none";
 
       if (status) {
         if (status === "OPEN") {
@@ -146,7 +143,7 @@ export async function GET(req: NextRequest) {
       serializeChallenge(
         challenge,
         role,
-        userId
+        requesterProfileId
       )
     );
 
@@ -191,11 +188,10 @@ export async function POST(req: NextRequest) {
 
     const data = parsed.data;
 
-    const industryProfile = await prisma.industryProfile.findUnique({
-      where: {
-        userId: session.user.id,
-      },
-    });
+    const companyId = await getIndustryProfileId(session.user.role, session.user.id);
+    const industryProfile = companyId
+      ? await prisma.industryProfile.findUnique({ where: { id: companyId } })
+      : null;
 
     if (!industryProfile) {
       return badRequest(
@@ -261,7 +257,7 @@ export async function POST(req: NextRequest) {
     });
 
     return created(
-      serializeChallenge(challenge, session.user.role, session.user.id)
+      serializeChallenge(challenge, session.user.role, industryProfile.id)
     );
   } catch (err) {
     console.error("[POST /api/challenges]", err);

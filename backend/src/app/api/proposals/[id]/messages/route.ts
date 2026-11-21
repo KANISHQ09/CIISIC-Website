@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { belongsToCompany, notifyIndustryTeam } from "@/lib/industry-team";
 import {
   MessageCreateSchema,
   redactContactInfo,
@@ -56,9 +57,7 @@ export async function GET(
     const isAdmin = role === "SUPER_ADMIN" || role === "CII_ADMIN";
     const isInstitution =
       role === "INSTITUTION_SPOC" && institutionSpocId(proposal) === userId;
-    const isIndustry =
-      role === "INDUSTRY_SPOC" &&
-      proposal.challenge.industryProfile?.userId === userId;
+    const isIndustry = await belongsToCompany(role, userId, proposal.challenge.industryProfileId);
 
     if (!isAdmin && !isInstitution && !isIndustry) {
       return forbidden("Access denied to this message thread");
@@ -135,9 +134,7 @@ export async function POST(
     const institutionUserId = institutionSpocId(proposal);
     const isInstitution =
       role === "INSTITUTION_SPOC" && institutionUserId === userId;
-    const isIndustry =
-      role === "INDUSTRY_SPOC" &&
-      proposal.challenge.industryProfile?.userId === userId;
+    const isIndustry = await belongsToCompany(role, userId, proposal.challenge.industryProfileId);
 
     if (!isInstitution && !isIndustry) {
       return forbidden("You are not a participant in this proposal thread");
@@ -164,19 +161,15 @@ export async function POST(
     });
 
     // Notify the other party
-    const recipientId = isInstitution
-      ? proposal.challenge.industryProfile?.userId ?? null
-      : institutionUserId;
-
-    if (recipientId) {
-      await prisma.notification.create({
-        data: {
-          userId: recipientId,
-          title: "New Message",
-          body: `${session.user.name} sent a message on a proposal`,
-          link: `/api/proposals/${id}/messages`,
-        },
-      });
+    const notification = {
+      title: "New Message",
+      body: `${session.user.name} sent a message on a proposal`,
+      link: `/api/proposals/${id}/messages`,
+    };
+    if (isInstitution && proposal.challenge.industryProfileId) {
+      await notifyIndustryTeam(proposal.challenge.industryProfileId, notification);
+    } else if (isIndustry && institutionUserId) {
+      await prisma.notification.create({ data: { userId: institutionUserId, ...notification } });
     }
 
     const { ipAddress, userAgent } = getRequestMeta(req);

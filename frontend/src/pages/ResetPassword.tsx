@@ -7,10 +7,11 @@ import { resetPassword } from '../lib/api';
 
 const PASSWORD_RULES = 'At least 8 characters, with an uppercase letter and a number.';
 
-/** /reset-password?token=… — set a new password from the emailed link. */
+/** /reset-password?token=… — set a new password from the emailed link, or a first password for a new team member (&welcome=1). */
 export const ResetPassword: React.FC = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') || '';
+  const isWelcome = searchParams.get('welcome') === '1';
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -46,8 +47,8 @@ export const ResetPassword: React.FC = () => {
   return (
     <AuthCard
       icon={<ShieldCheck className="h-8 w-8" />}
-      title="Set a new password"
-      subtitle="Choose a new password for your CIISIC account."
+      title={isWelcome ? 'Join your company team' : 'Set a new password'}
+      subtitle={isWelcome ? 'Create a password to sign in to your company dashboard.' : 'Choose a new password for your CIISIC account.'}
     >
       {!token ? (
         <div className="space-y-5 text-center">
@@ -63,12 +64,12 @@ export const ResetPassword: React.FC = () => {
         <div className="space-y-5 text-center">
           <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-900 text-left flex gap-3">
             <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-            <span>Your password has been changed. You can now sign in with your new password.</span>
+            <span>{isWelcome ? 'Your password is set. You can now sign in to your company dashboard.' : 'Your password has been changed. You can now sign in with your new password.'}</span>
           </div>
           <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm font-bold">
             <Link to="/industry/login" className="text-[#063028] hover:underline">Industry login</Link>
-            <Link to="/institution/login" className="text-[#063028] hover:underline">Institution login</Link>
-            <Link to="/admin/login" className="text-[#063028] hover:underline">CII Admin login</Link>
+            {!isWelcome && <Link to="/institution/login" className="text-[#063028] hover:underline">Institution login</Link>}
+            {!isWelcome && <Link to="/admin/login" className="text-[#063028] hover:underline">CII Admin login</Link>}
           </div>
         </div>
       ) : (
@@ -111,7 +112,7 @@ export const ResetPassword: React.FC = () => {
             disabled={isLoading}
             className="w-full py-3.5 rounded-xl text-base font-bold text-white bg-[#063028] hover:bg-[#04201a] transition-all disabled:opacity-60 cursor-pointer shadow-sm"
           >
-            {isLoading ? 'Saving...' : 'Save new password'}
+            {isLoading ? 'Saving...' : isWelcome ? 'Set password' : 'Save new password'}
           </button>
         </form>
       )}

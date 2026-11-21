@@ -57,7 +57,10 @@ model User {
   accounts            Account[]
   auditLogs           AuditLog[]
   reviewedChallenges  Challenge[]          @relation("ChallengeReviewer")
-  industryProfile     IndustryProfile?
+  industryProfile     IndustryProfile?     @relation("IndustryMainAccount")
+  // Set for a colleague added to a company's team. The company's main account has industryProfile instead.
+  teamIndustryProfileId String?
+  teamIndustryProfile IndustryProfile?     @relation("IndustryTeam", fields: [teamIndustryProfileId], references: [id], onDelete: SetNull)
   institutionProfile  InstitutionProfile?
   sentMessages        Message[]            @relation("SentMessages")
   notifications       Notification[]
@@ -67,6 +70,7 @@ model User {
 
   @@index([email])
   @@index([role])
+  @@index([teamIndustryProfileId])
 }
 
 model IndustryProfile {
@@ -84,7 +88,8 @@ model IndustryProfile {
   memberSince DateTime?
   createdAt   DateTime    @default(now())
   challenges  Challenge[]
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User        @relation("IndustryMainAccount", fields: [userId], references: [id], onDelete: Cascade)
+  teamMembers User[]      @relation("IndustryTeam")
 }
 
 model Institution {

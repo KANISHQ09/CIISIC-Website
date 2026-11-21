@@ -11,6 +11,16 @@ vi.mock("../src/lib/auth", () => ({ auth: vi.fn() }));
 vi.mock("../src/lib/email", () => ({ sendProblemReceivedEmail: vi.fn().mockResolvedValue({}) }));
 vi.mock("../src/lib/prisma", () => ({
   prisma: {
+    user: {
+      findUnique: vi.fn(async ({ where }: { where: { id: string } }) => ({
+        role: "INDUSTRY_SPOC",
+        isActive: true,
+        approvalStatus: "APPROVED",
+        industryProfile: { id: where.id === "industry-user-1" ? "ind-1" : "ind-2" },
+        teamIndustryProfile: null,
+      })),
+      findMany: vi.fn().mockResolvedValue([{ id: "industry-user-1" }]),
+    },
     challenge: { count: vi.fn(), create: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
     industryProfile: { findFirst: vi.fn() },
     auditLog: { create: vi.fn().mockResolvedValue({}) },
@@ -103,7 +113,7 @@ describe("Editing details", () => {
       id: "ch-1",
       status: "OPEN",
       publishedAt: new Date(),
-      industryProfile: { userId: "industry-user-1" },
+      industryProfileId: "ind-1", industryProfile: { userId: "industry-user-1" },
     } as any);
 
     await patchChallenge(
@@ -127,7 +137,7 @@ describe("Editing details", () => {
       id: "ch-1",
       status: "OPEN",
       publishedAt: new Date(),
-      industryProfile: { userId: "industry-user-1" },
+      industryProfileId: "ind-1", industryProfile: { userId: "industry-user-1" },
     } as any);
 
     await patchChallenge(
