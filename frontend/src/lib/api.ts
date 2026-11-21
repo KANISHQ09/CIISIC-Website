@@ -1,6 +1,6 @@
 import {
   ProblemStatement, User, SubmissionStatus, UserRole,
-  SolutionSubmission, SolutionStatus, PublicIndustry
+  SolutionSubmission, SolutionStatus, PublicIndustry, PhoneVisibility
 } from '../types';
 
 /**
@@ -877,6 +877,7 @@ function flattenChallengePayload(payload: any): any {
     contactDesignation: payload.company?.designation || undefined,
     contactEmail: payload.company?.email || undefined,
     contactPhone: payload.company?.phone || undefined,
+    phoneVisibility: payload.company?.phoneVisibility,
     // Details from the submission form
     existingProcess: payload.details?.existingProcess || undefined,
     expectedOutcome: payload.details?.expectedOutcome || undefined,
@@ -1076,6 +1077,7 @@ function mapBackendToProblemStatement(backend: any): ProblemStatement {
       designation: contact.designation ?? backend.industry?.designation ?? '',
       email: contact.email ?? backend.industry?.email ?? '',
       phone: contact.phone ?? backend.industry?.phone ?? '',
+      phoneVisibility: backend.phoneVisibility ?? undefined,
       website: backend.organisation?.website ?? backend.industry?.website ?? '',
       industrySector: backend.organisation?.sector || sectorName,
       city: backend.organisation?.city ?? undefined,
@@ -1182,6 +1184,7 @@ export interface PublicProblemPayload {
   contactDesignation: string;
   contactEmail: string;
   contactPhone: string;
+  phoneVisibility?: PhoneVisibility;
   // Problem (already in backend shape)
   title: string;
   description: string;
@@ -1239,6 +1242,17 @@ export function toBackendProblemFields(payload: Omit<ProblemStatement, 'id' | 's
     expectedDeliverables: flat.expectedDeliverables,
     additionalNotes: flat.additionalNotes,
   };
+}
+
+/** Change who can see a problem's mobile number. Does not send the problem back for review. */
+export async function updatePhoneVisibility(id: string, phoneVisibility: PhoneVisibility): Promise<ProblemStatement> {
+  if (!API_BASE) throw new Error('Backend is not configured');
+  const updated = await fetchJSON<any>(`${API_BASE}/api/challenges/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phoneVisibility }),
+  });
+  return mapBackendToProblemStatement(updated);
 }
 
 /** CII admin: invite an unregistered ("Other") organisation to register. */

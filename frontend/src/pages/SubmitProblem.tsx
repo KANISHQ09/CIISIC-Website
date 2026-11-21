@@ -17,6 +17,7 @@ import {
 } from '../lib/api';
 import { usePageTitle } from '../lib/usePageTitle';
 import { DocumentAccessNotice, SubmissionDisclaimer } from '../components/common/Notice';
+import { PHONE_VISIBILITY_OPTIONS, PhoneVisibilityField } from '../components/common/PhoneVisibilityField';
 
 /** Dropdown value for an organisation that is not registered on the portal. */
 const OTHER_ORG = 'OTHER';
@@ -36,6 +37,7 @@ const formSchema = z.object({
     .string()
     .min(7, 'Phone number is required')
     .regex(/^[+0-9 ()-]+$/, 'Use digits, spaces, +, - and brackets only'),
+  phoneVisibility: z.enum(['EVERYONE', 'INSTITUTION_SPOCS', 'NO_ONE']),
   website: z.string().optional(),
   industrySector: z.string().min(2, 'Industry sector is required'),
   // Only needed for "Other" organisations (checked in validateOrganisation)
@@ -112,6 +114,7 @@ export const SubmitProblem: React.FC = () => {
       designation: isIndustryUser ? currentUser?.designation || '' : '',
       email: isIndustryUser ? currentUser?.email || '' : '',
       phone: isIndustryUser ? currentUser?.phone || '' : '',
+      phoneVisibility: 'NO_ONE',
       website: '',
       industrySector: isIndustryUser ? currentUser?.industry || '' : '',
       city: '',
@@ -125,6 +128,7 @@ export const SubmitProblem: React.FC = () => {
   });
 
   const orgChoice = watch('orgChoice');
+  const phoneVisibility = watch('phoneVisibility');
   const isOtherOrg = orgChoice === OTHER_ORG;
   const isRegisteredOrg = !!orgChoice && orgChoice !== OTHER_ORG && orgChoice !== OWN_ORG;
 
@@ -253,6 +257,7 @@ export const SubmitProblem: React.FC = () => {
           designation: data.designation,
           email: data.email,
           phone: data.phone,
+          phoneVisibility: data.phoneVisibility,
           website: data.website || '',
           industrySector: data.industrySector
         },
@@ -306,6 +311,7 @@ export const SubmitProblem: React.FC = () => {
         contactDesignation: data.designation,
         contactEmail: data.email,
         contactPhone: data.phone,
+        phoneVisibility: data.phoneVisibility,
         companyFax: honeypot,
       });
 
@@ -669,6 +675,11 @@ export const SubmitProblem: React.FC = () => {
                       <input type="tel" autoComplete="tel" {...register('phone')} placeholder="+91 98765 43210" className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white" />
                       {errors.phone && <p className="text-sm text-red-600 mt-1">{errors.phone.message}</p>}
                     </div>
+                    <PhoneVisibilityField
+                      className="sm:col-span-2"
+                      value={phoneVisibility}
+                      onChange={(value) => setValue('phoneVisibility', value)}
+                    />
                   </div>
                 </div>
               </div>
@@ -1050,6 +1061,9 @@ export const SubmitProblem: React.FC = () => {
                       <h4 className="text-xs font-bold uppercase text-stone-500 tracking-wider">Filing Organization</h4>
                       <p className="font-semibold text-stone-800 mt-1">{allValues.companyName}</p>
                       <p className="text-xs text-stone-500 mt-0.5 break-all">{allValues.representativeName} • {allValues.email}</p>
+                      <p className="text-xs text-stone-500 mt-0.5">
+                        Mobile number visible to: {PHONE_VISIBILITY_OPTIONS.find((o) => o.value === phoneVisibility)?.label}
+                      </p>
                     </div>
                     <div>
                       <h4 className="text-xs font-bold uppercase text-stone-500 tracking-wider">Industry sector</h4>

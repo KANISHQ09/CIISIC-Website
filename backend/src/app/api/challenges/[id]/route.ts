@@ -139,6 +139,8 @@ export async function PATCH(
         ...(data.budgetRange !== undefined && { budgetRange: data.budgetRange }),
         ...(data.tags && { tags: data.tags }),
         ...(data.attachmentUrls && { attachmentUrls: data.attachmentUrls }),
+        // A privacy choice, not a content change: it never sends the problem back for review
+        ...(data.phoneVisibility && { phoneVisibility: data.phoneVisibility }),
         // Only the detail fields that were sent are changed
         ...Object.fromEntries(
           Object.entries(problemDetailData(data)).filter(([key]) => data[key as DetailKey] !== undefined)

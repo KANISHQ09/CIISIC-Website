@@ -231,6 +231,7 @@ export async function POST(req: NextRequest) {
         contactDesignation: data.contactDesignation || null,
         contactEmail,
         contactPhone: data.contactPhone || null,
+        phoneVisibility: data.phoneVisibility ?? "NO_ONE",
         ...problemDetailData(data),
       },
       include: { industryProfile: { select: INDUSTRY_PROFILE_SELECT } },

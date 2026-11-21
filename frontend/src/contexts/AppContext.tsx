@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
   ProblemStatement, User, SubmissionStatus, UserRole,
-  SolutionSubmission, SolutionStatus
+  SolutionSubmission, SolutionStatus, PhoneVisibility
 } from '../types';
 import { 
   login as apiLogin, logout as apiLogout, getSession, 
-  fetchChallenges, createChallenge, updateChallenge, reviewChallenge,
+  fetchChallenges, createChallenge, updateChallenge, updatePhoneVisibility, reviewChallenge,
   fetchSolutions,
   submitSolution as apiSubmitSolution, reviewSolution as apiReviewSolution
 } from '../lib/api';
@@ -33,6 +33,7 @@ interface AppContextType {
   addSubmission: (submission: Omit<ProblemStatement, 'id' | 'status' | 'submittedDate'>) => Promise<string>;
   updateSubmissionStatus: (id: string, status: SubmissionStatus, remarks?: string) => Promise<void>;
   updateSubmission: (submission: ProblemStatement) => Promise<void>;
+  setPhoneVisibility: (id: string, visibility: PhoneVisibility) => Promise<ProblemStatement>;
   submitSolution: (solutionData: Omit<SolutionSubmission, 'id' | 'submittedAt' | 'status'>) => Promise<SolutionSubmission>;
   reviewSolution: (solutionId: string, status: SolutionStatus, feedback?: string, revisionNotes?: string) => Promise<SolutionSubmission>;
   resetData: () => void;
@@ -196,6 +197,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
+  const setPhoneVisibility = async (id: string, visibility: PhoneVisibility) => {
+    const saved = await updatePhoneVisibility(id, visibility);
+    setSubmissions((prev) => prev.map((sub) => (sub.id === saved.id ? saved : sub)));
+    return saved;
+  };
+
   const updateSubmission = async (updated: ProblemStatement) => {
     const saved = await updateChallenge(updated.id, updated);
     setSubmissions((prev) =>
@@ -250,6 +257,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addSubmission,
         updateSubmissionStatus,
         updateSubmission,
+        setPhoneVisibility,
         submitSolution,
         reviewSolution,
         resetData

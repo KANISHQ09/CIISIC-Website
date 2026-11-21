@@ -10,6 +10,9 @@ const DOMAINS = [
   "STARTUP",
 ] as const;
 
+/** Who can see the submitter's mobile number (CII admins and the owning company always can). */
+export const PhoneVisibilitySchema = z.enum(["EVERYONE", "INSTITUTION_SPOCS", "NO_ONE"]);
+
 /** Person submitting a problem statement. */
 const ContactSchema = z.object({
   contactName: z.string().trim().min(2, "Contact name is required").max(100),
@@ -21,6 +24,7 @@ const ContactSchema = z.object({
     .min(7, "A valid phone number is required")
     .max(20)
     .regex(/^[+0-9 ()-]+$/, "Phone number can only contain digits, spaces, +, - and brackets"),
+  phoneVisibility: PhoneVisibilitySchema.optional(),
 });
 
 /** Extra problem details from the submission form (all optional; older problems lack them). */
@@ -86,6 +90,7 @@ export const ChallengeCreateSchema = z.object({
   contactDesignation: z.string().trim().max(100).optional(),
   contactEmail: z.string().trim().toLowerCase().email().optional().or(z.literal("")),
   contactPhone: z.string().trim().max(20).optional(),
+  phoneVisibility: PhoneVisibilitySchema.optional(),
 }).merge(ProblemDetailSchema);
 
 export const ChallengeUpdateSchema = ChallengeCreateSchema.partial().extend({

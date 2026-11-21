@@ -11,10 +11,11 @@ import { useApp } from '../contexts/AppContext';
 import { sanitizeHTML, stripHTML } from '../lib/html';
 import { uploadFile } from '../lib/api';
 import { getOriginalFileName } from '../lib/file';
-import { SolutionSubmission, SolutionStatus } from '../types';
+import { PhoneVisibility, SolutionSubmission, SolutionStatus } from '../types';
 import { ChangePasswordModal } from '../components/common/ChangePasswordModal';
 import { InlineLoader } from '../components/common/Loader';
 import { DocumentAccessNotice } from '../components/common/Notice';
+import { PHONE_VISIBILITY_OPTIONS, PhoneVisibilityField } from '../components/common/PhoneVisibilityField';
 
 export const IndustryDashboard: React.FC = () => {
   const { currentUser, submissions, addSubmission, showToast, solutions, reviewSolution, submissionsLoading, solutionsLoading } = useApp();
@@ -42,6 +43,7 @@ export const IndustryDashboard: React.FC = () => {
   const [spocName, setSpocName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [phoneVisibility, setPhoneVisibility] = useState<PhoneVisibility>('NO_ONE');
   const [website, setWebsite] = useState('');
   
   const [title, setTitle] = useState('');
@@ -387,6 +389,7 @@ export const IndustryDashboard: React.FC = () => {
           designation: currentUser?.designation || 'Head of Innovation & R&D',
           email: email,
           phone: phone,
+          phoneVisibility,
           website: website,
           industrySector: industryCategory,
         },
@@ -1154,6 +1157,8 @@ export const IndustryDashboard: React.FC = () => {
                       />
                       {errors.website && <p className="text-sm text-red-600 mt-1">{errors.website}</p>}
                     </div>
+
+                    <PhoneVisibilityField className="col-span-full" value={phoneVisibility} onChange={setPhoneVisibility} />
                   </div>
                 </div>
 
@@ -1413,6 +1418,9 @@ export const IndustryDashboard: React.FC = () => {
                     <div>
                       <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Phone Number</span>
                       <span className="font-semibold text-stone-800 block mt-1">{phone}</span>
+                      <span className="text-xs text-stone-500 block mt-0.5">
+                        Visible to: {PHONE_VISIBILITY_OPTIONS.find((o) => o.value === phoneVisibility)?.label}
+                      </span>
                     </div>
                     <div>
                       <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Company Website</span>

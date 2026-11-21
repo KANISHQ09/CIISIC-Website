@@ -11,11 +11,12 @@ import { fetchChallengeById } from '../lib/api';
 import { getOriginalFileName } from '../lib/file';
 import { ProblemStatement } from '../types';
 import { usePageTitle } from '../lib/usePageTitle';
+import { PhoneVisibilityField } from '../components/common/PhoneVisibilityField';
 
 export const SubmissionDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { currentUser, submissions, updateSubmissionStatus, updateSubmission, showToast } = useApp();
+  const { currentUser, submissions, updateSubmissionStatus, updateSubmission, setPhoneVisibility, showToast } = useApp();
 
   const [submission, setSubmission] = useState<ProblemStatement | null>(() => {
     return submissions.find((sub) => sub.id === id) || null;
@@ -49,6 +50,7 @@ export const SubmissionDetails: React.FC = () => {
   const [remarks, setRemarks] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [savingVisibility, setSavingVisibility] = useState(false);
 
   // Editable fields state
   const [editTitle, setEditTitle] = useState('');
@@ -372,10 +374,35 @@ export const SubmissionDetails: React.FC = () => {
                 ) : (
                   <div className="sm:col-span-2">
                     <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Contact</span>
-                    <span className="text-stone-600 text-sm block mt-1">
-                      Contact details are shared by CII with partner institutions on request.
-                    </span>
+                    {submission.company.phone ? (
+                      <a href={`tel:${submission.company.phone.replace(/[^+0-9]/g, '')}`} className="font-semibold text-[#063028] text-base block mt-1 hover:underline">
+                        {submission.company.phone}
+                      </a>
+                    ) : (
+                      <span className="text-stone-600 text-sm block mt-1">
+                        Contact details are shared by CII with partner institutions on request.
+                      </span>
+                    )}
                   </div>
+                )}
+                {/* Only the owning company and CII admins receive this setting */}
+                {submission.company.phoneVisibility && (
+                  <PhoneVisibilityField
+                    className="sm:col-span-2"
+                    value={submission.company.phoneVisibility}
+                    disabled={savingVisibility}
+                    onChange={async (value) => {
+                      setSavingVisibility(true);
+                      try {
+                        setSubmission(await setPhoneVisibility(submission.id, value));
+                        showToast('Mobile number visibility updated.', 'success');
+                      } catch (err: any) {
+                        showToast(err.message || 'Could not update the visibility.', 'error');
+                      } finally {
+                        setSavingVisibility(false);
+                      }
+                    }}
+                  />
                 )}
                 {submission.company.website && (
                   <div>

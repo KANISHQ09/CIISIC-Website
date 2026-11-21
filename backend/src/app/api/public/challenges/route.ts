@@ -103,6 +103,7 @@ export async function POST(req: NextRequest) {
         contactDesignation: data.contactDesignation,
         contactEmail: data.contactEmail,
         contactPhone: data.contactPhone,
+        phoneVisibility: data.phoneVisibility ?? "NO_ONE",
         ...problemDetailData(data),
       },
       select: { id: true, referenceCode: true, title: true, status: true },

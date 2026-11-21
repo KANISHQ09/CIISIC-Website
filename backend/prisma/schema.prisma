@@ -142,6 +142,8 @@ model Challenge {
   contactDesignation String?
   contactEmail       String?
   contactPhone       String?
+  // Who may see contactPhone besides CII admins and the owning company
+  phoneVisibility    PhoneVisibility @default(NO_ONE)
   // When CII invited an unregistered organisation to create an industry account
   inviteSentAt       DateTime?
   attachmentUrls     String[]
@@ -302,6 +304,12 @@ enum CellTheme {
   AGRITECH
   SKILL_DEVELOPMENT
   STARTUP
+}
+
+enum PhoneVisibility {
+  EVERYONE
+  INSTITUTION_SPOCS
+  NO_ONE
 }
 
 enum ChallengeStatus {

@@ -325,6 +325,53 @@ describe("5. Industry owner cannot skip CII review", () => {
   });
 });
 
+describe("5b. Mobile number privacy", () => {
+  const PHONE = "+91 91234 56789";
+
+  it("follows the company's choice and never triggers a new review", async () => {
+    const created = await api("/api/challenges", {
+      method: "POST",
+      token: state.industryToken,
+      body: { ...problem(`E2E Phone privacy ${unique}`), contactPhone: PHONE, phoneVisibility: "INSTITUTION_SPOCS" },
+    });
+    assert.equal(created.status, 201, created.json?.message);
+    const id = created.data.id;
+
+    // Not published yet: nobody else gets the number
+    assert.equal((await api(`/api/challenges/${id}`, { token: state.institutionToken })).status, 404);
+
+    const approved = await api(`/api/admin/challenges/${id}/review`, {
+      method: "POST", token: state.adminToken, body: { action: "APPROVE", remarks: "Clear scope" },
+    });
+    assert.equal(approved.status, 200);
+
+    // Institution SPOCs only
+    const spoc = await api(`/api/challenges/${id}`, { token: state.institutionToken });
+    assert.equal(spoc.data.contact.phone, PHONE);
+    assert.equal(spoc.data.contact.email, null);
+    assert.equal(spoc.data.phoneVisibility, undefined);
+    assert.ok(!JSON.stringify((await api(`/api/challenges/${id}`)).json).includes(PHONE));
+
+    // Everyone, changed by the owner: stays published
+    const everyone = await api(`/api/challenges/${id}`, {
+      method: "PATCH", token: state.industryToken, body: { phoneVisibility: "EVERYONE" },
+    });
+    assert.equal(everyone.status, 200);
+    assert.equal(everyone.data.status, "OPEN");
+    assert.equal((await api(`/api/challenges/${id}`)).data.contact.phone, PHONE);
+
+    // No one
+    await api(`/api/challenges/${id}`, {
+      method: "PATCH", token: state.industryToken, body: { phoneVisibility: "NO_ONE" },
+    });
+    assert.ok(!JSON.stringify((await api(`/api/challenges/${id}`)).json).includes(PHONE));
+    assert.ok(!JSON.stringify((await api(`/api/challenges/${id}`, { token: state.institutionToken })).json).includes(PHONE));
+    const owner = await api(`/api/challenges/${id}`, { token: state.industryToken });
+    assert.equal(owner.data.contact.phone, PHONE);
+    assert.equal(owner.data.phoneVisibility, "NO_ONE");
+  });
+});
+
 describe("6. Password reset", () => {
   it("emails a link that sets a new password", async () => {
     const before = outbox().length;
