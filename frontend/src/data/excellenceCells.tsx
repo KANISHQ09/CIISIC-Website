@@ -6,6 +6,12 @@ export interface ExcellenceCellData {
   id: string;
   name: string;
   partner: string;
+  /**
+   * The cell's contact email and (optional) contact person, shown on the cell cards and profile
+   * (CII portal review, 16 Nov 2026). Hidden until filled in: add them here when CII shares them.
+   */
+  email?: string;
+  contactName?: string;
   image: string;
   brief: string;
   details: string;
@@ -35,6 +41,8 @@ export const EXCELLENCE_CELLS: ExcellenceCellData[] = [
     id: 'family-business',
     name: "Family Business & Entrepreneurship",
     partner: "Jagran Lakecity University",
+    email: "", // TODO: cell email from CII
+    contactName: "", // optional: contact person from CII
     image: "/images/1_family_business.jpg",
     brief: "Building sustainable family enterprises through governance, entrepreneurship, and next-generation leadership.",
     details: "The Family Business & Entrepreneurship Cell supports family-owned enterprises and aspiring entrepreneurs through structured guidance, industry engagement, and practical learning. It focuses on strengthening business continuity, encouraging innovation, promoting networking opportunities, and developing next-generation leadership for sustainable growth.",
@@ -44,6 +52,8 @@ export const EXCELLENCE_CELLS: ExcellenceCellData[] = [
     id: 'talent-readiness',
     name: "Talent Readiness & Employability",
     partner: "Lakshmi Narain College of Technology",
+    email: "", // TODO: cell email from CII
+    contactName: "", // optional: contact person from CII
     image: "/images/2_talent_readiness.jpg",
     brief: "Preparing students with industry exposure, career readiness, mentoring, and employability skills.",
     details: "The Talent Readiness & Employability Cell prepares students for successful careers by enhancing professional skills and industry exposure. The cell emphasizes career readiness, placement preparation, employability enhancement, and mentorship to bridge the gap between academia and industry.",
@@ -53,6 +63,8 @@ export const EXCELLENCE_CELLS: ExcellenceCellData[] = [
     id: 'research-innovation',
     name: "Research & Innovation",
     partner: "LNCT University",
+    email: "", // TODO: cell email from CII
+    contactName: "", // optional: contact person from CII
     image: "/images/3_research_innovation.jpg",
     brief: "Promoting applied research, innovation, technology development, and industry collaboration.",
     details: "The Research & Innovation Cell promotes applied research and technology-driven innovation to solve real-world challenges. It encourages industry collaboration, supports innovation laboratories, facilitates intellectual property development, and nurtures startup-oriented research initiatives.",
@@ -62,6 +74,8 @@ export const EXCELLENCE_CELLS: ExcellenceCellData[] = [
     id: 'ai-in-business',
     name: "AI in Business Excellence Cell",
     partner: "Oriental Group of Institutes (OGI)",
+    email: "", // TODO: cell email from CII
+    contactName: "", // optional: contact person from CII
     image: "/images/4_ai_in_business.jpg",
     brief: "Helping organizations adopt Artificial Intelligence through practical use cases, analytics, automation, and AI-driven business transformation.",
     details: "The AI in Business Excellence Cell, run by Oriental Group of Institutes in collaboration with the CII Industry Academia Excellence Cell, exists to give organizations a dependable starting point for AI adoption, one built on evidence and experimentation rather than sales pitches. We help companies figure out where AI genuinely fits, test it before committing real budget, and build the internal skills needed to sustain it once the pilot is over.",
@@ -148,6 +162,8 @@ export const EXCELLENCE_CELLS: ExcellenceCellData[] = [
     id: 'agritech',
     name: "AgriTech",
     partner: "Rabindranath Tagore University",
+    email: "", // TODO: cell email from CII
+    contactName: "", // optional: contact person from CII
     image: "/images/5_agritech.jpeg",
     brief: "Advancing agriculture through digital technologies, sustainability, and smart farming innovation.",
     details: "The AgriTech Cell promotes innovation in agriculture by integrating modern technologies with sustainable farming practices. It supports agricultural research, digital solutions, climate-smart agriculture, and startup initiatives that contribute to the growth of the agri ecosystem.",
@@ -157,6 +173,8 @@ export const EXCELLENCE_CELLS: ExcellenceCellData[] = [
     id: 'skill-development',
     name: "Skill Development",
     partner: "Scope Global Skills University",
+    email: "", // TODO: cell email from CII
+    contactName: "", // optional: contact person from CII
     image: "/images/6_skill_development.jpeg",
     brief: "Empowering learners with industry-aligned training, certifications, and lifelong learning opportunities.",
     details: "The Skill Development Cell equips learners with industry-relevant knowledge and practical experience to improve career readiness. The cell focuses on hands-on training, skill certification, lifelong learning, and continuous professional development aligned with industry requirements.",
@@ -166,6 +184,8 @@ export const EXCELLENCE_CELLS: ExcellenceCellData[] = [
     id: 'startup-cell',
     name: "Startup Cell",
     partner: "Rabindranath Tagore University",
+    email: "", // TODO: cell email from CII
+    contactName: "", // optional: contact person from CII
     image: "/images/7_startup.jpeg",
     brief: "Supporting entrepreneurship through mentorship, incubation, funding opportunities, and startup growth.",
     details: "The Startup Cell empowers innovators by supporting the complete entrepreneurial journey from idea to venture creation. It provides guidance in ideation, mentorship, investor connections, and startup growth through collaboration with industry and academic experts.",

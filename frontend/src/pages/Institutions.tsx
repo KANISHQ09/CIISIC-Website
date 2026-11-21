@@ -10,8 +10,9 @@ const PARTNER_LOGOS = [
   { name: 'Rabindranath Tagore University', src: '/images/rntu_logo.png' },
   { name: 'Scope Global Skills University', src: '/images/scope_global_logo.png' },
 ];
-import { Building2, GraduationCap, ArrowRight } from 'lucide-react';
+import { GraduationCap, ArrowRight } from 'lucide-react';
 import { usePageTitle } from '../lib/usePageTitle';
+import { InstitutionDirectory } from '../components/common/InstitutionDirectory';
 
 export const Institutions: React.FC = () => {
   usePageTitle('Partner Institutions');
@@ -98,62 +99,8 @@ export const Institutions: React.FC = () => {
           </div>
         </div>
 
-        {/* Two-Column Grid for Cities */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
-          
-          {/* Indore Column */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-3 border-b border-stone-200 pb-4">
-              <div className="p-3 bg-[#edf4f0] text-[#063028] rounded-xl">
-                <Building2 className="h-6 w-6" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-[#063028] font-serif">Indore Division</h2>
-                <p className="text-sm text-[#a6711c] font-bold uppercase tracking-wider">{INDORE_INSTITUTIONS.length} Partner Institutions</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {INDORE_INSTITUTIONS.map((inst, index) => (
-                <div 
-                  key={index} 
-                  className="bg-white border border-stone-200/90 p-5 rounded-2xl shadow-xs flex flex-col justify-center min-h-[5.5rem] transition-all duration-300 hover:border-[#063028] hover:shadow-md hover:-translate-y-0.5"
-                >
-                  <p className="text-sm sm:text-base font-bold text-stone-800 leading-snug">
-                    {inst.name}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Bhopal Column */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-3 border-b border-stone-200 pb-4">
-              <div className="p-3 bg-[#fef6e7] text-[#c48825] rounded-xl">
-                <Building2 className="h-6 w-6" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-[#063028] font-serif">Bhopal Division</h2>
-                <p className="text-sm text-[#a6711c] font-bold uppercase tracking-wider">{BHOPAL_INSTITUTIONS.length} Partner Institutions</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {BHOPAL_INSTITUTIONS.map((inst, index) => (
-                <div 
-                  key={index} 
-                  className="bg-white border border-stone-200/90 p-5 rounded-2xl shadow-xs flex flex-col justify-center min-h-[5.5rem] transition-all duration-300 hover:border-[#063028] hover:shadow-md hover:-translate-y-0.5"
-                >
-                  <p className="text-sm sm:text-base font-bold text-stone-800 leading-snug">
-                    {inst.name}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-        </div>
+        {/* Institutions by city, with a city filter (same list as the Ecosystem page) */}
+        <InstitutionDirectory />
 
       </div>
     </div>

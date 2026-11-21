@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { X, CheckCircle2 } from 'lucide-react';
+import { X, CheckCircle2, Mail } from 'lucide-react';
 import { EXCELLENCE_CELLS, ExcellenceCellData } from '../../data/excellenceCells';
 
 
@@ -28,12 +28,14 @@ export const ExcellenceCellsSection: React.FC = () => {
         </div>
 
         {/* Cells Showcase Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-8">
           {EXCELLENCE_CELLS.map((cell) => (
-            <div 
+            <button
+              type="button"
               key={cell.id}
               onClick={() => setSelectedCell(cell)}
-              className="group bg-white border border-stone-200/90 rounded-2xl overflow-hidden flex flex-col justify-between shadow-xs hover:shadow-md hover:border-stone-300 transition-all duration-300 cursor-pointer"
+              aria-label={`${cell.name}: open the cell profile`}
+              className="group h-full text-left bg-white border border-stone-200/90 rounded-2xl overflow-hidden flex flex-col justify-between shadow-xs hover:shadow-md hover:border-stone-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#063028] transition-all duration-300 cursor-pointer"
             >
               <div className="space-y-4">
                 {/* Cell Image Frame - natural height to prevent cropping infographic text */}
@@ -60,6 +62,13 @@ export const ExcellenceCellsSection: React.FC = () => {
                   <p className="text-sm text-stone-700 leading-relaxed font-normal">
                     {cell.brief}
                   </p>
+                  {cell.email && (
+                    <p className="flex items-center gap-1.5 text-sm font-semibold text-[#063028] break-all">
+                      <Mail className="h-4 w-4 shrink-0 text-[#c48825]" aria-hidden="true" />
+                      {cell.contactName ? `${cell.contactName} · ` : ''}
+                      {cell.email}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -67,7 +76,7 @@ export const ExcellenceCellsSection: React.FC = () => {
                 <span>Explore Cell Details</span>
                 <span className="group-hover:translate-x-1 transition-transform">→</span>
               </div>
-            </div>
+            </button>
           ))}
         </div>
 
@@ -77,7 +86,7 @@ export const ExcellenceCellsSection: React.FC = () => {
             to="/institutions"
             className="inline-flex items-center gap-2 px-6 py-3.5 bg-[#063028] hover:bg-[#04201a] text-white rounded-xl text-sm sm:text-base font-bold shadow-xs transition-all duration-200 cursor-pointer"
           >
-            Explore All CII Excellence Cells
+            See participating institutions
           </Link>
         </div>
 
@@ -107,6 +116,14 @@ export const ExcellenceCellsSection: React.FC = () => {
                 <p className="text-sm text-stone-600 font-medium">
                   Partner Institution: {selectedCell.partner}
                 </p>
+                {selectedCell.email && (
+                  <p className="text-sm text-stone-700">
+                    Contact: {selectedCell.contactName ? `${selectedCell.contactName}, ` : ''}
+                    <a href={`mailto:${selectedCell.email}`} className="font-semibold text-[#063028] underline underline-offset-2 hover:text-[#c48825]">
+                      {selectedCell.email}
+                    </a>
+                  </p>
+                )}
               </div>
               <button 
                 onClick={() => setSelectedCell(null)}
