@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { belongsToCompany } from "@/lib/industry-team";
 import {
   ProposalStatusUpdateSchema,
   validateProposalStatusTransition,
@@ -53,9 +54,7 @@ export async function GET(
     const role = session.user.role;
     const userId = session.user.id;
     const isAdmin = role === "SUPER_ADMIN" || role === "CII_ADMIN";
-    const isIndustryOwner =
-      role === "INDUSTRY_SPOC" &&
-      proposal.challenge.industryProfile?.userId === userId;
+    const isIndustryOwner = await belongsToCompany(role, userId, proposal.challenge.industryProfileId);
 
     let requestingUserInstitutionId: string | undefined;
     let isInstitutionSpocOwner = false;
@@ -126,7 +125,7 @@ export async function PATCH(
     });
     if (!proposal) return notFound("Proposal not found");
 
-    if (isIndustry && proposal.challenge.industryProfile?.userId !== session.user.id) {
+    if (isIndustry && !(await belongsToCompany(role, session.user.id, proposal.challenge.industryProfileId))) {
       return forbidden("This proposal is not for your challenge");
     }
 

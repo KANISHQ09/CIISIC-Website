@@ -16,6 +16,16 @@ vi.mock("../src/lib/auth", () => ({
 // Mock Prisma client
 vi.mock("../src/lib/prisma", () => ({
   prisma: {
+    user: {
+      findUnique: vi.fn(async ({ where }: { where: { id: string } }) => ({
+        role: "INDUSTRY_SPOC",
+        isActive: true,
+        approvalStatus: "APPROVED",
+        industryProfile: { id: where.id === "industry-user-1" ? "ind-1" : "ind-2" },
+        teamIndustryProfile: null,
+      })),
+      findMany: vi.fn().mockResolvedValue([{ id: "industry-user-1" }]),
+    },
     challenge: {
       findUnique: vi.fn(),
       update: vi.fn().mockReturnValue({ catch: vi.fn() }),
@@ -94,7 +104,7 @@ describe("RBAC & Object-Level Access Control", () => {
         id: "challenge-2",
         title: "Draft Challenge",
         status: "DRAFT",
-        industryProfile: { userId: "industry-user-1" },
+        industryProfileId: "ind-1", industryProfile: { userId: "industry-user-1" },
       } as any);
 
       const req = new NextRequest("http://ciisic.test/api/challenges/challenge-2");
@@ -113,7 +123,7 @@ describe("RBAC & Object-Level Access Control", () => {
         id: "challenge-2",
         title: "Draft Challenge",
         status: "DRAFT",
-        industryProfile: { userId: "industry-user-1" },
+        industryProfileId: "ind-1", industryProfile: { userId: "industry-user-1" },
       } as any);
 
       const req = new NextRequest("http://ciisic.test/api/challenges/challenge-2");
@@ -133,7 +143,7 @@ describe("RBAC & Object-Level Access Control", () => {
       vi.mocked(prisma.proposal.findUnique).mockResolvedValue({
         id: "prop-1",
         institutionId: "inst-1",
-        challenge: { industryProfile: { userId: "industry-user-1" } },
+        challenge: { industryProfileId: "ind-1", industryProfile: { userId: "industry-user-1" } },
       } as any);
 
       const req = new NextRequest("http://ciisic.test/api/proposals/prop-1");
@@ -151,7 +161,7 @@ describe("RBAC & Object-Level Access Control", () => {
       vi.mocked(prisma.proposal.findUnique).mockResolvedValue({
         id: "prop-1",
         institutionId: "inst-1",
-        challenge: { industryProfile: { userId: "industry-user-1" } },
+        challenge: { industryProfileId: "ind-1", industryProfile: { userId: "industry-user-1" } },
       } as any);
 
       const req = new NextRequest("http://ciisic.test/api/proposals/prop-1");
@@ -173,7 +183,7 @@ describe("RBAC & Object-Level Access Control", () => {
       vi.mocked(prisma.proposal.findUnique).mockResolvedValue({
         id: "prop-1",
         institutionId: "inst-1",
-        challenge: { industryProfile: { userId: "industry-user-1" } },
+        challenge: { industryProfileId: "ind-1", industryProfile: { userId: "industry-user-1" } },
       } as any);
 
       const req = new NextRequest("http://ciisic.test/api/proposals/prop-1");
@@ -195,7 +205,7 @@ describe("RBAC & Object-Level Access Control", () => {
       vi.mocked(prisma.proposal.findUnique).mockResolvedValue({
         id: "prop-1",
         institutionId: "inst-1",
-        challenge: { industryProfile: { userId: "industry-user-1" } },
+        challenge: { industryProfileId: "ind-1", industryProfile: { userId: "industry-user-1" } },
       } as any);
 
       const req = new NextRequest("http://ciisic.test/api/proposals/prop-1");

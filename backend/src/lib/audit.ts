@@ -24,6 +24,9 @@ type AuditAction =
   | "INSTITUTION_UPDATED"
   | "INSTITUTION_DELETED"
   | "FILE_UPLOADED"
+  | "TEAM_MEMBER_ADDED"
+  | "TEAM_MEMBER_REMOVED"
+  | "TEAM_LINK_CREATED"
   | "ADMIN_ACTION";
 
 interface AuditParams {

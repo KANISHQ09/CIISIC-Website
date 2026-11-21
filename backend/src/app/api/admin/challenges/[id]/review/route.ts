@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { belongsToCompany, notifyIndustryTeam } from "@/lib/industry-team";
 import { INDUSTRY_PROFILE_SELECT } from "@/lib/problem-submission";
 import { createAuditLog, getRequestMeta } from "@/lib/audit";
 import { serializeChallenge } from "@/lib/serializers";
@@ -51,9 +52,7 @@ export async function GET(
       return notFound("Challenge not found");
     }
 
-    const isOwner =
-      session.user.role === "INDUSTRY_SPOC" &&
-      challenge.industryProfile?.userId === session.user.id;
+    const isOwner = await belongsToCompany(session.user.role, session.user.id, challenge.industryProfileId);
 
     if (!isAdmin && !isOwner) {
       return forbidden("You do not have permission to view review details");
@@ -130,17 +129,14 @@ export async function POST(
       },
     });
 
-    // Notify the Industry SPOC (owner), when the problem belongs to a registered account
-    if (challenge.industryProfile) {
-      await prisma.notification.create({
-        data: {
-          userId: challenge.industryProfile.userId,
-          title: `Challenge ${action === "APPROVE" ? "Approved" : "Rejected"}`,
-          body: remarks
-            ? `Review Remarks: ${remarks}`
-            : `Your challenge "${challenge.title}" has been ${action === "APPROVE" ? "approved" : "rejected"}.`,
-          link: `/api/challenges/${id}`,
-        },
+    // Notify the company's team, when the problem belongs to a registered account
+    if (challenge.industryProfileId) {
+      await notifyIndustryTeam(challenge.industryProfileId, {
+        title: `Challenge ${action === "APPROVE" ? "Approved" : "Rejected"}`,
+        body: remarks
+          ? `Review Remarks: ${remarks}`
+          : `Your challenge "${challenge.title}" has been ${action === "APPROVE" ? "approved" : "rejected"}.`,
+        link: `/api/challenges/${id}`,
       });
     }
 

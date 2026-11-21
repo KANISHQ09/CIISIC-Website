@@ -169,7 +169,7 @@ export async function sendProblemReceivedEmail(
   const text =
     `Hello ${name},\n\nThank you for submitting "${problemTitle}" to CIISIC.\n` +
     `Your reference ID is ${referenceCode}.\n\n` +
-    `CII officials will verify the submission before it is published to partner institutions. ` +
+    `CII officials will review the submission and publish it to partner institutions once it is approved. ` +
     `We will email you once it has been reviewed.`;
   const html = emailShell(
     "Problem statement received",
@@ -177,7 +177,7 @@ export async function sendProblemReceivedEmail(
      <p>Thank you for submitting <strong>"${escapeHtml(problemTitle)}"</strong> to CIISIC.</p>
      <p>Your reference ID is
        <span style="font-family: monospace; font-weight: bold; background: #edf4f0; padding: 4px 8px; border-radius: 4px;">${escapeHtml(referenceCode)}</span></p>
-     <p>CII officials will verify the submission before it is published to partner institutions. We will email you once it has been reviewed.</p>`
+     <p>CII officials will review the submission and publish it to partner institutions once it is approved. We will email you once it has been reviewed.</p>`
   );
   return sendEmail({ to, subject, html, text });
 }
@@ -196,7 +196,7 @@ export async function sendProblemDecisionEmail(
     ? `Your problem statement is now published${ref}`
     : `Update on your problem statement${ref}`;
   const outcome = approved
-    ? "has been verified by CII and is now published to partner institutions."
+    ? "has been approved by CII and is now published to partner institutions."
     : "could not be published after CII review.";
   const text =
     `Hello ${name},\n\nYour problem statement "${problemTitle}"${ref} ${outcome}` +

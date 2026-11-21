@@ -49,7 +49,7 @@ export const GetInvolvedSection: React.FC = () => {
               <ul className="space-y-3 pt-2">
                 <li className="flex items-center gap-3 text-sm sm:text-base text-stone-700 font-medium">
                   <div className="h-5 w-5 rounded-full bg-[#edf4f0] text-[#063028] flex items-center justify-center text-xs font-bold shrink-0">✓</div>
-                  <span>Verified faculty &amp; student team matching</span>
+                  <span>CII-approved faculty &amp; student team matching</span>
                 </li>
                 <li className="flex items-center gap-3 text-sm sm:text-base text-stone-700 font-medium">
                   <div className="h-5 w-5 rounded-full bg-[#edf4f0] text-[#063028] flex items-center justify-center text-xs font-bold shrink-0">✓</div>

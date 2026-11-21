@@ -12,12 +12,23 @@ vi.mock("../src/lib/auth", () => ({
 // Mock Prisma client
 vi.mock("../src/lib/prisma", () => ({
   prisma: {
+    user: {
+      findUnique: vi.fn(async ({ where }: { where: { id: string } }) => ({
+        role: "INDUSTRY_SPOC",
+        isActive: true,
+        approvalStatus: "APPROVED",
+        industryProfile: { id: where.id === "industry-user-1" ? "ind-1" : "ind-2" },
+        teamIndustryProfile: null,
+      })),
+      findMany: vi.fn().mockResolvedValue([{ id: "industry-user-1" }]),
+    },
     challenge: {
       findUnique: vi.fn(),
       update: vi.fn(),
     },
     notification: {
       create: vi.fn().mockResolvedValue({}),
+      createMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
     auditLog: {
       create: vi.fn().mockResolvedValue({}),
@@ -56,6 +67,7 @@ describe("Admin Challenge Review Workflow", () => {
       id: "challenge-1",
       title: "Pending Challenge",
       status: "UNDER_REVIEW",
+      industryProfileId: "ind-1",
       industryProfile: {
         userId: "industry-user-1",
       },
@@ -69,6 +81,7 @@ describe("Admin Challenge Review Workflow", () => {
       reviewedAt: new Date(),
       reviewerId: "admin-1",
       reviewRemarks: "Approved",
+      industryProfileId: "ind-1",
       industryProfile: {
         userId: "industry-user-1",
         companyName: "TechCorp",
@@ -97,7 +110,7 @@ describe("Admin Challenge Review Workflow", () => {
       include: expect.any(Object),
     });
 
-    expect(prisma.notification.create).toHaveBeenCalled();
+    expect(prisma.notification.createMany).toHaveBeenCalled();
     expect(prisma.auditLog.create).toHaveBeenCalled();
   });
 
@@ -110,6 +123,7 @@ describe("Admin Challenge Review Workflow", () => {
       id: "challenge-1",
       title: "Pending Challenge",
       status: "UNDER_REVIEW",
+      industryProfileId: "ind-1",
       industryProfile: {
         userId: "industry-user-1",
       },
@@ -122,6 +136,7 @@ describe("Admin Challenge Review Workflow", () => {
       reviewedAt: new Date(),
       reviewerId: "admin-1",
       reviewRemarks: "Rejected, needs more detail",
+      industryProfileId: "ind-1",
       industryProfile: {
         userId: "industry-user-1",
         companyName: "TechCorp",
@@ -162,6 +177,7 @@ describe("Admin Challenge Review Workflow", () => {
       reviewRemarks: "Rejected, needs more detail",
       reviewedAt: new Date(),
       reviewerId: "admin-1",
+      industryProfileId: "ind-1",
       industryProfile: {
         userId: "industry-user-1",
       },

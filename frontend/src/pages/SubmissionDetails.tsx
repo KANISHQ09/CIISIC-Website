@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   Building2, FileText, Settings, ShieldAlert, ArrowLeft, CheckCircle, 
   XCircle, Clock, MessageSquare, AlertTriangle,
-  Edit, Save, X, Wrench, Share2, Printer, GraduationCap, CheckCircle2
+  Edit, Save, X, Wrench, Share2, Printer, GraduationCap
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { sanitizeHTML } from '../lib/html';
@@ -11,11 +11,12 @@ import { fetchChallengeById } from '../lib/api';
 import { getOriginalFileName } from '../lib/file';
 import { ProblemStatement } from '../types';
 import { usePageTitle } from '../lib/usePageTitle';
+import { PhoneVisibilityField } from '../components/common/PhoneVisibilityField';
 
 export const SubmissionDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { currentUser, submissions, updateSubmissionStatus, updateSubmission, showToast } = useApp();
+  const { currentUser, submissions, updateSubmissionStatus, updateSubmission, setPhoneVisibility, showToast } = useApp();
 
   const [submission, setSubmission] = useState<ProblemStatement | null>(() => {
     return submissions.find((sub) => sub.id === id) || null;
@@ -49,6 +50,7 @@ export const SubmissionDetails: React.FC = () => {
   const [remarks, setRemarks] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [savingVisibility, setSavingVisibility] = useState(false);
 
   // Editable fields state
   const [editTitle, setEditTitle] = useState('');
@@ -267,7 +269,7 @@ export const SubmissionDetails: React.FC = () => {
           <Link to={backLink} className="inline-flex items-center gap-1.5 text-sm font-bold text-stone-600 hover:text-[#063028] transition-colors mb-1">
             <ArrowLeft className="h-4 w-4" /> {backLinkText}
           </Link>
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
             <span className="text-xs text-stone-500 font-medium">Submitted on {new Date(submission.submittedDate).toLocaleString()}</span>
             {submission.editedByAdmin && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-amber-100 text-amber-800 border border-amber-300">
@@ -372,10 +374,35 @@ export const SubmissionDetails: React.FC = () => {
                 ) : (
                   <div className="sm:col-span-2">
                     <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Contact</span>
-                    <span className="text-stone-600 text-sm block mt-1">
-                      Contact details are shared by CII with partner institutions on request.
-                    </span>
+                    {submission.company.phone ? (
+                      <a href={`tel:${submission.company.phone.replace(/[^+0-9]/g, '')}`} className="font-semibold text-[#063028] text-base block mt-1 hover:underline">
+                        {submission.company.phone}
+                      </a>
+                    ) : (
+                      <span className="text-stone-600 text-sm block mt-1">
+                        Contact details are shared by CII with partner institutions on request.
+                      </span>
+                    )}
                   </div>
+                )}
+                {/* Only the owning company and CII admins receive this setting */}
+                {submission.company.phoneVisibility && (
+                  <PhoneVisibilityField
+                    className="sm:col-span-2"
+                    value={submission.company.phoneVisibility}
+                    disabled={savingVisibility}
+                    onChange={async (value) => {
+                      setSavingVisibility(true);
+                      try {
+                        setSubmission(await setPhoneVisibility(submission.id, value));
+                        showToast('Mobile number visibility updated.', 'success');
+                      } catch (err: any) {
+                        showToast(err.message || 'Could not update the visibility.', 'error');
+                      } finally {
+                        setSavingVisibility(false);
+                      }
+                    }}
+                  />
                 )}
                 {submission.company.website && (
                   <div>
@@ -614,7 +641,7 @@ export const SubmissionDetails: React.FC = () => {
 
               <div className="p-4 bg-[#edf4f0]/60 rounded-2xl border border-[#063028]/10 text-xs text-stone-700 leading-normal flex items-start gap-2.5">
                 <CheckCircle className="h-5 w-5 text-emerald-700 shrink-0 mt-0.5" />
-                <span>Representative official declaration signed and verified. Intellectual property conditions acknowledged by organization under CII guidelines.</span>
+                <span>Representative official declaration signed and approved. Intellectual property conditions acknowledged by organization under CII guidelines.</span>
               </div>
             </div>
           </div>
@@ -725,7 +752,7 @@ export const SubmissionDetails: React.FC = () => {
                       }`}>
                         {submission.status === 'Pending' ? <Clock className="h-3 w-3" /> : <CheckCircle className="h-3 w-3 text-white" />}
                       </span>
-                      <p className="text-sm font-bold text-stone-800">Filing Verification</p>
+                      <p className="text-sm font-bold text-stone-800">Filing Approval</p>
                       <p className="text-xs text-stone-500">Processed automatically</p>
                     </div>
 
@@ -772,9 +799,6 @@ export const SubmissionDetails: React.FC = () => {
                 <div className="flex items-center justify-between border-b border-stone-100 pb-3">
                   <span className="text-xs font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1.5">
                     <GraduationCap className="h-4 w-4 text-[#c48825]" /> Innovation Challenge
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Verified Challenge
                   </span>
                 </div>
 

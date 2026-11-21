@@ -65,7 +65,10 @@ export type SafeChallenge = {
     state: string | null;
     address?: string | null; // admins and the owning company only
   };
-  // Person who submitted it — admins and the owning company only
+  // Who may see the mobile number — admins and the owning company only
+  phoneVisibility?: "EVERYONE" | "INSTITUTION_SPOCS" | "NO_ONE";
+  // Person who submitted it — admins and the owning company. Others get only the mobile
+  // number, and only when the company chose to share it with them.
   contact?: {
     name: string | null;
     designation: string | null;
@@ -136,20 +139,30 @@ export function serializeUser(user: any): SafeUser {
  * Serialize a challenge.
  * - Public visitors (no role): budgetRange is stripped.
  * - Contact details and the reference ID: CII admins and the owning company only.
+ * - Mobile number: also shared on published problems if the company chose Everyone or
+ *   Institution SPOCs. Anyone else never receives it.
  * - Reviewer hints (registered company? email domain matches?): CII admins only.
  */
 export function serializeChallenge(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   challenge: any,
   requestingRole?: Role,
-  requestingUserId?: string
+  // The requester's company (see getIndustryProfileId), so every team member counts as the owner
+  requestingIndustryProfileId?: string | null
 ): SafeChallenge {
   const isAdmin = requestingRole === "SUPER_ADMIN" || requestingRole === "CII_ADMIN";
   const isOwner =
-    !!requestingUserId &&
+    !!requestingIndustryProfileId &&
     requestingRole === "INDUSTRY_SPOC" &&
-    challenge.industryProfile?.userId === requestingUserId;
+    challenge.industryProfileId === requestingIndustryProfileId;
   const showContact = isAdmin || isOwner;
+  const phoneVisibility = challenge.phoneVisibility ?? "NO_ONE";
+  const sharePhone =
+    !showContact &&
+    !!challenge.contactPhone &&
+    challenge.status === "OPEN" &&
+    (phoneVisibility === "EVERYONE" ||
+      (phoneVisibility === "INSTITUTION_SPOCS" && requestingRole === "INSTITUTION_SPOC"));
 
   return {
     id: challenge.id,
@@ -208,7 +221,10 @@ export function serializeChallenge(
           email: challenge.contactEmail ?? challenge.industryProfile?.user?.email ?? null,
           phone: challenge.contactPhone ?? null,
         }
+      : sharePhone
+      ? { name: null, designation: null, email: null, phone: challenge.contactPhone }
       : undefined,
+    phoneVisibility: showContact ? phoneVisibility : undefined,
     review: isAdmin
       ? {
           registeredCompany: !!challenge.industryProfileId,

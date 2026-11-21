@@ -271,7 +271,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                     Institution Portal
                   </Link>
                   <Link
-                    to="/industry/login"
+                    to="/industry"
                     className={navButtonClass('border-stone-800 text-stone-900 bg-transparent hover:bg-stone-50')}
                   >
                     <Factory className={NAV_ICON} />
@@ -447,7 +447,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                       Institution Portal
                     </Link>
                     <Link
-                      to="/industry/login"
+                      to="/industry"
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-base font-semibold border border-stone-800 text-stone-900 text-center hover:bg-stone-50 transition-all cursor-pointer"
                     >

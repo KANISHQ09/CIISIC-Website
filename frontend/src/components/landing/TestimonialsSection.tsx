@@ -66,7 +66,7 @@ export const TestimonialsSection: React.FC = () => {
                     {t.role}
                   </h4>
                   <span className="text-xs text-stone-600 font-semibold uppercase tracking-wider">
-                    Verified Stakeholder
+                    CII Partner
                   </span>
                 </div>
               </div>

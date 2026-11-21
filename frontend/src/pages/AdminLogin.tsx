@@ -167,7 +167,7 @@ export const AdminLogin: React.FC = () => {
                 disabled={isLoading}
                 className="w-full flex justify-center items-center py-3.5 px-4 rounded-xl text-base font-bold text-white bg-[#063028] hover:bg-[#04201a] focus:outline-none transition-all duration-150 disabled:opacity-50 cursor-pointer shadow-md active:scale-[0.99]"
               >
-                {isLoading ? 'Verifying Credentials...' : 'Sign In as Administrator'}
+                {isLoading ? 'Signing in...' : 'Sign In as Administrator'}
               </button>
             </form>
           </div>

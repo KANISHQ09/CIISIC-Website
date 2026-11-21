@@ -5,15 +5,18 @@ import {
   Building2, PlusCircle, CheckCircle, Clock, AlertTriangle, FileText, 
   Globe, ChevronRight, FileCheck, X,
   Calendar, IndianRupee, UploadCloud, ArrowLeft, RefreshCw, Eye, Download,
-  GraduationCap, ExternalLink, MessageSquare, User, Lock
+  GraduationCap, ExternalLink, MessageSquare, User, Users, Lock
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { sanitizeHTML, stripHTML } from '../lib/html';
 import { uploadFile } from '../lib/api';
 import { getOriginalFileName } from '../lib/file';
-import { SolutionSubmission, SolutionStatus } from '../types';
+import { PhoneVisibility, SolutionSubmission, SolutionStatus } from '../types';
 import { ChangePasswordModal } from '../components/common/ChangePasswordModal';
 import { InlineLoader } from '../components/common/Loader';
+import { DocumentAccessNotice } from '../components/common/Notice';
+import { TeamPanel } from '../components/industry/TeamPanel';
+import { PHONE_VISIBILITY_OPTIONS, PhoneVisibilityField } from '../components/common/PhoneVisibilityField';
 
 export const IndustryDashboard: React.FC = () => {
   const { currentUser, submissions, addSubmission, showToast, solutions, reviewSolution, submissionsLoading, solutionsLoading } = useApp();
@@ -22,7 +25,7 @@ export const IndustryDashboard: React.FC = () => {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   // Dashboard tab state
-  const [activeDashboardTab, setActiveDashboardTab] = useState<'statements' | 'solutions'>('statements');
+  const [activeDashboardTab, setActiveDashboardTab] = useState<'statements' | 'solutions' | 'team'>('statements');
   const dashboardTabsRef = useRef<HTMLDivElement>(null);
   useScrollIntoViewOnChange(dashboardTabsRef, activeDashboardTab);
   const [selectedSolutionForReview, setSelectedSolutionForReview] = useState<SolutionSubmission | null>(null);
@@ -41,6 +44,7 @@ export const IndustryDashboard: React.FC = () => {
   const [spocName, setSpocName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [phoneVisibility, setPhoneVisibility] = useState<PhoneVisibility>('NO_ONE');
   const [website, setWebsite] = useState('');
   
   const [title, setTitle] = useState('');
@@ -386,6 +390,7 @@ export const IndustryDashboard: React.FC = () => {
           designation: currentUser?.designation || 'Head of Innovation & R&D',
           email: email,
           phone: phone,
+          phoneVisibility,
           website: website,
           industrySector: industryCategory,
         },
@@ -541,7 +546,7 @@ export const IndustryDashboard: React.FC = () => {
       {currentView === 'dashboard' && (
         <div className="space-y-6 animate-fade-in" id="dashboard-ledger">
           {/* Main Tab Navigation */}
-          <div ref={dashboardTabsRef} className="flex border-b border-stone-200 gap-6">
+          <div ref={dashboardTabsRef} className="flex border-b border-stone-200 gap-x-6 gap-y-3 flex-wrap">
             <button
               onClick={() => setActiveDashboardTab('statements')}
               className={`pb-3 text-sm sm:text-base font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
@@ -571,7 +576,21 @@ export const IndustryDashboard: React.FC = () => {
                 {mySolutions.length}
               </span>
             </button>
+
+            <button
+              onClick={() => setActiveDashboardTab('team')}
+              className={`pb-3 text-sm sm:text-base font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
+                activeDashboardTab === 'team'
+                  ? 'text-[#063028] border-b-2 border-[#063028]'
+                  : 'text-stone-500 hover:text-stone-800'
+              }`}
+            >
+              <Users className="h-4 w-4" />
+              Team
+            </button>
           </div>
+
+          {activeDashboardTab === 'team' && <TeamPanel />}
 
           {/* TAB 1: PROBLEM STATEMENTS */}
           {activeDashboardTab === 'statements' && (
@@ -1153,6 +1172,8 @@ export const IndustryDashboard: React.FC = () => {
                       />
                       {errors.website && <p className="text-sm text-red-600 mt-1">{errors.website}</p>}
                     </div>
+
+                    <PhoneVisibilityField className="col-span-full" value={phoneVisibility} onChange={setPhoneVisibility} />
                   </div>
                 </div>
 
@@ -1271,6 +1292,7 @@ export const IndustryDashboard: React.FC = () => {
                       <label className="block text-sm font-bold text-stone-700">
                         Supporting Documents / Attachments
                       </label>
+                      <DocumentAccessNotice viewers="CII officials and partner institutions" />
                       
                       <div
                         onDragOver={handleDragOver}
@@ -1411,6 +1433,9 @@ export const IndustryDashboard: React.FC = () => {
                     <div>
                       <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Phone Number</span>
                       <span className="font-semibold text-stone-800 block mt-1">{phone}</span>
+                      <span className="text-xs text-stone-500 block mt-0.5">
+                        Visible to: {PHONE_VISIBILITY_OPTIONS.find((o) => o.value === phoneVisibility)?.label}
+                      </span>
                     </div>
                     <div>
                       <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">Company Website</span>

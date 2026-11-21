@@ -103,6 +103,7 @@ export async function POST(req: NextRequest) {
         contactDesignation: data.contactDesignation,
         contactEmail: data.contactEmail,
         contactPhone: data.contactPhone,
+        phoneVisibility: data.phoneVisibility ?? "NO_ONE",
         ...problemDetailData(data),
       },
       select: { id: true, referenceCode: true, title: true, status: true },
@@ -118,7 +119,7 @@ export async function POST(req: NextRequest) {
       id: challenge.id,
       referenceCode: challenge.referenceCode,
       status: challenge.status,
-      message: "Your problem statement has been received and will be published after CII verification.",
+      message: "Your problem statement has been received and will be published after CII approval.",
     });
   } catch (err) {
     console.error("[POST /api/public/challenges]", err);

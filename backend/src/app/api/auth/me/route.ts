@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ok, unauthorized } from "@/lib/api-response";
+import { getIndustryMembership } from "@/lib/industry-team";
 
 /**
  * GET /api/auth/me
@@ -16,6 +17,7 @@ export async function GET() {
     where: { id: session.user.id },
     include: {
       industryProfile: true,
+      teamIndustryProfile: true,
       institutionProfile: {
         include: { institution: true },
       },
@@ -26,8 +28,14 @@ export async function GET() {
     return unauthorized("User no longer exists");
   }
 
-  // Omit passwordHash
-  const { passwordHash: _, ...safeUser } = user;
+  // A removed team member or a deactivated account is signed out on its next page load
+  if (!user.isActive) return unauthorized("This account is no longer active");
+  if (user.role === "INDUSTRY_SPOC" && !(await getIndustryMembership(user.id))) {
+    return unauthorized("This account is no longer active");
+  }
 
-  return ok(safeUser);
+  // Omit passwordHash. A team member sees their company as their own profile.
+  const { passwordHash: _, teamIndustryProfile, ...safeUser } = user;
+
+  return ok({ ...safeUser, industryProfile: user.industryProfile ?? teamIndustryProfile });
 }

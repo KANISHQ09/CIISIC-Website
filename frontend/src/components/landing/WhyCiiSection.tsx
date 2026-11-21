@@ -30,30 +30,33 @@ export const WhyCiiSection: React.FC = () => {
     <section id="why-cii" className="py-16 sm:py-24 bg-[#faf8f4] scroll-mt-20 border-t border-[#e8e4dc]">
       <div className="max-w-[1320px] mx-auto px-6 sm:px-8 lg:px-12">
         
-        {/* Core Philosophy Section (Section 4) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start mb-16 sm:mb-20">
-          <div className="lg:col-span-5 space-y-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#edf4f0] text-[#063028] text-xs font-semibold tracking-wide">
-              Our Purpose
-            </div>
+        {/* Our purpose: heading on the left; the explanation and the motto on the right, aligned with it */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start mb-16 sm:mb-20">
+          <div className="lg:col-span-5 space-y-3">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#c48825]">Our purpose</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-[#063028] tracking-tight leading-tight font-serif">
               Why the CII Industry–Academia Excellence Initiative
             </h2>
-            <p className="text-[#063028] text-base sm:text-lg font-sans font-medium">
-              “Solving real problems through collaborative innovation.”
-            </p>
           </div>
-          <div className="lg:col-span-7">
-            <p className="text-stone-700 text-base sm:text-lg leading-relaxed pt-2">
-              Most organizations know innovation matters — what's missing is research capacity, fresh thinking, or a low-risk way to test new ideas. The CII Industry–Academia Excellence Initiative bridges industry with academia, creating opportunities to solve real-world challenges through collective expertise, innovation, and shared purpose.
+          <div className="lg:col-span-7 lg:pt-7 space-y-6">
+            <p className="text-stone-700 text-base sm:text-lg leading-relaxed">
+              Most organizations know innovation matters — what&apos;s missing is research capacity, fresh thinking, or a
+              low-risk way to test new ideas. The CII Industry–Academia Excellence Initiative bridges industry with
+              academia, creating opportunities to solve real-world challenges through collective expertise, innovation,
+              and shared purpose.
             </p>
+            <blockquote className="border-l-4 border-[#c48825] pl-5">
+              <p className="font-serif italic text-xl sm:text-2xl text-[#063028] leading-snug">
+                “Solving real problems through collaborative innovation.”
+              </p>
+            </blockquote>
           </div>
         </div>
 
         {/* Stakeholder Value Cards Section (Section 8) */}
         <div className="space-y-6">
           <div className="text-left border-b border-stone-200 pb-4 mb-8">
-            <h3 className="text-sm font-bold text-stone-600 uppercase tracking-wider">Stakeholder Ecosystem</h3>
+            <h3 className="text-xs font-bold text-[#c48825] uppercase tracking-wider">Stakeholder Ecosystem</h3>
             <p className="text-2xl sm:text-3xl font-bold text-[#063028] mt-1 font-serif">Creating Value for Every Stakeholder</p>
           </div>
 

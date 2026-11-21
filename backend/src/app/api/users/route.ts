@@ -53,12 +53,16 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: "desc" },
         include: {
           industryProfile: { select: { companyName: true, industry: true } },
+          teamIndustryProfile: { select: { companyName: true, industry: true } },
           institutionProfile: { select: { designation: true } },
         },
       }),
     ]);
 
-    const serialized = users.map(({ passwordHash: _, ...u }) => u);
+    const serialized = users.map(({ passwordHash: _, teamIndustryProfile, ...u }) => ({
+      ...u,
+      industryProfile: u.industryProfile ?? teamIndustryProfile,
+    }));
 
     return ok({
       data: serialized,

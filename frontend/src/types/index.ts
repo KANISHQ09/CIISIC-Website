@@ -1,6 +1,9 @@
 export type DifficultyLevel = 'Easy' | 'Medium' | 'Hard';
 export type SubmissionStatus = 'Pending' | 'Approved' | 'Rejected';
 
+/** Who can see an industry's mobile number, besides CII admins and the company itself. */
+export type PhoneVisibility = 'EVERYONE' | 'INSTITUTION_SPOCS' | 'NO_ONE';
+
 export interface CompanyInfo {
   industryName: string;
   companyName: string;
@@ -8,6 +11,8 @@ export interface CompanyInfo {
   designation: string;
   email: string;
   phone: string;
+  // Only returned to CII admins and the owning company
+  phoneVisibility?: PhoneVisibility;
   website: string;
   industrySector: string;
   // Organisation location (from public submissions)
@@ -42,6 +47,8 @@ export interface AdditionalDetails {
   budget?: string;
   // Solution deadline, ISO date string
   deadline?: string;
+  // Optional cover photo shown on problem cards (placeholder when missing)
+  coverImageUrl?: string;
   fileAttachmentName?: string;
   declarationAccepted: boolean;
 }

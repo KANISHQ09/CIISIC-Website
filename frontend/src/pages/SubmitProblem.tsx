@@ -16,6 +16,8 @@ import {
   submitPublicProblem, toBackendProblemFields
 } from '../lib/api';
 import { usePageTitle } from '../lib/usePageTitle';
+import { DocumentAccessNotice, SubmissionDisclaimer } from '../components/common/Notice';
+import { PHONE_VISIBILITY_OPTIONS, PhoneVisibilityField } from '../components/common/PhoneVisibilityField';
 
 /** Dropdown value for an organisation that is not registered on the portal. */
 const OTHER_ORG = 'OTHER';
@@ -35,6 +37,7 @@ const formSchema = z.object({
     .string()
     .min(7, 'Phone number is required')
     .regex(/^[+0-9 ()-]+$/, 'Use digits, spaces, +, - and brackets only'),
+  phoneVisibility: z.enum(['EVERYONE', 'INSTITUTION_SPOCS', 'NO_ONE']),
   website: z.string().optional(),
   industrySector: z.string().min(2, 'Industry sector is required'),
   // Only needed for "Other" organisations (checked in validateOrganisation)
@@ -111,6 +114,7 @@ export const SubmitProblem: React.FC = () => {
       designation: isIndustryUser ? currentUser?.designation || '' : '',
       email: isIndustryUser ? currentUser?.email || '' : '',
       phone: isIndustryUser ? currentUser?.phone || '' : '',
+      phoneVisibility: 'NO_ONE',
       website: '',
       industrySector: isIndustryUser ? currentUser?.industry || '' : '',
       city: '',
@@ -124,6 +128,7 @@ export const SubmitProblem: React.FC = () => {
   });
 
   const orgChoice = watch('orgChoice');
+  const phoneVisibility = watch('phoneVisibility');
   const isOtherOrg = orgChoice === OTHER_ORG;
   const isRegisteredOrg = !!orgChoice && orgChoice !== OTHER_ORG && orgChoice !== OWN_ORG;
 
@@ -252,6 +257,7 @@ export const SubmitProblem: React.FC = () => {
           designation: data.designation,
           email: data.email,
           phone: data.phone,
+          phoneVisibility: data.phoneVisibility,
           website: data.website || '',
           industrySector: data.industrySector
         },
@@ -291,7 +297,7 @@ export const SubmitProblem: React.FC = () => {
         return;
       }
 
-      // Public visitor: no login, CII verifies before anything is published
+      // Public visitor: no login, CII approves before anything is published
       const result = await submitPublicProblem({
         ...toBackendProblemFields(submission),
         industryProfileId: isRegisteredOrg ? data.orgChoice : undefined,
@@ -305,6 +311,7 @@ export const SubmitProblem: React.FC = () => {
         contactDesignation: data.designation,
         contactEmail: data.email,
         contactPhone: data.phone,
+        phoneVisibility: data.phoneVisibility,
         companyFax: honeypot,
       });
 
@@ -374,7 +381,7 @@ export const SubmitProblem: React.FC = () => {
             <div className="space-y-2">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-[#063028] font-serif">Problem statement received</h1>
               <p className="text-base text-stone-600 leading-relaxed">
-                Thank you. <strong className="text-stone-800">"{submitted.title}"</strong> is now pending verification by CII officials.
+                Thank you. <strong className="text-stone-800">"{submitted.title}"</strong> is now pending approval by CII officials.
                 It will be published to partner institutions only after it is approved.
               </p>
             </div>
@@ -437,7 +444,7 @@ export const SubmitProblem: React.FC = () => {
             Submit a Problem Statement
           </h1>
           <p className="text-base text-stone-600 max-w-xl mx-auto leading-relaxed">
-            Share your organisation's challenge, technical requirements and target outcomes. CII officials verify every
+            Share your organisation's challenge, technical requirements and target outcomes. CII officials approve every
             submission before it is published to partner institutions.
             {!isIndustryUser && ' No login needed.'}
           </p>
@@ -493,7 +500,7 @@ export const SubmitProblem: React.FC = () => {
                   <h2 className="text-xl font-bold text-[#063028] font-serif flex items-center gap-2.5">
                     <Building2 className="h-6 w-6 text-[#c48825]" /> Organisation &amp; Contact Details
                   </h2>
-                  <p className="text-sm text-stone-600 mt-1">CII uses these details to verify the submission and to contact you.</p>
+                  <p className="text-sm text-stone-600 mt-1">CII uses these details to review the submission and to contact you.</p>
                 </div>
 
                 {/* Spam trap: hidden from people, filled in only by bots */}
@@ -668,6 +675,11 @@ export const SubmitProblem: React.FC = () => {
                       <input type="tel" autoComplete="tel" {...register('phone')} placeholder="+91 98765 43210" className="block w-full px-4 py-3 border border-stone-300 rounded-xl text-base text-stone-900 focus:outline-none focus:border-[#063028] focus:ring-2 focus:ring-[#063028]/10 bg-white" />
                       {errors.phone && <p className="text-sm text-red-600 mt-1">{errors.phone.message}</p>}
                     </div>
+                    <PhoneVisibilityField
+                      className="sm:col-span-2"
+                      value={phoneVisibility}
+                      onChange={(value) => setValue('phoneVisibility', value)}
+                    />
                   </div>
                 </div>
               </div>
@@ -916,6 +928,7 @@ export const SubmitProblem: React.FC = () => {
                   {/* File Upload Component */}
                   <div className="space-y-2">
                     <label className="block text-sm font-bold text-stone-700">Supporting Data Sheet / Attachment</label>
+                    <DocumentAccessNotice viewers="CII officials and partner institutions" />
                     
                     <div 
                       onDragOver={handleDragOver}
@@ -964,6 +977,8 @@ export const SubmitProblem: React.FC = () => {
                       )}
                     </div>
                   </div>
+
+                  <SubmissionDisclaimer />
 
                   {/* Declaration Checkbox */}
                   <div className="p-5 bg-amber-50/60 rounded-2xl border border-amber-200/80 space-y-3">
@@ -1046,6 +1061,9 @@ export const SubmitProblem: React.FC = () => {
                       <h4 className="text-xs font-bold uppercase text-stone-500 tracking-wider">Filing Organization</h4>
                       <p className="font-semibold text-stone-800 mt-1">{allValues.companyName}</p>
                       <p className="text-xs text-stone-500 mt-0.5 break-all">{allValues.representativeName} • {allValues.email}</p>
+                      <p className="text-xs text-stone-500 mt-0.5">
+                        Mobile number visible to: {PHONE_VISIBILITY_OPTIONS.find((o) => o.value === phoneVisibility)?.label}
+                      </p>
                     </div>
                     <div>
                       <h4 className="text-xs font-bold uppercase text-stone-500 tracking-wider">Industry sector</h4>

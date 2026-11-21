@@ -9,6 +9,7 @@ import {
 import { StudentTeamLead, StudentTeamMember, FacultyMentor } from '../types';
 import { PageLoader } from '../components/common/Loader';
 import { htmlToPlainText } from '../lib/html';
+import { DocumentAccessNotice } from '../components/common/Notice';
 
 export const SubmitSolution: React.FC = () => {
   const { challengeId } = useParams<{ challengeId: string }>();
@@ -506,6 +507,8 @@ export const SubmitSolution: React.FC = () => {
                 <p className="text-xs text-gray-500">Provide direct links to working demos, source repositories, or presentations</p>
               </div>
             </div>
+
+            <DocumentAccessNotice viewers="CII officials and the industry partner" className="mb-6" />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>

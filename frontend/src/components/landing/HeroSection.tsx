@@ -76,7 +76,7 @@ export const HeroSection: React.FC = () => {
                   </Link>
 
                   <Link
-                    to="/industry/login"
+                    to="/industry"
                     className="inline-flex items-center gap-2 px-5 sm:px-6 py-3.5 rounded-xl text-sm font-bold text-[#063028] bg-white border border-stone-300 hover:bg-stone-50 hover:border-[#063028]/40 transition-all duration-200 shadow-2xs active:scale-98 whitespace-nowrap"
                   >
                     <Building2 className="w-4 h-4 text-[#063028]" />
