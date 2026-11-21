@@ -204,7 +204,8 @@ export const HeroBannerCarousel: React.FC = () => {
               <img
                 src={banner.image}
                 alt={banner.alt}
-                fetchPriority={i === 0 ? 'high' : 'low'}
+                loading="lazy"
+                fetchPriority="low"
                 decoding="async"
                 style={{ objectPosition: banner.objectPosition || 'center center' }}
                 className="w-full h-full object-cover transition-transform duration-1000 ease-out hover:scale-102"

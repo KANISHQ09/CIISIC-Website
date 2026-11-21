@@ -5,7 +5,7 @@ import {
 } from '../types';
 import { 
   login as apiLogin, logout as apiLogout, getSession, 
-  fetchChallenges, createChallenge, updateChallenge, updatePhoneVisibility, reviewChallenge,
+  fetchChallenges, createChallenge, updateChallenge, updatePhoneVisibility, saveStandardisedFile, reviewChallenge,
   fetchSolutions,
   submitSolution as apiSubmitSolution, reviewSolution as apiReviewSolution
 } from '../lib/api';
@@ -34,6 +34,7 @@ interface AppContextType {
   updateSubmissionStatus: (id: string, status: SubmissionStatus, remarks?: string) => Promise<void>;
   updateSubmission: (submission: ProblemStatement) => Promise<void>;
   setPhoneVisibility: (id: string, visibility: PhoneVisibility) => Promise<ProblemStatement>;
+  setStandardisedFile: (id: string, file: File | null) => Promise<ProblemStatement>;
   submitSolution: (solutionData: Omit<SolutionSubmission, 'id' | 'submittedAt' | 'status'>) => Promise<SolutionSubmission>;
   reviewSolution: (solutionId: string, status: SolutionStatus, feedback?: string, revisionNotes?: string) => Promise<SolutionSubmission>;
   resetData: () => void;
@@ -203,6 +204,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved;
   };
 
+  const setStandardisedFile = async (id: string, file: File | null) => {
+    const saved = await saveStandardisedFile(id, file);
+    setSubmissions((prev) => prev.map((sub) => (sub.id === saved.id ? saved : sub)));
+    return saved;
+  };
+
   const updateSubmission = async (updated: ProblemStatement) => {
     const saved = await updateChallenge(updated.id, updated);
     setSubmissions((prev) =>
@@ -258,6 +265,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateSubmissionStatus,
         updateSubmission,
         setPhoneVisibility,
+        setStandardisedFile,
         submitSolution,
         reviewSolution,
         resetData

@@ -127,6 +127,11 @@ export async function PATCH(
       challenge.status !== "PENDING_APPROVAL";
     const nextStatus = needsReReview ? "PENDING_APPROVAL" : data.status;
 
+    // A new raw file makes CII's standardised version out of date
+    const attachmentsChanged =
+      data.attachmentUrls !== undefined &&
+      JSON.stringify(data.attachmentUrls) !== JSON.stringify(challenge.attachmentUrls);
+
     const updated = await prisma.challenge.update({
       where: { id },
       data: {
@@ -138,6 +143,7 @@ export async function PATCH(
         ...(data.budgetRange !== undefined && { budgetRange: data.budgetRange }),
         ...(data.tags && { tags: data.tags }),
         ...(data.attachmentUrls && { attachmentUrls: data.attachmentUrls }),
+        ...(attachmentsChanged && { standardisedFileUrl: null, standardisedAt: null }),
         // A privacy choice, not a content change: it never sends the problem back for review
         ...(data.phoneVisibility && { phoneVisibility: data.phoneVisibility }),
         // Only the detail fields that were sent are changed

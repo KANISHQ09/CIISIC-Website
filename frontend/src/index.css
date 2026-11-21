@@ -54,6 +54,96 @@ body {
 }
 
 /* Custom styles for animations & layout styling */
+@keyframes heroRise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes heroWord {
+  from { opacity: 0; transform: translateY(45%) rotateX(-35deg); }
+  to { opacity: 1; transform: translateY(0) rotateX(0); }
+}
+
+@keyframes heroDraw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes heroProgress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes heroPing {
+  75%, 100% { transform: scale(2.2); opacity: 0; }
+}
+
+.hero-rise {
+  animation: heroRise 0.7s cubic-bezier(0.22, 0.8, 0.24, 1) both;
+  animation-delay: var(--hero-delay, 0ms);
+}
+
+.hero-word {
+  transform-origin: bottom;
+  animation: heroWord 0.5s cubic-bezier(0.22, 0.8, 0.24, 1) both;
+}
+
+.hero-underline path {
+  stroke-dasharray: 1;
+  animation: heroDraw 0.6s 0.2s ease-out both;
+}
+
+.hero-progress {
+  transform-origin: left;
+  animation: heroProgress var(--hero-timer, 3800ms) linear both;
+}
+
+.hero-ping {
+  animation: heroPing 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-rise,
+  .hero-word,
+  .hero-underline path,
+  .hero-ping {
+    animation: none;
+  }
+  .hero-progress {
+    display: none;
+  }
+}
+
+@keyframes cellMarquee {
+  to { transform: translateX(-50%); }
+}
+
+.cell-marquee {
+  animation: cellMarquee 34s linear infinite;
+}
+
+.cell-marquee-viewport:hover .cell-marquee,
+.cell-marquee-viewport:focus-within .cell-marquee {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell-marquee {
+    animation: none;
+    width: auto;
+    justify-content: center;
+  }
+  .cell-marquee ul {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 1rem;
+    padding-right: 0;
+  }
+  .cell-marquee ul[aria-hidden="true"] {
+    display: none;
+  }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }

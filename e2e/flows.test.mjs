@@ -449,6 +449,56 @@ describe("5c. Several logins for one company", () => {
   });
 });
 
+describe("5d. CII standardises an industry's raw file", () => {
+  const pdf = () => {
+    const form = new FormData();
+    form.append("file", new File(["%PDF-1.7 standardised"], "Standardised_Brief.pdf", { type: "application/pdf" }));
+    return form;
+  };
+  const uploadAs = (id, token) =>
+    fetch(`${API}/api/admin/challenges/${id}/standardised-file`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}`, "x-forwarded-for": "198.51.100.77" },
+      body: pdf(),
+    });
+
+  it("institutions get the standardised file, while CII and the company keep the original", async () => {
+    const RAW = `https://files.example/raw-${unique}.pdf`;
+    const created = await api("/api/challenges", {
+      method: "POST", token: state.industryToken, body: { ...problem(`E2E Raw file ${unique}`), attachmentUrls: [RAW] },
+    });
+    assert.equal(created.status, 201);
+    const id = created.data.id;
+    await api(`/api/admin/challenges/${id}/review`, {
+      method: "POST", token: state.adminToken, body: { action: "APPROVE" },
+    });
+
+    assert.equal((await uploadAs(id, state.industryToken)).status, 403);
+    assert.equal((await uploadAs(id, state.institutionToken)).status, 403);
+    const saved = await uploadAs(id, state.adminToken);
+    assert.equal(saved.status, 200);
+    const clean = (await saved.json()).data.standardisedFile.url;
+    assert.match(clean, /\.pdf$/);
+
+    for (const token of [undefined, state.institutionToken]) {
+      const view = await api(`/api/challenges/${id}`, { token });
+      assert.deepEqual(view.data.attachmentUrls, [clean]);
+      assert.ok(!JSON.stringify(view.json).includes(RAW), "raw file is not sent");
+    }
+    const owner = await api(`/api/challenges/${id}`, { token: state.industryToken });
+    assert.deepEqual(owner.data.attachmentUrls, [RAW]);
+
+    // A new raw file from the company makes the standardised version out of date
+    const NEW_RAW = `https://files.example/new-${unique}.pdf`;
+    await api(`/api/challenges/${id}`, {
+      method: "PATCH", token: state.industryToken, body: { attachmentUrls: [NEW_RAW] },
+    });
+    const after = await api(`/api/challenges/${id}`, { token: state.adminToken });
+    assert.equal(after.data.standardisedFile, null);
+    assert.equal(after.data.status, "PENDING_APPROVAL");
+  });
+});
+
 describe("6. Password reset", () => {
   it("emails a link that sets a new password", async () => {
     const before = outbox().length;

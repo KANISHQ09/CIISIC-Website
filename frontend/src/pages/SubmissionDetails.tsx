@@ -12,6 +12,7 @@ import { getOriginalFileName } from '../lib/file';
 import { ProblemStatement } from '../types';
 import { usePageTitle } from '../lib/usePageTitle';
 import { PhoneVisibilityField } from '../components/common/PhoneVisibilityField';
+import { StandardisedFilePanel } from '../components/problems/StandardisedFilePanel';
 
 export const SubmissionDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -638,6 +639,12 @@ export const SubmissionDetails: React.FC = () => {
                   No additional data sheets or attachments filed with this statement.
                 </div>
               )}
+
+              <StandardisedFilePanel
+                submission={submission}
+                isAdmin={currentUser?.role === 'admin'}
+                onUpdated={setSubmission}
+              />
 
               <div className="p-4 bg-[#edf4f0]/60 rounded-2xl border border-[#063028]/10 text-xs text-stone-700 leading-normal flex items-start gap-2.5">
                 <CheckCircle className="h-5 w-5 text-emerald-700 shrink-0 mt-0.5" />
