@@ -1115,6 +1115,7 @@ function mapBackendToProblemStatement(backend: any): ProblemStatement {
     submissionSource: backend.submissionSource,
     isNewOrganisation: backend.isNewOrganisation ?? false,
     ownedByRequester: backend.ownedByRequester ?? false,
+    standardisedFile: backend.standardisedFile ?? null,
     review: backend.review ?? undefined,
   } as ProblemStatement;
 }
@@ -1278,6 +1279,20 @@ export async function requestPasswordReset(email: string): Promise<{ message: st
 }
 
 /** Set a new password using the token from the emailed link. */
+/** CII admin: upload a standardised PDF of an industry's file, or remove it (file = null). */
+export async function saveStandardisedFile(id: string, file: File | null): Promise<ProblemStatement> {
+  const url = `${API_BASE}/api/admin/challenges/${id}/standardised-file`;
+  let updated: any;
+  if (file) {
+    const form = new FormData();
+    form.append('file', file);
+    updated = await fetchJSON<any>(url, { method: 'POST', body: form });
+  } else {
+    updated = await fetchJSON<any>(url, { method: 'DELETE' });
+  }
+  return mapBackendToProblemStatement(updated);
+}
+
 /** Company team: several people signing in to the same industry dashboard. */
 export interface IndustryTeamMember {
   id: string;

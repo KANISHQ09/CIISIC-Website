@@ -149,6 +149,9 @@ model Challenge {
   contactPhone       String?
   // Who may see contactPhone besides CII admins and the owning company
   phoneVisibility    PhoneVisibility @default(NO_ONE)
+  // CII's standardised PDF of the industry's raw file, shown to viewers instead of the original
+  standardisedFileUrl String?
+  standardisedAt     DateTime?
   // When CII invited an unregistered organisation to create an industry account
   inviteSentAt       DateTime?
   attachmentUrls     String[]

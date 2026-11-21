@@ -198,8 +198,7 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                   <span className="text-base sm:text-lg font-extrabold tracking-tight text-[#063028] font-serif">
                     CIISIC
                   </span>
-                  {/* Hidden on laptop widths when the full nav shows, so the tabs fit on one line */}
-                  <span className={`text-[9px] sm:text-[9.5px] text-stone-600 font-semibold tracking-wide mt-0.5 whitespace-nowrap ${showPublicNav ? 'xl:max-[1800px]:hidden' : ''}`}>
+                  <span className="text-[9px] sm:text-[9.5px] text-stone-600 font-semibold tracking-wide mt-0.5 whitespace-nowrap">
                     CII Student Innovation Challenge
                   </span>
                 </div>
@@ -276,12 +275,6 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                   >
                     <Factory className={NAV_ICON} />
                     Industry Login
-                  </Link>
-                  <Link
-                    to="/submit-problem"
-                    className={navButtonClass('border-[#063028] text-white bg-[#063028] hover:bg-[#04201a]')}
-                  >
-                    Submit a Problem
                   </Link>
                 </div>
 
@@ -453,13 +446,6 @@ export const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                     >
                       <Factory className="w-4 h-4 text-[#c48825]" />
                       Industry Login
-                    </Link>
-                    <Link
-                      to="/submit-problem"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="block w-full py-2.5 rounded-lg text-base font-semibold bg-[#063028] text-white text-center hover:bg-[#04201a] transition-all cursor-pointer shadow-xs"
-                    >
-                      Submit a Problem
                     </Link>
                   </div>
                   )}

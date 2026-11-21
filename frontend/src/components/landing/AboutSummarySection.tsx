@@ -24,58 +24,58 @@ export const AboutSummarySection: React.FC = () => {
 
   return (
     <section id="about-ciisic" className="py-16 sm:py-24 bg-[#faf8f4] scroll-mt-20">
-      <div className="max-w-[1320px] mx-auto px-6 sm:px-8 lg:px-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
-          {/* What CIISIC is */}
-          <div className="lg:col-span-5 space-y-5 text-left">
-            <div className="flex items-center gap-2 text-[#c48825] font-bold text-xs tracking-wider uppercase">
-              About CIISIC · Powered by CII
-            </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-bold text-[#063028] tracking-tight leading-[1.15] font-serif">
-              Where industry challenges meet student <span className="text-[#c48825]">innovation</span>
-            </h1>
-            <p className="text-stone-700 text-base sm:text-lg leading-relaxed">
-              The CII Student Innovation Challenge connects industries in Madhya Pradesh with partner institutions and
-              their students, so real problems get practical, research-backed solutions.
-            </p>
-            <div className="flex flex-wrap gap-3 pt-1">
-              <Link
-                to="/about"
-                className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl text-sm font-bold text-white bg-[#063028] hover:bg-[#04201a] transition-colors"
-              >
-                Read more about CIISIC <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                to="/how-it-works"
-                className="inline-flex items-center px-5 py-3.5 rounded-xl text-sm font-bold text-[#063028] bg-white border border-stone-300 hover:bg-stone-50 transition-colors"
-              >
-                How it works
-              </Link>
-            </div>
+      <div className="max-w-[1180px] mx-auto px-6 sm:px-8 lg:px-12">
+        {/* What CIISIC is */}
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-[#c48825] font-bold text-xs tracking-wider uppercase">About CIISIC · Powered by CII</p>
+          <h2 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold text-[#063028] tracking-tight leading-[1.15] font-serif">
+            Where industry challenges meet student <span className="text-[#c48825]">innovation</span>
+          </h2>
+          <p className="mx-auto mt-5 max-w-2xl text-stone-700 text-base sm:text-lg leading-relaxed">
+            The CII Student Innovation Challenge connects industries in Madhya Pradesh with partner institutions and
+            their students, so real problems get practical, research-backed solutions.
+          </p>
+          <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link
+              to="/about"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-sm font-bold text-white bg-[#063028] hover:bg-[#04201a] transition-colors"
+            >
+              Read more about CIISIC <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              to="/how-it-works"
+              className="inline-flex items-center justify-center px-5 py-3.5 rounded-xl text-sm font-bold text-[#063028] bg-white border border-stone-300 hover:bg-stone-50 transition-colors"
+            >
+              How it works
+            </Link>
           </div>
-
-          {/* How it works, in three steps */}
-          <ol className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {steps.map((step, index) => {
-              const Icon = step.icon;
-              return (
-                <li
-                  key={step.title}
-                  className="bg-white border border-stone-200/90 rounded-2xl p-6 shadow-xs flex flex-col gap-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="h-11 w-11 rounded-full bg-[#edf4f0] text-[#063028] flex items-center justify-center">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <span className="text-xs font-bold font-mono text-[#c48825]">0{index + 1}</span>
-                  </div>
-                  <h2 className="text-base font-bold text-[#063028] leading-snug">{step.title}</h2>
-                  <p className="text-sm text-stone-600 leading-relaxed">{step.text}</p>
-                </li>
-              );
-            })}
-          </ol>
         </div>
+
+        {/* How it works, in three connected steps */}
+        <ol className="relative mt-12 sm:mt-14 grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
+          <div
+            className="absolute left-[16.66%] right-[16.66%] top-[52px] hidden border-t-2 border-dashed border-[#c48825]/40 md:block"
+            aria-hidden="true"
+          />
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            return (
+              <li
+                key={step.title}
+                className="relative flex flex-col items-center rounded-2xl border border-stone-200/90 bg-white p-6 sm:p-7 text-center shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-[#c48825]/50 hover:shadow-md"
+              >
+                <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[#063028] text-white ring-8 ring-white">
+                  <Icon className="h-6 w-6" aria-hidden="true" />
+                  <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#e0a63f] text-[11px] font-extrabold text-[#04201a]">
+                    {index + 1}
+                  </span>
+                </div>
+                <h3 className="mt-5 text-lg font-bold text-[#063028] leading-snug">{step.title}</h3>
+                <p className="mt-2 text-sm text-stone-600 leading-relaxed">{step.text}</p>
+              </li>
+            );
+          })}
+        </ol>
       </div>
     </section>
   );

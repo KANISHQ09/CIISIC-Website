@@ -70,6 +70,8 @@ export interface ProblemStatement {
   isNewOrganisation?: boolean;
   // True when the logged-in industry user owns this problem
   ownedByRequester?: boolean;
+  // CII's standardised PDF of the industry's raw file
+  standardisedFile?: { url: string; updatedAt: string | null } | null;
   // Reviewer hints (CII admins only)
   review?: {
     registeredCompany: boolean;

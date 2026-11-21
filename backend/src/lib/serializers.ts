@@ -43,6 +43,7 @@ export type SafeChallenge = {
   };
   _count?: { proposals: number };
   attachmentUrls?: string[];
+  standardisedFile?: { url: string; updatedAt: Date | null } | null;
   // Details from the submission form (null/empty for older problems)
   existingProcess: string | null;
   expectedOutcome: string | null;
@@ -192,7 +193,14 @@ export function serializeChallenge(
       representativeName: showContact ? (challenge.industryProfile?.user?.name ?? "") : undefined,
     },
     _count: challenge._count,
-    attachmentUrls: challenge.attachmentUrls ?? [],
+    // Once CII has standardised a file, only CII and the owning company receive the raw original
+    attachmentUrls:
+      challenge.standardisedFileUrl && !showContact
+        ? [challenge.standardisedFileUrl]
+        : challenge.attachmentUrls ?? [],
+    standardisedFile: challenge.standardisedFileUrl
+      ? { url: challenge.standardisedFileUrl, updatedAt: challenge.standardisedAt ?? null }
+      : null,
     existingProcess: challenge.existingProcess ?? null,
     expectedOutcome: challenge.expectedOutcome ?? null,
     projectObjectives: challenge.projectObjectives ?? null,
