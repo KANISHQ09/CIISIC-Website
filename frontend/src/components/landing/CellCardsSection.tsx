@@ -51,7 +51,7 @@ const CellLogos: React.FC<{ copy?: boolean }> = ({ copy = false }) => (
  * Each opens the Ecosystem page with the full profiles.
  */
 export const CellCardsSection: React.FC = () => (
-  <section id="excellence-cells" aria-labelledby="excellence-cells-title" className="py-5 sm:py-6 bg-white border-b border-[#e8e4dc] scroll-mt-20">
+  <section id="excellence-cells" aria-labelledby="excellence-cells-title" className="py-5 sm:py-6 bg-white border-y border-[#e8e4dc] scroll-mt-20">
     <div className="max-w-[1320px] mx-auto px-6 sm:px-8 lg:px-12">
       <h2 id="excellence-cells-title" className="mb-4 text-center text-xs font-bold uppercase tracking-wider text-[#c48825]">
         Our 7 CII Industry–Academia Excellence Cells

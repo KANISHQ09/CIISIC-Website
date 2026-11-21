@@ -69,10 +69,6 @@ body {
   to { stroke-dashoffset: 0; }
 }
 
-@keyframes heroDrift {
-  50% { transform: translate(44px, 32px) scale(1.1); }
-}
-
 @keyframes heroProgress {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
@@ -97,10 +93,6 @@ body {
   animation: heroDraw 0.6s 0.2s ease-out both;
 }
 
-.hero-aurora {
-  animation: heroDrift 14s ease-in-out infinite;
-}
-
 .hero-progress {
   transform-origin: left;
   animation: heroProgress var(--hero-timer, 3800ms) linear both;
@@ -114,7 +106,6 @@ body {
   .hero-rise,
   .hero-word,
   .hero-underline path,
-  .hero-aurora,
   .hero-ping {
     animation: none;
   }

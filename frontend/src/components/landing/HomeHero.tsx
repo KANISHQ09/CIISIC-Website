@@ -36,7 +36,7 @@ const LiveChallengeCard: React.FC<{ problem: ProblemStatement; now: number; show
   return (
     <Link
       to={`/details/${problem.id}`}
-      className="group relative flex h-full flex-col overflow-hidden rounded-3xl bg-white p-6 sm:p-7 text-left shadow-2xl shadow-black/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#e0a63f]"
+      className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-stone-200 bg-white p-6 sm:p-7 text-left shadow-xl shadow-[#063028]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#e0a63f]"
     >
       {/* Shows how long until the next card */}
       {showTimer && (
@@ -162,36 +162,24 @@ export const HomeHero: React.FC = () => {
 
   const riseDelay = (ms: number) => ({ '--hero-delay': `${ms}ms` } as React.CSSProperties);
   const controlClass =
-    'flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/30 text-white transition-colors hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#e0a63f]';
+    'flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-stone-300 bg-white text-[#063028] transition-colors hover:border-[#063028] hover:bg-[#edf4f0] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c48825]';
 
   return (
-    <section id="hero" className="relative isolate flex min-h-[calc(100svh-65px)] flex-col overflow-hidden bg-[#063028] text-white">
-      {/* Background: slow-moving glow, and a dot grid that fades out at the edges */}
-      <div className="hero-aurora absolute -right-32 -top-40 -z-10 h-[600px] w-[600px] rounded-full bg-[#c48825]/30 blur-[120px]" aria-hidden="true" />
-      <div
-        className="hero-aurora absolute -bottom-48 -left-32 -z-10 h-[480px] w-[480px] rounded-full bg-emerald-400/15 blur-[110px]"
-        style={{ animationDelay: '-7s' }}
-        aria-hidden="true"
-      />
-      <div
-        className="absolute inset-0 -z-10 opacity-[0.16] [background-image:radial-gradient(#ffffff_1px,transparent_1px)] [background-size:26px_26px] [mask-image:radial-gradient(ellipse_75%_75%_at_60%_40%,black,transparent)]"
-        aria-hidden="true"
-      />
-
+    <section id="hero" className="relative isolate flex min-h-[calc(100svh-65px)] flex-col overflow-hidden bg-[#faf8f4] text-[#063028]">
       <div className="mx-auto grid w-full max-w-[1320px] min-[106rem]:max-w-[1600px] flex-1 grid-cols-1 items-center gap-10 px-6 py-12 sm:px-8 sm:py-14 lg:grid-cols-12 lg:gap-12 lg:px-12 lg:py-7">
         <div className="lg:col-span-7">
-          <p className="hero-rise flex items-center gap-3 text-xs sm:text-sm font-bold uppercase tracking-[0.16em] text-[#e0a63f]">
-            <span className="h-px w-8 bg-[#e0a63f]" aria-hidden="true" />
+          <p className="hero-rise flex items-center gap-3 text-xs sm:text-sm font-bold uppercase tracking-[0.16em] text-[#9a6a1b]">
+            <span className="hidden h-px w-8 bg-[#c48825] sm:block" aria-hidden="true" />
             CII Student Innovation Challenge
           </p>
           <h1
-            className="hero-rise mt-4 font-serif text-[clamp(2rem,10.6vw,3.75rem)] font-bold leading-[1.08] tracking-tight !text-white sm:text-6xl xl:text-7xl min-[106rem]:text-[6.25rem]"
+            className="hero-rise mt-4 font-serif text-[clamp(2rem,10.6vw,3.75rem)] font-bold leading-[1.08] tracking-tight !text-[#063028] sm:text-6xl xl:text-7xl min-[106rem]:text-[6.25rem]"
             style={riseDelay(90)}
           >
             Don&apos;t just study it.
             <span className="sr-only"> Solve it.</span>
             <span className="relative mt-1 block h-[1.22em] [perspective:600px]" aria-hidden="true">
-              <span key={wordIndex} className="hero-word relative inline-block text-[#e0a63f]">
+              <span key={wordIndex} className="hero-word relative inline-block text-[#b47a1c]">
                 {HEADLINE_WORDS[wordIndex]}
                 <svg
                   className="hero-underline absolute -bottom-[0.1em] left-0 h-[0.16em] w-full"
@@ -204,7 +192,7 @@ export const HomeHero: React.FC = () => {
               </span>
             </span>
           </h1>
-          <p className="hero-rise mt-5 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg min-[106rem]:max-w-2xl min-[106rem]:text-xl" style={riseDelay(180)}>
+          <p className="hero-rise mt-5 max-w-xl text-base leading-relaxed text-stone-700 sm:text-lg min-[106rem]:max-w-2xl min-[106rem]:text-xl" style={riseDelay(180)}>
             Take on real challenges from Indian industry, build solutions with your team and faculty
             mentor, and put your work in front of the companies that need it.
           </p>
@@ -212,22 +200,22 @@ export const HomeHero: React.FC = () => {
           <div className="hero-rise mt-7 flex flex-col gap-3 sm:flex-row" style={riseDelay(270)}>
             <Link
               to="/problem-statements"
-              className="group inline-flex items-center justify-center gap-2 rounded-xl bg-[#e0a63f] px-6 py-3.5 text-base font-bold text-[#04201a] shadow-lg shadow-[#c48825]/25 transition-all hover:-translate-y-0.5 hover:bg-[#ecb95a] hover:shadow-xl hover:shadow-[#c48825]/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="group inline-flex items-center justify-center gap-2 rounded-xl bg-[#063028] px-6 py-3.5 text-base font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-[#04201a] hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c48825] focus-visible:ring-offset-2"
             >
               Explore Problem Statements
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
             </Link>
             <Link
               to="/how-it-works"
-              className="inline-flex items-center justify-center rounded-xl border border-white/40 px-6 py-3.5 text-base font-bold text-white transition-all hover:-translate-y-0.5 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="inline-flex items-center justify-center rounded-xl border border-stone-300 bg-white px-6 py-3.5 text-base font-bold text-[#063028] transition-all hover:-translate-y-0.5 hover:border-[#063028] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c48825] focus-visible:ring-offset-2"
             >
               See How It Works
             </Link>
           </div>
 
-          <p className="hero-rise mt-4 text-sm text-white/75" style={riseDelay(360)}>
+          <p className="hero-rise mt-4 text-sm text-stone-600" style={riseDelay(360)}>
             Students take part through their institution.{' '}
-            <Link to="/institutions" className="font-bold text-[#e0a63f] hover:underline">
+            <Link to="/institutions" className="font-bold text-[#9a6a1b] hover:underline">
               Find yours
             </Link>
           </p>
@@ -260,8 +248,8 @@ export const HomeHero: React.FC = () => {
           >
             {deck.length < 2 && (
               <>
-                <div className="absolute inset-0 translate-x-3 translate-y-3 rotate-3 rounded-3xl bg-[#c48825]/70" aria-hidden="true" />
-                <div className="absolute inset-0 -translate-x-2 translate-y-1.5 -rotate-2 rounded-3xl bg-white/20" aria-hidden="true" />
+                <div className="absolute inset-0 translate-x-3 translate-y-3 rotate-3 rounded-3xl bg-[#c48825]/40" aria-hidden="true" />
+                <div className="absolute inset-0 -translate-x-2 translate-y-1.5 -rotate-2 rounded-3xl bg-[#dbe7e1]" aria-hidden="true" />
               </>
             )}
             {hasCards ? (
@@ -306,7 +294,7 @@ export const HomeHero: React.FC = () => {
               <div className="absolute inset-0">
                 <Link
                   to="/how-it-works"
-                  className="flex h-full flex-col justify-center rounded-3xl bg-white p-7 text-left shadow-2xl shadow-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#e0a63f]"
+                  className="flex h-full flex-col justify-center rounded-3xl border border-stone-200 bg-white p-7 text-left shadow-xl shadow-[#063028]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#e0a63f]"
                 >
                   <span className="text-xs font-bold uppercase tracking-wider text-[#9a6a1b]">New challenges on the way</span>
                   <span className="mt-3 font-serif text-2xl font-bold leading-snug text-[#063028]">
@@ -340,7 +328,7 @@ export const HomeHero: React.FC = () => {
                     aria-current={i === current}
                     className="flex h-6 w-8 cursor-pointer items-center justify-center"
                   >
-                    <span className={`h-1.5 rounded-full transition-all ${i === current ? 'w-7 bg-[#e0a63f]' : 'w-3 bg-white/40'}`} />
+                    <span className={`h-1.5 rounded-full transition-all ${i === current ? 'w-7 bg-[#c48825]' : 'w-3 bg-stone-300'}`} />
                   </button>
                 ))}
               </div>
