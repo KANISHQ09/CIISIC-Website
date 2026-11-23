@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { X, CheckCircle2, Mail } from 'lucide-react';
+import { X, CheckCircle2 } from 'lucide-react';
 import { EXCELLENCE_CELLS, ExcellenceCellData } from '../../data/excellenceCells';
 
 
@@ -35,17 +35,17 @@ export const ExcellenceCellsSection: React.FC = () => {
               key={cell.id}
               onClick={() => setSelectedCell(cell)}
               aria-label={`${cell.name}: open the cell profile`}
-              className="group h-full text-left bg-white border border-stone-200/90 rounded-2xl overflow-hidden flex flex-col justify-between shadow-xs hover:shadow-md hover:border-stone-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#063028] transition-all duration-300 cursor-pointer"
+              className="group h-full text-left bg-white border border-stone-200 rounded-2xl overflow-hidden flex flex-col justify-between shadow-xs hover:shadow-md hover:border-[#c48825]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#063028] transition-all duration-300 cursor-pointer"
             >
               <div className="space-y-4">
-                {/* Cell Image Frame - natural height to prevent cropping infographic text */}
-                <div className="w-full overflow-hidden relative bg-white border-b border-stone-100">
+                {/* Same square frame for every cell, without cropping the poster's text */}
+                <div className="aspect-square w-full overflow-hidden bg-white p-3">
                   <img 
                     src={cell.image} 
                     alt={cell.name} 
-                    width={1200}
-                    height={1200}
-                    className="w-full h-auto block group-hover:scale-[1.01] transition-transform duration-500"
+                    width={900}
+                    height={900}
+                    className="block h-full w-full object-contain group-hover:scale-[1.01] transition-transform duration-500"
                     loading="lazy"
                   />
                 </div>
@@ -62,13 +62,6 @@ export const ExcellenceCellsSection: React.FC = () => {
                   <p className="text-sm text-stone-700 leading-relaxed font-normal">
                     {cell.brief}
                   </p>
-                  {cell.email && (
-                    <p className="flex items-center gap-1.5 text-sm font-semibold text-[#063028] break-all">
-                      <Mail className="h-4 w-4 shrink-0 text-[#c48825]" aria-hidden="true" />
-                      {cell.contactName ? `${cell.contactName} · ` : ''}
-                      {cell.email}
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -116,14 +109,6 @@ export const ExcellenceCellsSection: React.FC = () => {
                 <p className="text-sm text-stone-600 font-medium">
                   Partner Institution: {selectedCell.partner}
                 </p>
-                {selectedCell.email && (
-                  <p className="text-sm text-stone-700">
-                    Contact: {selectedCell.contactName ? `${selectedCell.contactName}, ` : ''}
-                    <a href={`mailto:${selectedCell.email}`} className="font-semibold text-[#063028] underline underline-offset-2 hover:text-[#c48825]">
-                      {selectedCell.email}
-                    </a>
-                  </p>
-                )}
               </div>
               <button 
                 onClick={() => setSelectedCell(null)}
