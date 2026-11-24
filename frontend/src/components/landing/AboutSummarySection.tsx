@@ -57,7 +57,7 @@ export const AboutSummarySection: React.FC = () => {
             className="absolute left-[16.66%] right-[16.66%] top-[52px] hidden border-t-2 border-dashed border-[#c48825]/40 md:block"
             aria-hidden="true"
           />
-          {steps.map((step, index) => {
+          {steps.map((step) => {
             const Icon = step.icon;
             return (
               <li
@@ -66,9 +66,6 @@ export const AboutSummarySection: React.FC = () => {
               >
                 <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[#063028] text-white ring-8 ring-white">
                   <Icon className="h-6 w-6" aria-hidden="true" />
-                  <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#e0a63f] text-[11px] font-extrabold text-[#04201a]">
-                    {index + 1}
-                  </span>
                 </div>
                 <h3 className="mt-5 text-lg font-bold text-[#063028] leading-snug">{step.title}</h3>
                 <p className="mt-2 text-sm text-stone-600 leading-relaxed">{step.text}</p>

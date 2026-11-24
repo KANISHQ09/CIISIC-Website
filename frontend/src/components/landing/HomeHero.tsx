@@ -48,15 +48,11 @@ const LiveChallengeCard: React.FC<{ problem: ProblemStatement; now: number; show
       )}
 
       <div className="flex items-center justify-between gap-3">
-        <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-700">
-          <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
-            <span className="hero-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-          </span>
-          Live challenge
-        </span>
+        <p className="min-w-0 truncate text-xs font-bold uppercase tracking-wider text-[#9a6a1b]">
+          {problem.company.industrySector}
+        </p>
         <span
-          className={`rounded-full px-3 py-1 text-xs font-bold ${
+          className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${
             left.urgent ? 'bg-red-50 text-red-700' : 'bg-[#edf4f0] text-[#063028]'
           }`}
         >
@@ -64,10 +60,7 @@ const LiveChallengeCard: React.FC<{ problem: ProblemStatement; now: number; show
         </span>
       </div>
 
-      <p className="mt-5 truncate text-xs font-bold uppercase tracking-wider text-[#9a6a1b]">
-        {problem.company.industrySector}
-      </p>
-      <h2 className="mt-1.5 line-clamp-2 font-serif text-2xl min-[106rem]:text-3xl font-bold leading-snug text-[#063028]">
+      <h2 className="mt-5 line-clamp-2 font-serif text-2xl min-[106rem]:text-3xl font-bold leading-snug text-[#063028]">
         {problem.details.title}
       </h2>
       <p className="mt-2 line-clamp-2 text-sm min-[106rem]:text-base leading-relaxed text-stone-600">
